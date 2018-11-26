@@ -46,6 +46,13 @@ namespace Differ
 				{"h|?|help", "show this message and exit", h => _help = h != null},
 			};
 
+			if (_help)
+			{
+				ShowHelp(options, providers);
+				return;
+			}
+
+
 			if (args.Length < 2)
 			{
 				ShowHelp(options, providers);
@@ -63,12 +70,6 @@ namespace Differ
 				Console.WriteLine(e.Message);
 				Console.WriteLine("Try 'Differ.exe --help' for more information.");
 				Environment.ExitCode = 1;
-				return;
-			}
-
-			if (_help)
-			{
-				ShowHelp(options, providers);
 				return;
 			}
 
