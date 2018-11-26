@@ -1,27 +1,23 @@
 root=true
 
-[*.cs]
-trim_trailing_whitespace=true
-insert_final_newline=true
-
 [*]
-indent_style = space
+indent_style = tab
 indent_size = 4
 
 [*.cshtml]
 indent_style = space
-indent_size = 4
 
 [*.{fs,fsx}]
 indent_style = space
-indent_size = 4
 
-[*.{md,markdown,json,js,csproj,fsproj,targets,targets,props}]
+[*.{md,markdown,json,js,csproj,fsproj,targets,props}]
 indent_style = space
-indent_size = 2
 
 # Dotnet code style settings:
 [*.{cs,vb}]
+trim_trailing_whitespace=true
+insert_final_newline=true
+
 
 # ---
 # naming conventions https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-naming-conventions

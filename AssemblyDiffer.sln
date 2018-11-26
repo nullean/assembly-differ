@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Differ", "AssemblyDiffer\AssemblyDiffer.csproj", "{ABB946F3-7A8D-41D7-9526-23E0CFFA16F8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Root", "Root", "{C57AE0BE-05FE-4DCA-9399-06C2B7998455}"
+ProjectSection(SolutionItems) = preProject
+	.editorconfig = .editorconfig
+	.gitignore = .gitignore
+	appveyor.yml = appveyor.yml
+	LICENSE = LICENSE
+	README.md = README.md
+EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABB946F3-7A8D-41D7-9526-23E0CFFA16F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABB946F3-7A8D-41D7-9526-23E0CFFA16F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABB946F3-7A8D-41D7-9526-23E0CFFA16F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABB946F3-7A8D-41D7-9526-23E0CFFA16F8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
