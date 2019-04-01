@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <AssemblyName>assembly-differ</AssemblyName>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <AssemblyName>dotnet-assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
 
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>assembly-differ</ToolCommandName>
-    <PackageOutputPath>../build</PackageOutputPath>
+<!--    <PackAsTool>true</PackAsTool>-->
+<!--    <ToolCommandName>dotnet-assembly-differ</ToolCommandName>-->
+<!--    <PackageOutputPath>../build</PackageOutputPath>-->
 
     <MajorMinor>1.0</MajorMinor>
     <MinVerPrerelease>alpha$([System.DateTime]::UtcNow.ToString(yyyyMMddTHHmmss))</MinVerPrerelease>
