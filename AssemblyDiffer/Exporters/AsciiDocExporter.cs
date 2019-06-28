@@ -20,10 +20,12 @@ namespace Differ.Exporters
 			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "asciidoc"))))
 			{
 				writer.WriteLine($"== Breaking changes for {Path.GetFileNameWithoutExtension(name)}");
-				writer.WriteLine();
 
 				foreach (var typeElement in doc.Descendants("Type"))
+				{
+					writer.WriteLine();
 					WriteTypeElement(writer, typeElement);
+				}
 			}
 		}
 
@@ -35,13 +37,21 @@ namespace Differ.Exporters
 			switch(diffType)
 			{
 				case DiffType.Deleted:
-					writer.WriteLine($"[float]{Environment.NewLine}=== `{typeName}` is deleted");
+					writer.WriteLine("[discrete]");
+					writer.WriteLine($"=== `{typeName}`");
+					writer.WriteLine();
+					writer.WriteLine("[horizontal]");
+					writer.WriteLine("type:: deleted");
 					break;
 				case DiffType.Modified:
 					WriteMemberElements(writer, typeName, typeElement);
 					break;
 				case DiffType.New:
-					writer.WriteLine($"[float]{Environment.NewLine}=== `{typeName}` is added");
+					writer.WriteLine("[discrete]");
+					writer.WriteLine($"=== `{typeName}`");
+					writer.WriteLine();
+					writer.WriteLine("[horizontal]");
+					writer.WriteLine("type:: added");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -50,35 +60,102 @@ namespace Differ.Exporters
 
 		private void WriteMemberElements(StreamWriter writer, string typeName, XElement typeElement)
 		{
-			var memberElements = typeElement.Elements("Method").Concat(typeElement.Elements("Property"));
+			var memberElements = typeElement.Elements("Method")
+				.Concat(typeElement.Elements("Property"))
+				.Where(m =>
+				{
+					var diffType = m.Attribute("DiffType").Value;
+					return diffType == "New" || diffType == "Deleted" || m.Descendants("DiffItem").Any();
+				}).ToList();
 
 			if (memberElements.Any())
-				writer.WriteLine($"[float]{Environment.NewLine}=== `{typeName}`");
-
-			foreach (var memberElement in memberElements)
 			{
-				var memberName = memberElement.Attribute("Name")?.Value;
-				if (!string.IsNullOrEmpty(memberName) && Enum.TryParse(typeElement.Attribute("DiffType")?.Value, out DiffType diffType))
+				writer.WriteLine("[discrete]");
+				writer.WriteLine($"=== `{typeName}`");
+				writer.WriteLine();
+				writer.WriteLine("[horizontal]");
+				foreach (var memberElement in memberElements)
 				{
-					switch (diffType)
+					var memberName = memberElement.Attribute("Name")?.Value;
+					if (!string.IsNullOrEmpty(memberName) && Enum.TryParse(memberElement.Attribute("DiffType")?.Value,
+						    out DiffType diffType))
 					{
-						case DiffType.Deleted:
-							writer.WriteLine($"[float]{Environment.NewLine}==== `{memberName}` is deleted");
-							break;
-						case DiffType.Modified:
-							var diffItem = memberElement.Descendants("DiffItem").FirstOrDefault();
-							if (diffItem != null)
-							{
-								writer.WriteLine($"[float]{Environment.NewLine}==== `{memberName}`");
-								writer.WriteLine(
-									Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).", "changed from `$1` to `$2`."));
-							}
-							break;
-						case DiffType.New:
-							writer.WriteLine($"[float]{Environment.NewLine}==== `{memberName}` is added");
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
+						var memberType = memberElement.Name.LocalName.ToLowerInvariant();
+
+						switch (diffType)
+						{
+							case DiffType.Deleted:
+								writer.WriteLine($"`{memberName}` {memberType}:: deleted");
+								break;
+							case DiffType.Modified:
+								if (memberType == "method")
+								{
+									var diffItem = memberElement.Descendants("DiffItem").FirstOrDefault();
+									if (diffItem != null)
+									{
+										writer.WriteLine($"`{memberName}` {memberType}::");
+										writer.WriteLine(
+											Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).",
+												"changed from `$1` to `$2`."));
+									}
+								}
+								else if (memberType == "property")
+								{
+									var methods = memberElement.Elements("Method");
+									if (methods.Any())
+									{
+										foreach (var propertyMethod in methods)
+										{
+											writer.WriteLine($"`{memberName}` {memberType} {propertyMethod.Attribute("Name").Value}ter::");
+											var diffItem = propertyMethod.Descendants("DiffItem").FirstOrDefault();
+											if (diffItem != null)
+											{
+												if (Regex.IsMatch(diffItem.Value, "changed from (.*?) to (.*)."))
+												{
+													writer.WriteLine(
+														Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).",
+															"changed from `$1` to `$2`."));
+												}
+												else if (Regex.IsMatch(diffItem.Value, "Method changed"))
+												{
+													writer.WriteLine(
+														Regex.Replace(diffItem.Value, "Method changed (.*)",
+															"changed $1"));
+												}
+												else
+													writer.WriteLine(diffItem.Value);
+											}
+										}
+									}
+
+									var propertyDiffItem = memberElement.Elements("DiffItem").FirstOrDefault();
+									if (propertyDiffItem != null)
+									{
+										writer.WriteLine($"`{memberName}` {memberType}::");
+										if (Regex.IsMatch(propertyDiffItem.Value, "changed from (.*?) to (.*)."))
+										{
+											writer.WriteLine(
+												Regex.Replace(propertyDiffItem.Value, "changed from (.*?) to (.*).",
+													"changed from `$1` to `$2`."));
+										}
+										else if (Regex.IsMatch(propertyDiffItem.Value, "Method changed"))
+										{
+											writer.WriteLine(
+												Regex.Replace(propertyDiffItem.Value, "Method changed (.*)",
+													"changed $1"));
+										}
+										else
+											writer.WriteLine(propertyDiffItem.Value);
+									}
+
+								}
+								break;
+							case DiffType.New:
+								writer.WriteLine($"`{memberName}` {memberType}:: added");
+								break;
+							default:
+								throw new ArgumentOutOfRangeException();
+						}
 					}
 				}
 			}
