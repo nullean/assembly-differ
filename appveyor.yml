@@ -1,8 +1,12 @@
 version: 1.0.{build} 
 image: Visual Studio 2017 
+test: off
+
 build_script: 
   - cmd: dotnet pack -c RELEASE
-test: off
+install:
+  - cmd: choco install dotnetcore-sdk --version 3.0.100
+
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
