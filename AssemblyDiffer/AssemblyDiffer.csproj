@@ -4,10 +4,8 @@
     <TargetFrameworks>netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
     <AssemblyName>dotnet-assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
-
-<!--    <PackAsTool>true</PackAsTool>-->
-<!--    <ToolCommandName>dotnet-assembly-differ</ToolCommandName>-->
-<!--    <PackageOutputPath>../build</PackageOutputPath>-->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>assembly-differ</ToolCommandName>
 
     <MajorMinor>1.0</MajorMinor>
     <MinVerPrerelease>alpha$([System.DateTime]::UtcNow.ToString(yyyyMMddTHHmmss))</MinVerPrerelease>
@@ -24,6 +22,15 @@
   <ItemGroup>
     <Folder Include="lib">
     </Folder>
+    <Content Include="..\appveyor.yml">
+      <Link>appveyor.yml</Link>
+    </Content>
+    <Content Include="..\LICENSE">
+      <Link>LICENSE</Link>
+    </Content>
+    <Content Include="..\README.md">
+      <Link>README.md</Link>
+    </Content>
     <Content Include="lib\*.dll"> 
       <PackagePath>lib\$(TargetFramework)\</PackagePath> 
       <Pack>true</Pack> 

@@ -2,17 +2,17 @@ version: 1.0.{build}
 image: Visual Studio 2017 
 test: off
 
+environment:
+	DOTNET_CLI_TELEMETRY_OPTOUT: true
+	DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+install:
+	- cmd: choco install dotnetcore-sdk --version 3.0.100
 build_script: 
   - cmd: dotnet pack -c RELEASE
-install:
-  - cmd: choco install dotnetcore-sdk --version 3.0.100
 
-environment:
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 artifacts:
   - path: '**\*.nupkg'
     name: Nuget
 nuget:
-  
   disable_publish_on_pr: true
