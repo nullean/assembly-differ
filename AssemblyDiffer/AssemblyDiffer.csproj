@@ -30,10 +30,6 @@
     <Content Include="..\README.md">
       <Link>README.md</Link>
     </Content>
-    <Content Include="lib\*.dll"> 
-      <PackagePath>lib\netcoreapp3.0</PackagePath> 
-      <Pack>true</Pack> 
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
