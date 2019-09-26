@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>dotnet-assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
     <PackAsTool>true</PackAsTool>
@@ -11,7 +11,6 @@
     <MinVerPrerelease>ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0-$(MinVerPrerelease)</Version>
     <PackageVersion>$(Version)</PackageVersion>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Mono.Options" Version="5.3.0.1" />
@@ -32,7 +31,7 @@
       <Link>README.md</Link>
     </Content>
     <Content Include="lib\*.dll"> 
-      <PackagePath>lib\$(TargetFramework)\</PackagePath> 
+      <PackagePath>lib\netcoreapp3.0</PackagePath> 
       <Pack>true</Pack> 
     </Content>
   </ItemGroup>
