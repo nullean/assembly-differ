@@ -2,7 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ProcNet;
+using System.Threading;
+using NuGet.Common;
+using NuGet.Configuration;
+using NuGet.Frameworks;
+using NuGet.Packaging;
+using NuGet.Packaging.Core;
+using NuGet.Packaging.Signing;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Resolver;
+using NuGet.Versioning;
 
 namespace Differ.Providers.NuGet
 {
@@ -11,59 +21,122 @@ namespace Differ.Providers.NuGet
 		NuGetPackage InstallPackage(string packageName, string version, string targetDirectory);
 	}
 
-	public class NuGet : ExecutableBase, INuGet
+	public class PreviousNugetPackage : NuGet
 	{
-		private const string NugetExe = "nuget.exe";
-		private readonly string[] _sources = { "https://www.nuget.org/api/v2/", "https://api.nuget.org/v3/index.json" };
-		private readonly string _executable;
-
-		public NuGet(string executable = null, string sources = null)
+		public override NuGetPackage InstallPackage(string packageName, string currentVersion, string targetDirectory)
 		{
-			if (!string.IsNullOrEmpty(sources))
-				_sources = sources.Split(';');
+			var nugetVersion = new NuGetVersion(currentVersion);
+			var providers = new List<Lazy<INuGetResourceProvider>>();
+			providers.AddRange(Repository.Provider.GetCoreV3());
+			var packageSource = new PackageSource("https://api.nuget.org/v3/index.json");
+			var sourceRepository = new SourceRepository(packageSource, providers);
+			var metadata = sourceRepository.GetResource<PackageMetadataResource>();
+			using var cacheContext = new SourceCacheContext();
+			var searchMetadata =
+				metadata.GetMetadataAsync(currentVersion, false, false, cacheContext, NullLogger.Instance, CancellationToken.None)
+					.GetAwaiter().GetResult();
 
-			if (!string.IsNullOrEmpty(executable))
+			var previousPackage =
+				searchMetadata
+					.Cast<PackageSearchMetadata>()
+					.OrderByDescending(p => p.Version)
+					.FirstOrDefault(p => p.Version < nugetVersion);
+
+			if (previousPackage == null) return NuGetPackage.Skip;
+
+			return base.InstallPackage(packageName, previousPackage.Version.ToString(), targetDirectory);
+		}
+	}
+
+	public class NuGet : INuGet
+	{
+		public virtual NuGetPackage InstallPackage(string packageName, string version, string targetDirectory)
+		{
+			if (!Directory.Exists(targetDirectory)) Directory.CreateDirectory(targetDirectory);
+
+			var packageVersion = NuGetVersion.Parse(version);
+			var nuGetFramework = NuGetFramework.AnyFramework;
+			var settings = Settings.LoadDefaultSettings(root: null);
+			var sourceRepositoryProvider = new SourceRepositoryProvider(settings, Repository.Provider.GetCoreV3());
+
+			using (var cacheContext = new SourceCacheContext())
 			{
-				if (!File.Exists(executable))
-					throw new FileNotFoundException($"{NugetExe} does not exist at {executable}");
+				var repositories = sourceRepositoryProvider.GetRepositories();
+				var availablePackages = new HashSet<SourcePackageDependencyInfo>(PackageIdentityComparer.Default);
+				GetPackageDependencies(
+					new PackageIdentity(packageName, packageVersion),
+					nuGetFramework, cacheContext, NullLogger.Instance, repositories, availablePackages);
 
-				_executable = executable;
+				var resolverContext = new PackageResolverContext(
+					DependencyBehavior.Lowest,
+					new[] {packageName},
+					Enumerable.Empty<string>(),
+					Enumerable.Empty<PackageReference>(),
+					Enumerable.Empty<PackageIdentity>(),
+					availablePackages,
+					sourceRepositoryProvider.GetRepositories().Select(s => s.PackageSource),
+					NullLogger.Instance);
+
+				var resolver = new PackageResolver();
+				var packagesToInstall = resolver.Resolve(resolverContext, CancellationToken.None)
+					.Select(p => availablePackages.Single(x => PackageIdentityComparer.Default.Equals(x, p)));
+				var packagePathResolver = new PackagePathResolver(Path.GetFullPath(targetDirectory));
+				var packageExtractionContext = new PackageExtractionContext(
+					PackageSaveMode.Nuspec | PackageSaveMode.Files | PackageSaveMode.Nupkg,
+					XmlDocFileSaveMode.None,
+					ClientPolicyContext.GetClientPolicy(settings, NullLogger.Instance),
+					NullLogger.Instance);
+				var downloadContext = new PackageDownloadContext(cacheContext);
+
+				foreach (var packageToInstall in packagesToInstall)
+				{
+					var installedPath = packagePathResolver.GetInstalledPath(packageToInstall);
+					if (installedPath != null) continue;
+					var downloadResource = packageToInstall.Source
+						.GetResourceAsync<DownloadResource>(CancellationToken.None).GetAwaiter().GetResult();
+					var downloadResult = downloadResource.GetDownloadResourceResultAsync(
+						packageToInstall,
+						downloadContext,
+						SettingsUtility.GetGlobalPackagesFolder(settings),
+						NullLogger.Instance, CancellationToken.None).GetAwaiter().GetResult();
+
+					PackageExtractor.ExtractPackageAsync(
+						downloadResult.PackageSource,
+						downloadResult.PackageStream,
+						packagePathResolver,
+						packageExtractionContext,
+						CancellationToken.None).GetAwaiter().GetResult();
+				}
 			}
-			else
-				_executable = FindExecutable(NugetExe);
+
+			return new NuGetPackage(Path.Combine(targetDirectory, $"{packageName}.{version}"));
 		}
 
-		public NuGetPackage InstallPackage(string packageName, string version, string targetDirectory)
+		private static void GetPackageDependencies(PackageIdentity package,
+			NuGetFramework framework,
+			SourceCacheContext cacheContext,
+			ILogger logger,
+			IEnumerable<SourceRepository> repositories,
+			ISet<SourcePackageDependencyInfo> availablePackages)
 		{
-			if (!Directory.Exists(targetDirectory))
-				Directory.CreateDirectory(targetDirectory);
+			if (availablePackages.Contains(package)) return;
 
-			var args = new List<string>
+			foreach (var sourceRepository in repositories)
 			{
-				"install", packageName,
-				"-Version", version,
-				"-ExcludeVersion", "-NonInteractive"
-			};
+				var dependencyInfoResource = sourceRepository.GetResource<DependencyInfoResource>();
+				var dependencyInfo = dependencyInfoResource.ResolvePackage(
+					package, framework, cacheContext, logger, CancellationToken.None).GetAwaiter().GetResult();
 
-			foreach (var source in _sources)
-			{
-				args.Add("-Source");
-				args.Add(source);
+				if (dependencyInfo == null) continue;
+
+				availablePackages.Add(dependencyInfo);
+				foreach (var dependency in dependencyInfo.Dependencies)
+				{
+					GetPackageDependencies(
+						new PackageIdentity(dependency.Id, dependency.VersionRange.MinVersion),
+						framework, cacheContext, logger, repositories, availablePackages);
+				}
 			}
-
-			var startArguments = new StartArguments(_executable, args)
-			{
-				WorkingDirectory = targetDirectory
-			};
-
-			var processResult = Proc.Start(startArguments);
-			if (processResult.ExitCode != 0)
-			{
-				var lines = string.Join(Environment.NewLine, processResult.ConsoleOut.Select(c => c.Line));
-				throw new Exception($"{NugetExe} returned non-zero exit code: {lines}");
-			}
-
-			return new NuGetPackage(Path.Combine(targetDirectory, packageName));
 		}
 	}
 }

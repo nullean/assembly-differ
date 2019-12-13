@@ -31,7 +31,7 @@ namespace Differ.Providers.NuGet
 			_command = new NuGetDiffCommand(command);
 		}
 
-		public IEnumerable<FileInfo> GetAssemblies(IEnumerable<string> targets)
+		public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 		{
 			var tempDir = Path.Combine(_command.TempDir, "differ", "nuget");
 			if (!Directory.Exists(tempDir))
@@ -60,9 +60,10 @@ namespace Differ.Providers.NuGet
 
 			// dependent assemblies need to copied to the same directory as the target assembly
 			CopyAssemblies(package, frameworkVersion);
+			var path = Path.Combine(package.Path, "lib", frameworkVersion);
 
-			return Directory.EnumerateFiles(Path.Combine(package.Path, "lib", frameworkVersion), "*.dll")
-				.Where(f => targets?.Contains(Path.GetFileNameWithoutExtension(f)) ?? true)
+			return Directory.EnumerateFiles(path, "*.dll")
+				.Where(f => targets.Count == 0 || targets.Contains(Path.GetFileNameWithoutExtension(f)))
 				.Select(f => new FileInfo(f));
 		}
 

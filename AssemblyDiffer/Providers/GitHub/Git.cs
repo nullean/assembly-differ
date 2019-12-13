@@ -14,6 +14,7 @@ namespace Differ.Providers.GitHub
 	{
 		private readonly string _executable;
 		private const string GitExe = "git.exe";
+		private const string GitCommand = "git";
 
 		public Git(string executable = null)
 		{
@@ -25,7 +26,7 @@ namespace Differ.Providers.GitHub
 				_executable = executable;
 			}
 			else
-				_executable = FindExecutable(GitExe);
+				_executable = IsWindows ? FindExecutable(GitExe) : GitCommand;
 		}
 
 

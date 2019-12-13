@@ -20,9 +20,9 @@ namespace Differ.Providers
 			_assemblyDirectory = assemblyDirectory;
 		}
 
-		public IEnumerable<FileInfo> GetAssemblies(IEnumerable<string> targets) =>
+		public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets) =>
 			Directory.EnumerateFiles(_assemblyDirectory, "*.dll")
-				.Where(f => targets?.Contains(Path.GetFileNameWithoutExtension(f)) ?? true)
+				.Where(f => targets.Count == 0 || targets.Contains(Path.GetFileNameWithoutExtension(f)))
 				.Select(f => new FileInfo(f));
 	}
 

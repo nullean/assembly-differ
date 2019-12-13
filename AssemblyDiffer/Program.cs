@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using Differ.Exporters;
 using Differ.Providers;
 using Differ.Providers.GitHub;
@@ -16,19 +17,15 @@ namespace Differ
 		private static string _format = "xml";
 		private static bool _help;
 		private static string _output = Directory.GetCurrentDirectory();
-		private static HashSet<string> _targets;
 
-		private static HashSet<string> Targets =>
-			_targets ?? (_targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		private static void Main(string[] args)
 		{
 			var providers = new AssemblyProviderFactoryCollection(
 				new AssemblyProviderFactory(),
 				new DirectoryAssemblyProviderFactory(),
-				new NuGetAssemblyProviderFactory(new Providers.NuGet.NuGet(
-					Environment.GetEnvironmentVariable("NUGET"),
-					Environment.GetEnvironmentVariable("NUGET_SOURCES"))),
+				new NuGetAssemblyProviderFactory(new Providers.NuGet.NuGet()),
 				new GitHubAssemblyProviderFactory(new Git(Environment.GetEnvironmentVariable("GIT")))
 			);
 
@@ -82,9 +79,12 @@ namespace Differ
 					throw new Exception($"No exporter for format '{_format}'");
 
 				var exporter = exporters[_format];
+				var pairs = CreateAssemblyPairs(firstProvider, secondProvider).ToList();
 
-				foreach (var assemblyPair in CreateAssemblyPairs(firstProvider, secondProvider))
+				foreach (var assemblyPair in pairs)
 				{
+					///new APIDiffHelper(AssemblyDefinition())
+
 					assemblyPair.Diff =
 						APIDiffHelper.GetAPIDifferences(assemblyPair.First.FullName, assemblyPair.Second.FullName);
 
@@ -104,11 +104,16 @@ namespace Differ
 			}
 		}
 
-		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IAssemblyProvider firstProvider, IAssemblyProvider secondProvider) =>
-			firstProvider.GetAssemblies(_targets).Join(secondProvider.GetAssemblies(_targets),
+		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IAssemblyProvider firstProvider, IAssemblyProvider secondProvider)
+		{
+			var first = firstProvider.GetAssemblies(Targets).ToList();
+			var second = secondProvider.GetAssemblies(Targets).ToList();
+			return first.Join(second,
 				f => f.Name.ToUpperInvariant(),
 				f => f.Name.ToUpperInvariant(),
 				(f1, f2) => new AssemblyDiffPair(f1, f2));
+
+		}
 
 		private static void AddTarget(string input)
 		{
