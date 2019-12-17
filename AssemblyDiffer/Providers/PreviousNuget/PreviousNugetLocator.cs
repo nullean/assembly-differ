@@ -23,16 +23,22 @@ namespace Differ.Providers.PreviousNuGet
 			var metadata = sourceRepository.GetResource<PackageMetadataResource>();
 			using var cacheContext = new SourceCacheContext();
 			var searchMetadata =
-				metadata.GetMetadataAsync(currentVersion, false, false, cacheContext, NullLogger.Instance, CancellationToken.None)
-					.GetAwaiter().GetResult();
+				metadata.GetMetadataAsync(packageName, false, false, cacheContext, NullLogger.Instance, CancellationToken.None)
+					.GetAwaiter().GetResult().ToList();
 
+			Console.WriteLine($"Found {searchMetadata.Count} packages for {packageName}");
 			var previousPackage =
 				searchMetadata
 					.Cast<PackageSearchMetadata>()
 					.OrderByDescending(p => p.Version)
 					.FirstOrDefault(p => p.Version < nugetVersion);
 
-			if (previousPackage == null) return NuGetPackage.Skip;
+			if (previousPackage == null)
+			{
+				Console.WriteLine($"No previous nuget package found for {packageName}: {currentVersion}");
+				return NuGetPackage.Skip;
+			}
+			Console.WriteLine($"Found previous nuget package found for {packageName} {currentVersion}: {previousPackage.Version}");
 
 			return base.InstallPackage(packageName, previousPackage.Version.ToString(), targetDirectory);
 		}

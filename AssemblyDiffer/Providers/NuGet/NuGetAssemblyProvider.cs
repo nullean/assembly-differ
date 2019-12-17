@@ -37,6 +37,7 @@ namespace Differ.Providers.NuGet
 			if (!Directory.Exists(tempDir))
 				Directory.CreateDirectory(tempDir);
 
+
 			var packageDirectory = Path.Combine(tempDir, _command.Package);
 
 			if (!Directory.Exists(packageDirectory))
@@ -44,6 +45,7 @@ namespace Differ.Providers.NuGet
 
 			var versionDirectory = Path.Combine(packageDirectory, _command.Version);
 			var package = _installer.InstallPackage(_command.Package, _command.Version, versionDirectory);
+			if (package == NuGetPackage.Skip) return Enumerable.Empty<FileInfo>();
 			var packageFrameworks =
 				new HashSet<string>(package.FrameworkVersions.Select(f => f.GetShortFolderName()), StringComparer.InvariantCultureIgnoreCase);
 
@@ -69,6 +71,8 @@ namespace Differ.Providers.NuGet
 
 		private void CopyAssemblies(NuGetPackage package, string frameworkVersion)
 		{
+			if (package == NuGetPackage.Skip) return;
+
 			foreach (var dependency in package.Dependencies)
 			{
 				var nearest = dependency.GetNearest(frameworkVersion);
