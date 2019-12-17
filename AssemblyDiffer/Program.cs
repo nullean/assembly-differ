@@ -7,6 +7,7 @@ using Differ.Exporters;
 using Differ.Providers;
 using Differ.Providers.GitHub;
 using Differ.Providers.NuGet;
+using Differ.Providers.PreviousNuGet;
 using JustAssembly.Core;
 using Mono.Options;
 
@@ -26,6 +27,7 @@ namespace Differ
 				new AssemblyProviderFactory(),
 				new DirectoryAssemblyProviderFactory(),
 				new NuGetAssemblyProviderFactory(new Providers.NuGet.NuGet()),
+				new PreviousNuGetAssemblyProviderFactory(new PreviousNugetLocator()),
 				new GitHubAssemblyProviderFactory(new Git(Environment.GetEnvironmentVariable("GIT")))
 			);
 
@@ -83,8 +85,6 @@ namespace Differ
 
 				foreach (var assemblyPair in pairs)
 				{
-					///new APIDiffHelper(AssemblyDefinition())
-
 					assemblyPair.Diff =
 						APIDiffHelper.GetAPIDifferences(assemblyPair.First.FullName, assemblyPair.Second.FullName);
 

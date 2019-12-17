@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -9,7 +8,6 @@ using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.Packaging.Signing;
-using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Resolver;
 using NuGet.Versioning;
@@ -21,33 +19,6 @@ namespace Differ.Providers.NuGet
 		NuGetPackage InstallPackage(string packageName, string version, string targetDirectory);
 	}
 
-	public class PreviousNugetPackage : NuGet
-	{
-		public override NuGetPackage InstallPackage(string packageName, string currentVersion, string targetDirectory)
-		{
-			var nugetVersion = new NuGetVersion(currentVersion);
-			var providers = new List<Lazy<INuGetResourceProvider>>();
-			providers.AddRange(Repository.Provider.GetCoreV3());
-			var packageSource = new PackageSource("https://api.nuget.org/v3/index.json");
-			var sourceRepository = new SourceRepository(packageSource, providers);
-			var metadata = sourceRepository.GetResource<PackageMetadataResource>();
-			using var cacheContext = new SourceCacheContext();
-			var searchMetadata =
-				metadata.GetMetadataAsync(currentVersion, false, false, cacheContext, NullLogger.Instance, CancellationToken.None)
-					.GetAwaiter().GetResult();
-
-			var previousPackage =
-				searchMetadata
-					.Cast<PackageSearchMetadata>()
-					.OrderByDescending(p => p.Version)
-					.FirstOrDefault(p => p.Version < nugetVersion);
-
-			if (previousPackage == null) return NuGetPackage.Skip;
-
-			return base.InstallPackage(packageName, previousPackage.Version.ToString(), targetDirectory);
-		}
-	}
-
 	public class NuGet : INuGet
 	{
 		public virtual NuGetPackage InstallPackage(string packageName, string version, string targetDirectory)
@@ -57,7 +28,8 @@ namespace Differ.Providers.NuGet
 			var packageVersion = NuGetVersion.Parse(version);
 			var nuGetFramework = NuGetFramework.AnyFramework;
 			var settings = Settings.LoadDefaultSettings(root: null);
-			var sourceRepositoryProvider = new SourceRepositoryProvider(settings, Repository.Provider.GetCoreV3());
+			var sourceRepositoryProvider = new SourceRepositoryProvider(
+				new PackageSourceProvider(settings), Repository.Provider.GetCoreV3());
 
 			using (var cacheContext = new SourceCacheContext())
 			{

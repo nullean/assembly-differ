@@ -7,17 +7,17 @@ namespace Differ.Providers.NuGet
 {
 	public class NuGetAssemblyProviderFactory : IAssemblyProviderFactory
 	{
-		private readonly INuGet _installer;
+		protected INuGet Installer { get; }
 
 		public NuGetAssemblyProviderFactory(INuGet installer) =>
-			_installer = installer ?? throw new ArgumentNullException(nameof(installer));
+			Installer = installer ?? throw new ArgumentNullException(nameof(installer));
 
-		public string Name { get; } = "nuget";
+		public virtual string Name { get; } = "nuget";
 
 		public string Format => $"{Name}|<package id>|<version>|[framework version]";
 
-		public IAssemblyProvider Create(string[] command) =>
-			new NuGetAssemblyProvider(_installer, command);
+		public virtual IAssemblyProvider Create(string[] command) =>
+			new NuGetAssemblyProvider(Installer, command);
 	}
 
 	public class NuGetAssemblyProvider : IAssemblyProvider
