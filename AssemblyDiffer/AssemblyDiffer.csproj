@@ -38,28 +38,28 @@
         </Content>
     </ItemGroup>
     <ItemGroup>
-        <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
-            <HintPath>lib\JustAssembly.API.dll</HintPath>
+        <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
+          <HintPath>lib\JustAssembly.API.dll</HintPath>
         </Reference>
-        <Reference Include="JustAssembly.Core, Version=2018.2.806.1, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="JustAssembly.Core, Version=0.0.7290.28282, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.Core.dll</HintPath>
         </Reference>
-        <Reference Include="JustAssembly.Infrastructure, Version=2018.2.806.1, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="JustAssembly.Infrastructure, Version=0.0.7290.27806, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.Infrastructure.dll</HintPath>
         </Reference>
-        <Reference Include="JustDecompile.External.JustAssembly, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="JustDecompile.External.JustAssembly, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustDecompile.External.JustAssembly.dll</HintPath>
         </Reference>
-        <Reference Include="JustDecompiler, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="JustDecompiler, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustDecompiler.dll</HintPath>
         </Reference>
-        <Reference Include="Telerik.JustDecompile.Mono.Cecil, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="Telerik.JustDecompile.Mono.Cecil, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\Telerik.JustDecompile.Mono.Cecil.dll</HintPath>
         </Reference>
-        <Reference Include="Telerik.JustDecompile.Mono.Cecil.Mdb, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="Telerik.JustDecompile.Mono.Cecil.Mdb, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\Telerik.JustDecompile.Mono.Cecil.Mdb.dll</HintPath>
         </Reference>
-        <Reference Include="Telerik.JustDecompile.Mono.Cecil.Pdb, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=2b2cea67609c9510">
+        <Reference Include="Telerik.JustDecompile.Mono.Cecil.Pdb, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\Telerik.JustDecompile.Mono.Cecil.Pdb.dll</HintPath>
         </Reference>
     </ItemGroup>
