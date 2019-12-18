@@ -81,7 +81,7 @@ namespace Differ
 					throw new Exception($"No exporter for format '{_format}'");
 
 				var exporter = exporters[_format];
-				var pairs = CreateAssemblyPairs(firstProvider, secondProvider).ToList();
+				var pairs = CreateAssemblyPairs(firstProvider, secondProvider);
 
 				foreach (var assemblyPair in pairs)
 				{
@@ -106,8 +106,8 @@ namespace Differ
 
 		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IAssemblyProvider firstProvider, IAssemblyProvider secondProvider)
 		{
-			var first = firstProvider.GetAssemblies(Targets).ToList();
-			var second = secondProvider.GetAssemblies(Targets).ToList();
+			var first = firstProvider.GetAssemblies(Targets);
+			var second = secondProvider.GetAssemblies(Targets);
 			return first.Join(second,
 				f => f.Name.ToUpperInvariant(),
 				f => f.Name.ToUpperInvariant(),
