@@ -10,7 +10,7 @@ namespace Differ.Providers.NuGet
 {
 	public class NuGetPackage : NuGetPackageBase
 	{
-		public static NuGetPackage Skip { get; } = new NuGetPackage();
+		public static NuGetPackage NotFound { get; } = new NuGetPackage();
 
 		private NuGetPackage() { }
 

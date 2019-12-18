@@ -36,7 +36,9 @@ namespace Differ.Providers.PreviousNuGet
 			if (previousPackage == null)
 			{
 				Console.WriteLine($"No previous nuget package found for {packageName}: {currentVersion}");
-				return NuGetPackage.Skip;
+				// return not found, we don't immediately want to error on this in CI
+				// might introduce a flag to fail later on
+				return NuGetPackage.NotFound;
 			}
 			Console.WriteLine($"Found previous nuget package found for {packageName} {currentVersion}: {previousPackage.Version}");
 
