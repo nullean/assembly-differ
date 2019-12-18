@@ -21,6 +21,7 @@ Supported Assembly Providers:
   assembly|<assembly path>
   directory|<directory path>
   nuget|<package id>|<version>|[framework version]
+  previous-nuget|<package id>|<version>|[framework version]
   github|<owner>/<repo>|<commit>|<build command>|<relative output path>
 
 Options:
@@ -52,6 +53,15 @@ Diff NuGet packages:
 
 ```bat
 dotnet run -- "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
+```
+
+Diff Previous NuGet packages:
+
+Imagine you want to release `6.2.0` and want to diff with whatever is the latest nuget package before `6.2.0`
+`previous-nuget` will do the heavy lifting of finding that previous release
+
+```bat
+dotnet run -- "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
 ```
 
 Diff GitHub commits:
