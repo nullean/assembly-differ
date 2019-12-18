@@ -32,7 +32,7 @@ namespace Differ.Providers.GitHub
 			_command = new GitHubDiffCommand(command);
 		}
 
-		public IEnumerable<FileInfo> GetAssemblies(IEnumerable<string> targets)
+		public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 		{
 			var tempDir = Path.Combine(_command.TempDir, "differ", "github");
 			if (!Directory.Exists(tempDir))
@@ -88,7 +88,7 @@ namespace Differ.Providers.GitHub
 			}
 
 			return Directory.EnumerateFiles(commitDirectory, "*.dll")
-				.Where(f => targets?.Contains(Path.GetFileNameWithoutExtension(f)) ?? true)
+				.Where(f => targets.Count == 0 || targets.Contains(Path.GetFileNameWithoutExtension(f)))
 				.Select(f => new FileInfo(f));
 		}
 	}

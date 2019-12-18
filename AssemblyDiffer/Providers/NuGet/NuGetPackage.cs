@@ -10,6 +10,10 @@ namespace Differ.Providers.NuGet
 {
 	public class NuGetPackage : NuGetPackageBase
 	{
+		public static NuGetPackage NotFound { get; } = new NuGetPackage();
+
+		private NuGetPackage() { }
+
 		public NuGetPackage(string path) : base(path)
 		{
 			var directory = new DirectoryInfo(path);
@@ -36,6 +40,8 @@ namespace Differ.Providers.NuGet
 	public abstract class NuGetPackageBase : INuGetPackage
 	{
 		private static readonly FrameworkReducer Reducer = new FrameworkReducer();
+
+		protected NuGetPackageBase() { }
 
 		protected NuGetPackageBase(string directory)
 		{

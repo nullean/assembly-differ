@@ -5,6 +5,6 @@ namespace Differ.Providers
 {
 	public interface IAssemblyProvider
 	{
-		IEnumerable<FileInfo> GetAssemblies(IEnumerable<string> targets);
+		IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets);
 	}
 }

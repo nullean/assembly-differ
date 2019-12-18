@@ -1,11 +1,14 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Differ.Providers
 {
 	public class ExecutableBase
 	{
-		protected string FindExecutable(string name)
+		protected static bool IsWindows { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+		protected static string FindExecutable(string name)
 		{
 			var path = Environment.GetEnvironmentVariable("PATH");
 

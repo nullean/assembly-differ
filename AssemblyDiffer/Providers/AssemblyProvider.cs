@@ -23,7 +23,7 @@ namespace Differ.Providers
 			_assemblyPath = assemblyPath;
 		}
 
-		public IEnumerable<FileInfo> GetAssemblies(IEnumerable<string> targets)
+		public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 		{
 			yield return new FileInfo(_assemblyPath);
 		}

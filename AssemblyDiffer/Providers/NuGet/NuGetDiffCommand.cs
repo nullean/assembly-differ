@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text;
+using System.IO;
 
 namespace Differ.Providers.NuGet
 {
@@ -26,6 +26,6 @@ namespace Differ.Providers.NuGet
 
 		public string FrameworkVersion { get; }
 
-		public string TempDir { get; } = Environment.GetEnvironmentVariable("TEMP");
+		public string TempDir { get; } = Path.GetTempPath();
 	}
 }
