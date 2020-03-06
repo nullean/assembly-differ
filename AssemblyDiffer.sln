@@ -9,6 +9,7 @@ ProjectSection(SolutionItems) = preProject
 	appveyor.yml = appveyor.yml
 	LICENSE = LICENSE
 	README.md = README.md
+	..\nuget-icon.png = ..\nuget-icon.png
 EndProjectSection
 EndProject
 Global
