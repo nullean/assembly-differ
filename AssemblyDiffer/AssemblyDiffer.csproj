@@ -7,7 +7,7 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>assembly-differ</ToolCommandName>
 
-        <PackageIcon>../nuget-icon.png</PackageIcon>
+        <PackageIcon>nuget-icon.png</PackageIcon>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/nullean/assembly-differ</PackageProjectUrl>
         <PackageReleaseNotes>https://github.com/nullean/assembly-differ/releases</PackageReleaseNotes>
@@ -40,6 +40,11 @@
         </Content>
         <Content Include="..\LICENSE">
             <Link>LICENSE</Link>
+        </Content>
+        <Content Include="..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
+          <Link>nuget-icon.png</Link>
+          <Pack>True</Pack>
+          <PackagePath>nuget-icon.png</PackagePath>
         </Content>
         <Content Include="..\README.md">
             <Link>README.md</Link>
