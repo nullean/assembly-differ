@@ -1,20 +1,34 @@
-# Differ
+# assembly-differ
 
 Compare and Diff assemblies from different sources.
 Useful for determining what changes are introduced across versions, and if any are _breaking_.
 
 Outputs differences in XML, Markdown or AsciiDoc. 
 
-Run 
+Differ builds on the amazing work done by [JustAssembly, licensed under Apache 2.0](https://github.com/telerik/JustAssembly)
+
+## Installation
+
+
+Distributed as a .NET tool so install using the following
+
+```
+dotnet tool install AssemblyDiffer
+```
+
+## Run 
 
 ```bat
-dotnet run -- --help
+dotnet assembly-differ
 ```
+
+You can omit `dotnet` if you install this as a global tool
+
 
 to see the supported Assembly Providers and outputs:
 
 ```bat
-Differ.exe <Old Assembly Provider> <New Assembly Provider> [Options]
+assembly-differ <Old Assembly Provider> <New Assembly Provider> [Options]
 
 Supported Assembly Providers:
 
@@ -33,26 +47,24 @@ Options:
   -h, -?, --help             show this message and exit
 ```
 
-Differ uses [JustAssembly, licensed under Apache 2.0](https://github.com/telerik/JustAssembly)
-
 #### Examples:
 
 Diff between two local assemblies:
 
 ```bat
-dotnet run -- "assembly|C:\6.1.0\Nest.dll" "assembly|C:\6.2.0\Nest.dll"
+dotnet assembly-differ "assembly|C:\6.1.0\Nest.dll" "assembly|C:\6.2.0\Nest.dll"
 ```
 
 Diff between all assemblies in directories, matched by name:
 
 ```bat
-dotnet run -- "directory|C:\6.1.0" "directory|C:\6.2.0"
+dotnet assembly-differ "directory|C:\6.1.0" "directory|C:\6.2.0"
 ```
 
 Diff NuGet packages:
 
 ```bat
-dotnet run -- "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
+dotnet assembly-differ "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
 ```
 
 Diff Previous NuGet packages:
@@ -61,17 +73,24 @@ Imagine you want to release `6.2.0` and want to diff with whatever is the latest
 `previous-nuget` will do the heavy lifting of finding that previous release
 
 ```bat
-dotnet run -- "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
+dotnet assembly-differ "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
 ```
 
 Diff GitHub commits:
 
 ```bat
-dotnet run -- "github|elastic/elasticsearch-net|6.1.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46" "github|elastic/elasticsearch-net|6.2.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
+dotnet assembly-differ "github|elastic/elasticsearch-net|6.1.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46" "github|elastic/elasticsearch-net|6.2.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
 ```
 
 Any of the above can be mixed. For example, to compare GitHub HEAD against last NuGet package, and output in Markdown
 
 ```bat
-dotnet run -- --format markdown "nuget|NEST|6.2.0|net46" "github|elastic/elasticsearch-net|HEAD|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
+dotnet assembly-differ --format markdown "nuget|NEST|6.2.0|net46" "github|elastic/elasticsearch-net|HEAD|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
 ```
+
+# FUTURE PLANS
+
+* Instruct the tool to emit errors if breaking changes exists
+* Pass the tool with the version you intend to release and have the tool report the version it thinks it should be based on the differences between the assemblies
+* Wrap all of this in Github Actions
+
