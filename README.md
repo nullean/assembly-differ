@@ -1,7 +1,7 @@
 <p>
 <img align="right" src="nuget-icon.png">  
 
-# dotnet-assembly-differ
+# assembly-differ
 </p>
 
 Compare and Diff assemblies from different sources.
@@ -17,7 +17,7 @@ Differ builds on the amazing work done by [JustAssembly, licensed under Apache 2
 Distributed as a .NET tool so install using the following
 
 ```
-dotnet tool install dotnet-assembly-differ
+dotnet tool install assembly-differ
 ```
 
 ## Run 
