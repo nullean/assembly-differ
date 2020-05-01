@@ -17,14 +17,13 @@ namespace Differ.Exporters
 			var xml = assemblyDiffPair.Diff.ToXml();
 			var doc = XDocument.Parse(xml);
 			var name = assemblyDiffPair.First.Name;
-			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md"))))
-			{
-				writer.WriteLine($"# Breaking changes for {Path.GetFileNameWithoutExtension(name)}");
-				writer.WriteLine();
+			using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md")));
 
-				foreach (var typeElement in doc.Descendants("Type"))
-					WriteTypeElement(writer, typeElement);
-			}
+			writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
+			writer.WriteLine();
+
+			foreach (var typeElement in doc.Descendants("Type"))
+				this.WriteTypeElement(writer, typeElement);
 		}
 
 		private void WriteTypeElement(StreamWriter writer, XElement typeElement)
@@ -41,7 +40,7 @@ namespace Differ.Exporters
 					WriteMemberElements(writer, typeName, typeElement);
 					break;
 				case DiffType.New:
-					writer.WriteLine($"## `{typeName}` is added");
+					writer.WriteLine($"## `{typeName}` is new");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -73,6 +72,8 @@ namespace Differ.Exporters
 								writer.WriteLine(
 									Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).", "changed from `$1` to `$2`."));
 							}
+							else
+								writer.WriteLine($"### `{memberName}` is added");
 							break;
 						case DiffType.New:
 							writer.WriteLine($"### `{memberName}` is added");
