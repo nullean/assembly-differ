@@ -39,3 +39,5 @@ _ReSharper*/
 # Nuget packages
 /packages
 *.nupkg
+
+AssemblyDiffer/*.xml

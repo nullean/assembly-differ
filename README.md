@@ -92,6 +92,15 @@ Any of the above can be mixed. For example, to compare GitHub HEAD against last 
 dotnet assembly-differ --format markdown "nuget|NEST|6.2.0|net46" "github|elastic/elasticsearch-net|HEAD|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
 ```
 
+## Development
+
+You can run the tool locally against itself using the following during development
+
+```bat
+dotnet build -c Release
+dotnet run --framework netcoreapp3.1 -- "previous-nuget|assembly-differ|0.9.1|netcoreapp3.1" "directory|bin/Release/netcoreapp3.1" --target=assembly-differ
+```
+
 # FUTURE PLANS
 
 * Instruct the tool to emit errors if breaking changes exists

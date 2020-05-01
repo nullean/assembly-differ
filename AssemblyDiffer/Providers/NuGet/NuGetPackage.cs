@@ -76,7 +76,17 @@ namespace Differ.Providers.NuGet
 			Version = metadata.Element(ns + "version").Value.Trim();
 			Path = directory;
 
-			FrameworkVersions =  Directory.EnumerateDirectories(System.IO.Path.Combine(Path, "lib"))
+			var libFolder = System.IO.Path.Combine(Path, "lib");
+			var toolsFolder = System.IO.Path.Combine(Path, "tools");
+
+			IEnumerable<string> EnumDirs(string dir)
+			{
+				if (!Directory.Exists(dir)) return Enumerable.Empty<string>();
+				return Directory.EnumerateDirectories(dir);
+			}
+
+			FrameworkVersions =
+				EnumDirs(libFolder).Concat(EnumDirs(toolsFolder))
 				.Select(d => NuGetFramework.ParseFolder(System.IO.Path.GetFileName(d)))
 				.ToList();
 		}

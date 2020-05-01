@@ -21,7 +21,7 @@ namespace Differ
 
 		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		private static void Main(string[] args)
+		private static int Main(string[] args)
 		{
 			var providers = new AssemblyProviderFactoryCollection(
 				new AssemblyProviderFactory(),
@@ -48,15 +48,14 @@ namespace Differ
 			if (_help)
 			{
 				ShowHelp(options, providers);
-				return;
+				return 2;
 			}
 
 
 			if (args.Length < 2)
 			{
 				ShowHelp(options, providers);
-				Environment.ExitCode = 1;
-				return;
+				return 2;
 			}
 
 			List<string> unflaggedArgs;
@@ -69,7 +68,7 @@ namespace Differ
 				Console.WriteLine(e.Message);
 				Console.WriteLine("Try 'Differ.exe --help' for more information.");
 				Environment.ExitCode = 1;
-				return;
+				return 2;
 			}
 
 			try
@@ -81,7 +80,10 @@ namespace Differ
 					throw new Exception($"No exporter for format '{_format}'");
 
 				var exporter = exporters[_format];
-				var pairs = CreateAssemblyPairs(firstProvider, secondProvider);
+
+				var first = firstProvider.GetAssemblies(Targets).ToList();
+				var second = secondProvider.GetAssemblies(Targets).ToList();
+				var pairs = CreateAssemblyPairs(first, second).ToList();
 
 				foreach (var assemblyPair in pairs)
 				{
@@ -93,27 +95,34 @@ namespace Differ
 						Console.WriteLine($"No diff between {assemblyPair.First.FullName} and {assemblyPair.Second.FullName}");
 						continue;
 					}
+					Console.WriteLine($"Difference found: {firstProvider.GetType().Name}:{assemblyPair.First.Name} and {secondProvider.GetType().Name}:{assemblyPair.Second.Name}");
 
 					exporter.Export(assemblyPair, _output);
 				}
+
+				if (!pairs.Any())
+				{
+					Console.Error.WriteLine($"Unable to create diff!");
+					Console.Error.WriteLine($" {firstProvider.GetType().Name}: {first.Count()} assemblies");
+					Console.Error.WriteLine($" {secondProvider.GetType().Name}: {second.Count()} assemblies");
+
+					return 1;
+				}
+
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine(e);
-				Environment.ExitCode = 1;
+				Console.Error.WriteLine(e);
+				return 1;
 			}
+			return 0;
 		}
 
-		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IAssemblyProvider firstProvider, IAssemblyProvider secondProvider)
-		{
-			var first = firstProvider.GetAssemblies(Targets);
-			var second = secondProvider.GetAssemblies(Targets);
-			return first.Join(second,
+		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IEnumerable<FileInfo> first, IEnumerable<FileInfo> second) =>
+			first.Join(second,
 				f => f.Name.ToUpperInvariant(),
 				f => f.Name.ToUpperInvariant(),
 				(f1, f2) => new AssemblyDiffPair(f1, f2));
-
-		}
 
 		private static void AddTarget(string input)
 		{

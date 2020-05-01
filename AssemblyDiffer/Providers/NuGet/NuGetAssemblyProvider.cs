@@ -62,9 +62,17 @@ namespace Differ.Providers.NuGet
 
 			// dependent assemblies need to copied to the same directory as the target assembly
 			CopyAssemblies(package, frameworkVersion);
-			var path = Path.Combine(package.Path, "lib", frameworkVersion);
 
-			return Directory.EnumerateFiles(path, "*.dll")
+			IEnumerable<string> GetFiles(string dir)
+			{
+				if (!Directory.Exists(dir)) return Enumerable.Empty<string>();
+				return Directory.EnumerateFiles(dir, "*.dll");
+			}
+			var libPath = Path.Combine(package.Path, "lib", frameworkVersion);
+			var toolsPath = Path.Combine(package.Path, "tools", frameworkVersion);
+			var toolsAnyPath = Path.Combine(package.Path, "tools", frameworkVersion, "any");
+
+			return GetFiles(libPath).Concat(GetFiles(toolsPath)).Concat(GetFiles(toolsAnyPath))
 				.Where(f => targets.Count == 0 || targets.Contains(Path.GetFileNameWithoutExtension(f)))
 				.Select(f => new FileInfo(f));
 		}
