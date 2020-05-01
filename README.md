@@ -17,7 +17,7 @@ Differ builds on the amazing work done by [JustAssembly, licensed under Apache 2
 Distributed as a .NET tool so install using the following
 
 ```
-dotnet tool install assembly-differ
+dotnet tool install -g assembly-differ
 ```
 
 ## Run 
