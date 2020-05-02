@@ -7,23 +7,31 @@ using JustAssembly.Core;
 
 namespace Differ.Exporters
 {
-	public class MarkdownExporter : IAssemblyComparisonExporter
+	public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 	{
-		public string Format { get; } = "markdown";
+		public string Format { get; } = "github-comment";
 
-		public void Export(AssemblyComparison assemblyComparison, string outputPath)
+		public void Export(AllComparisonResults results, string outputPath)
 		{
-			// IDiffItem implementations are internal so parse from XML for now
-			var xml = assemblyComparison.Diff.ToXml();
-			var doc = XDocument.Parse(xml);
-			var name = assemblyComparison.First.Name;
-			using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md")));
+			if (results.SuggestedVersionChange != SuggestedVersionChange.Major)
+				return;
 
-			writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
-			writer.WriteLine();
+			foreach (var comparison in results.Comparisons)
+			{
+			}
+			//var x = results.Comparisons
 
-			foreach (var typeElement in doc.Descendants("Type"))
-				this.WriteTypeElement(writer, typeElement);
+
+			// var xml = results.Diff.ToXml();
+			// var doc = XDocument.Parse(xml);
+			// var name = results.First.Name;
+			// using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md")));
+			//
+			// writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
+			// writer.WriteLine();
+			//
+			// foreach (var typeElement in doc.Descendants("Type"))
+			// 	this.WriteTypeElement(writer, typeElement);
 		}
 
 		private void WriteTypeElement(StreamWriter writer, XElement typeElement)

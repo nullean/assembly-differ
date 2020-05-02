@@ -3,14 +3,14 @@ using System.IO;
 
 namespace Differ.Exporters
 {
-	public class XmlExporter : IExporter
+	public class XmlExporter : IAssemblyComparisonExporter
 	{
 		public string Format { get; } = "xml";
 
-		public void Export(AssemblyDiffPair assemblyDiffPair, string outputPath)
+		public void Export(AssemblyComparison assemblyComparison, string outputPath)
 		{
-			var xml = assemblyDiffPair.Diff.ToXml();
-			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(assemblyDiffPair.First.Name, "xml"))))
+			var xml = assemblyComparison.Diff.ToXml();
+			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(assemblyComparison.First.Name, "xml"))))
 				writer.Write(xml);
 		}
 	}

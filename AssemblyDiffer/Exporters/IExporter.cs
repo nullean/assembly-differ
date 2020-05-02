@@ -5,7 +5,18 @@ namespace Differ.Exporters
 	public interface IExporter
 	{
 		string Format { get; }
+	}
 
-		void Export(AssemblyDiffPair assemblyDiffPair, string outputPath);
+	/// <summary> Represents an exporter that emits each <see cref="AssemblyComparison"/> to a single file </summary>
+	public interface IAssemblyComparisonExporter : IExporter
+	{
+		void Export(AssemblyComparison assemblyComparison, string outputPath);
+	}
+
+	/// <summary> Represents an exporter that exports all results into a single file </summary>
+	public interface IAllComparisonResultsExporter : IExporter
+	{
+		void Export(AllComparisonResults results, string outputPath);
+
 	}
 }
