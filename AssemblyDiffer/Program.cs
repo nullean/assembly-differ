@@ -18,6 +18,7 @@ namespace Differ
 		private static string _format = "xml";
 		private static bool _help;
 		private static string _output = Directory.GetCurrentDirectory();
+		private static SuggestedVersionChange _preventChange = SuggestedVersionChange.None;
 
 		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -34,7 +35,8 @@ namespace Differ
 			var exporters = new ExporterCollection(
 				new XmlExporter(),
 				new MarkdownExporter(),
-				new AsciiDocExporter()
+				new AsciiDocExporter(),
+				new GitHubActionCommentExporter()
 			);
 
 			var options = new OptionSet
@@ -42,6 +44,8 @@ namespace Differ
 				{"t|target=", "the assembly targets. Defaults to *all* assemblies located by the provider", AddTarget },
 				{"f|format=", $"the format of the diff output. Supported formats are {exporters.SupportedFormats}. Defaults to {_format}", f => _format = f},
 				{"o|output=", "the output directory. Defaults to current directory", o => _output = o},
+				{"p|prevent-change=", "Fail if the change detected is higher then specified: none|patch|minor|major. Defaults to `none` which will never fail.",
+					c => _preventChange = Enum.Parse<SuggestedVersionChange>(c, true)},
 				{"h|?|help", "show this message and exit", h => _help = h != null},
 			};
 
@@ -85,6 +89,15 @@ namespace Differ
 				var second = secondProvider.GetAssemblies(Targets).ToList();
 				var pairs = CreateAssemblyPairs(first, second).ToList();
 
+				if (!pairs.Any())
+				{
+					Console.Error.WriteLine($"Unable to create diff!");
+					Console.Error.WriteLine($" {firstProvider.GetType().Name}: {first.Count()} assemblies");
+					Console.Error.WriteLine($" {secondProvider.GetType().Name}: {second.Count()} assemblies");
+					return 1;
+				}
+
+				var result = new AllComparisonResults(pairs);
 				foreach (var assemblyPair in pairs)
 				{
 					assemblyPair.Diff =
@@ -97,17 +110,18 @@ namespace Differ
 					}
 					Console.WriteLine($"Difference found: {firstProvider.GetType().Name}:{assemblyPair.First.Name} and {secondProvider.GetType().Name}:{assemblyPair.Second.Name}");
 
-					exporter.Export(assemblyPair, _output);
+					if (exporter is IAssemblyComparisonExporter c)
+						c.Export(assemblyPair, _output);
 				}
+				if (exporter is IAllComparisonResultsExporter allExporter)
+					allExporter.Export(result, _output);
 
-				if (!pairs.Any())
+				if (_preventChange > SuggestedVersionChange.None && result.SuggestedVersionChange >= _preventChange)
 				{
-					Console.Error.WriteLine($"Unable to create diff!");
-					Console.Error.WriteLine($" {firstProvider.GetType().Name}: {first.Count()} assemblies");
-					Console.Error.WriteLine($" {secondProvider.GetType().Name}: {second.Count()} assemblies");
-
-					return 1;
+					Console.Error.WriteLine($"Needed version change '{result.SuggestedVersionChange}' exceeds or equals configured lock: '{_preventChange}");
+					return 4;
 				}
+				Console.WriteLine($"Suggested version change: {result.SuggestedVersionChange}");
 
 			}
 			catch (Exception e)
@@ -118,11 +132,11 @@ namespace Differ
 			return 0;
 		}
 
-		private static IEnumerable<AssemblyDiffPair> CreateAssemblyPairs(IEnumerable<FileInfo> first, IEnumerable<FileInfo> second) =>
+		private static IEnumerable<AssemblyComparison> CreateAssemblyPairs(IEnumerable<FileInfo> first, IEnumerable<FileInfo> second) =>
 			first.Join(second,
 				f => f.Name.ToUpperInvariant(),
 				f => f.Name.ToUpperInvariant(),
-				(f1, f2) => new AssemblyDiffPair(f1, f2));
+				(f1, f2) => new AssemblyComparison(f1, f2));
 
 		private static void AddTarget(string input)
 		{

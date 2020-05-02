@@ -7,16 +7,16 @@ using JustAssembly.Core;
 
 namespace Differ.Exporters
 {
-	public class AsciiDocExporter : IExporter
+	public class AsciiDocExporter : IAssemblyComparisonExporter
 	{
 		public string Format { get; } = "asciidoc";
 
-		public void Export(AssemblyDiffPair assemblyDiffPair, string outputPath)
+		public void Export(AssemblyComparison assemblyComparison, string outputPath)
 		{
 			// IDiffItem implementations are internal so parse from XML for now
-			var xml = assemblyDiffPair.Diff.ToXml();
+			var xml = assemblyComparison.Diff.ToXml();
 			var doc = XDocument.Parse(xml);
-			var name = assemblyDiffPair.First.Name;
+			var name = assemblyComparison.First.Name;
 			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "asciidoc"))))
 			{
 				writer.WriteLine($"== Breaking changes for {Path.GetFileNameWithoutExtension(name)}");
