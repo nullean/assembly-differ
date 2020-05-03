@@ -46,15 +46,18 @@ namespace Differ
 	public enum SuggestedVersionChange
 	{
 		None = 1,
-		Patch = 1,
-		Minor = 2,
-		Major = 3
+		Patch = 2,
+		Minor = 3,
+		Major = 4
 	}
 
 	public class AllComparisonResults
 	{
 		public List<AssemblyComparison> Comparisons { get; }
-		public AllComparisonResults(List<AssemblyComparison> results) => Comparisons = results;
+		public SuggestedVersionChange PreventVersionChange { get; }
+
+		public AllComparisonResults(List<AssemblyComparison> results, SuggestedVersionChange preventChange) =>
+			(Comparisons, PreventVersionChange) = (results, preventChange);
 
 		public SuggestedVersionChange SuggestedVersionChange =>
 			this.Comparisons.Count == 0

@@ -4,20 +4,75 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using JustAssembly.Core;
+using Telerik.JustDecompiler.Ast.Statements;
 
 namespace Differ.Exporters
 {
+	/**
+	 *
+```diff
+Scanned: 📑 7 projects
+- ⚠️ 12 breaking changes detected in 📑 3 projects ⚠️
+```
+
+### 📑 MyNamespace.ProjectA
+
+```diff
+- 🔴 IChangeList
+- 🔹 IExtensions.MyMethod(string x)
++ 🔷 IExtensions.MyMethod(string x, string y)
+````
+
+
+
+
+
+
+
+	 */
 	public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 	{
 		public string Format { get; } = "github-comment";
 
 		public void Export(AllComparisonResults results, string outputPath)
 		{
-			if (results.SuggestedVersionChange != SuggestedVersionChange.Major)
+			var prevent = results.PreventVersionChange;
+			if (results.SuggestedVersionChange < prevent)
 				return;
 
-			foreach (var comparison in results.Comparisons)
+			using var writer = new StreamWriter(Path.Combine(outputPath, "github-breaking-changes-comments.md"));
+
+
+
+
+			var breakingComparisons = results.Comparisons
+				.Where(c => c.SuggestedVersionChange < prevent)
+				.ToList();
+
+			var breakingChanges = (
+					from b in breakingComparisons
+					from change in b.Diff.ChildrenDiffs.Concat(b.Diff.DeclarationDiffs)
+					where IncludeDiffType(prevent, change)
+					group change by b.First.Name into g
+					select new { Name = g.Key, Changes = g.Distinct()}
+				).ToList();
+
+			writer.WriteLine($@"```diff
+Scanned: 📑 {results.Comparisons.Count} projects
+- ⚠️ {breakingChanges.Count} breaking changes detected in 📑{breakingComparisons.Count} projects ⚠️
+```");
+			foreach (var c in results.Comparisons)
 			{
+				writer.WriteLine($@"
+### 📑{c.First.Name}
+
+```diff
+");
+				c.Diff.Visit(((item, i) =>
+				{
+					writer.WriteLine($"{item.DiffType}: {item.HumanReadable}");
+				}));
+				writer.WriteLine("```");
 			}
 			//var x = results.Comparisons
 
@@ -32,6 +87,18 @@ namespace Differ.Exporters
 			//
 			// foreach (var typeElement in doc.Descendants("Type"))
 			// 	this.WriteTypeElement(writer, typeElement);
+		}
+
+		private static bool IncludeDiffType(SuggestedVersionChange prevent, IDiffItem change)
+		{
+			switch (prevent)
+			{
+				case SuggestedVersionChange.Major: return change.IsBreakingChange;
+				case SuggestedVersionChange.Minor:
+					return change.IsBreakingChange || change.DiffType == DiffType.New;
+				case SuggestedVersionChange.Patch: return true;
+				default: return false;
+			}
 		}
 
 		private void WriteTypeElement(StreamWriter writer, XElement typeElement)

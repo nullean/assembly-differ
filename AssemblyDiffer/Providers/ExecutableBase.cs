@@ -24,7 +24,5 @@ namespace Differ.Providers
 
 			throw new Exception($"Cannot find {name} in PATH environment variable. Add {name} to PATH or use specific environment variable");
 		}
-
-		public string X { get; }
 	}
 }

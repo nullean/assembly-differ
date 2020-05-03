@@ -54,16 +54,10 @@
         <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.API.dll</HintPath>
         </Reference>
-        <Reference Include="JustAssembly.Core, Version=0.0.7290.33974, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="JustAssembly.Core, Version=0.0.7428.37152, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.Core.dll</HintPath>
         </Reference>
-        <Reference Include="JustAssembly.Core, Version=0.0.7427.26461, Culture=neutral, PublicKeyToken=null">
-          <HintPath>lib\JustAssembly.Core.dll</HintPath>
-        </Reference>
-        <Reference Include="JustAssembly.Infrastructure, Version=0.0.7290.27806, Culture=neutral, PublicKeyToken=null">
-          <HintPath>lib\JustAssembly.Infrastructure.dll</HintPath>
-        </Reference>
-        <Reference Include="JustAssembly.Infrastructure, Version=0.0.7427.26459, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="JustAssembly.Infrastructure, Version=0.0.7428.37151, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.Infrastructure.dll</HintPath>
         </Reference>
         <Reference Include="JustDecompile.External.JustAssembly, Version=2018.2.802.0, Culture=neutral, PublicKeyToken=null">

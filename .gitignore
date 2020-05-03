@@ -41,3 +41,5 @@ _ReSharper*/
 *.nupkg
 
 AssemblyDiffer/*.xml
+github-breaking-changes-comments.md
+
