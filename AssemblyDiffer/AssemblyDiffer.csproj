@@ -54,7 +54,7 @@
         <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.API.dll</HintPath>
         </Reference>
-        <Reference Include="JustAssembly.Core, Version=0.0.7428.37152, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="JustAssembly.Core, Version=0.0.7428.39699, Culture=neutral, PublicKeyToken=null">
           <HintPath>lib\JustAssembly.Core.dll</HintPath>
         </Reference>
         <Reference Include="JustAssembly.Infrastructure, Version=0.0.7428.37151, Culture=neutral, PublicKeyToken=null">

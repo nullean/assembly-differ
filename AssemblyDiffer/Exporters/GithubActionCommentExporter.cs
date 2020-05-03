@@ -64,13 +64,23 @@ Scanned: 📑 {results.Comparisons.Count} projects
 			foreach (var c in results.Comparisons)
 			{
 				writer.WriteLine($@"
-### 📑{c.First.Name}
+## 📑 {c.First.Name}
 
 ```diff
 ");
 				c.Diff.Visit(((item, i) =>
 				{
-					writer.WriteLine($"{item.DiffType}: {item.HumanReadable}");
+					if (item.DiffType == DiffType.Deleted)
+						writer.Write("- 🔴  ");
+					else if (item.DiffType == DiffType.New)
+						writer.Write("+ 🌟  ");
+					else if (i> 2 && item.DiffType == DiffType.Modified)
+						writer.Write("+ 🔷 ");
+					else if (i == 2 && item.DiffType == DiffType.Modified)
+						writer.WriteLine($"```{Environment.NewLine}```diff");
+
+
+					writer.WriteLine($"{item.HumanReadable}");
 				}));
 				writer.WriteLine("```");
 			}

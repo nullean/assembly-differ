@@ -84,7 +84,7 @@ namespace Differ.Providers.NuGet
 			return new NuGetPackage(Path.Combine(targetDirectory, $"{packageName}.{version}"));
 		}
 
-		private static void GetPackageDependencies(PackageIdentity package,
+		public static void GetPackageDependencies(PackageIdentity package,
 			NuGetFramework framework,
 			SourceCacheContext cacheContext,
 			ILogger logger,
