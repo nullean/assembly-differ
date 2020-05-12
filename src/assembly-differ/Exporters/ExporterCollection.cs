@@ -14,7 +14,7 @@ namespace Differ.Exporters
 				throw new ArgumentNullException(nameof(exporters));
 
 			foreach (var exporter in exporters)
-				this.Add(exporter);
+				Add(exporter);
 		}
 
 		public string SupportedFormats => string.Join(", ", this.Select(e => e.Format));

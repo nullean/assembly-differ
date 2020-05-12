@@ -23,7 +23,7 @@ namespace Differ.Exporters
 			writer.WriteLine();
 
 			foreach (var typeElement in doc.Descendants("Type"))
-				this.WriteTypeElement(writer, typeElement);
+				WriteTypeElement(writer, typeElement);
 		}
 
 		private void WriteTypeElement(StreamWriter writer, XElement typeElement)

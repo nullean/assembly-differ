@@ -17,15 +17,14 @@ namespace Differ.Exporters
 			var xml = assemblyComparison.Diff.ToXml();
 			var doc = XDocument.Parse(xml);
 			var name = assemblyComparison.First.Name;
-			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "asciidoc"))))
-			{
-				writer.WriteLine($"== Breaking changes for {Path.GetFileNameWithoutExtension(name)}");
 
-				foreach (var typeElement in doc.Descendants("Type"))
-				{
-					writer.WriteLine();
-					WriteTypeElement(writer, typeElement);
-				}
+			using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "asciidoc")));
+			writer.WriteLine($"== Breaking changes for {Path.GetFileNameWithoutExtension(name)}");
+
+			foreach (var typeElement in doc.Descendants("Type"))
+			{
+				writer.WriteLine();
+				WriteTypeElement(writer, typeElement);
 			}
 		}
 

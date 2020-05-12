@@ -36,7 +36,7 @@ namespace Differ.Providers
 					throw new ArgumentNullException(nameof(providerFactories));
 
 				foreach (var factory in providerFactories)
-					this.Add(factory);
+					Add(factory);
 			}
 
 			protected override string GetKeyForItem(IAssemblyProviderFactory item) => item.Name;

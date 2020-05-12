@@ -60,9 +60,9 @@ namespace Differ
 			(Comparisons, PreventVersionChange) = (results, preventChange);
 
 		public SuggestedVersionChange SuggestedVersionChange =>
-			this.Comparisons.Count == 0
+			Comparisons.Count == 0
 				? SuggestedVersionChange.None
-				: this.Comparisons
+				: Comparisons
 					.Select(c => c.SuggestedVersionChange)
 					.OrderByDescending(c=>c)
 					.First();
