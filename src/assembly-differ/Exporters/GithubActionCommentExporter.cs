@@ -39,9 +39,6 @@ Scanned: 📑 7 projects
 		public void Export(AllComparisonResults results, string outputPath)
 		{
 			var prevent = results.PreventVersionChange;
-			if (results.SuggestedVersionChange < prevent)
-				return;
-
 			using var writer = new StreamWriter(Path.Combine(outputPath, "github-breaking-changes-comments.md"));
 
 			var breakingComparisons = results.Comparisons
@@ -82,7 +79,12 @@ Scanned: 📑 {results.Comparisons.Count} project(s)
 + {introduced} new additions
 - {deleted} removals
 - {modified} modifications
+Suggest change in version: {Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange)}
 ```");
+
+			if (results.SuggestedVersionChange < prevent)
+				return;
+
 			foreach (var c in results.Comparisons)
 			{
 				writer.WriteLine($@"
