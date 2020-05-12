@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using JustAssembly.Core;
+using JustAssembly.Core.DiffItems.References;
 using Telerik.JustDecompiler.Ast.Statements;
 
 namespace Differ.Exporters
@@ -42,72 +44,91 @@ Scanned: 📑 7 projects
 
 			using var writer = new StreamWriter(Path.Combine(outputPath, "github-breaking-changes-comments.md"));
 
-
-
-
 			var breakingComparisons = results.Comparisons
-				.Where(c => c.SuggestedVersionChange < prevent)
+				.Where(c => c.SuggestedVersionChange >= prevent)
 				.ToList();
 
-			var breakingChanges = (
-					from b in breakingComparisons
-					from change in b.Diff.ChildrenDiffs.Concat(b.Diff.DeclarationDiffs)
-					where IncludeDiffType(prevent, change)
-					group change by b.First.Name into g
-					select new { Name = g.Key, Changes = g.Distinct()}
-				).ToList();
 
-			writer.WriteLine($@"```diff
-Scanned: 📑 {results.Comparisons.Count} projects
-- ⚠️ {breakingChanges.Count} breaking changes detected in 📑{breakingComparisons.Count} projects ⚠️
+			var breakingChanges = new List<IDiffItem>();
+			int deleted = 0, modified = 0, introduced = 0;
+			foreach (var b in breakingComparisons)
+			{
+				b.Diff.Visit((item, depth) =>
+				{
+					if (item.DiffType == DiffType.Deleted) deleted++;
+					if (depth > 2 && item.DiffType == DiffType.Modified) modified++;
+					if (item.DiffType == DiffType.New) introduced++;
+
+					//TODO make this configurable, don't count assembly reference changes as breaking
+					if (item is AssemblyReferenceDiffItem) return;
+
+					if (depth < 2) return;
+					var changedType = depth == 2 && item.DiffType == DiffType.Modified;
+					// type is modified, count its changes not the type itself
+					if (changedType) return;
+
+					if (IncludeDiffType(prevent, item))
+						breakingChanges.Add(item);
+				});
+			}
+
+			writer.WriteLine($@"## Public API Changes
+
+```diff
+Scanned: 📑 {results.Comparisons.Count} project(s)
+- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} project(s) ⚠️
+```
+```diff
++ {introduced} new additions
+- {deleted} removals
+- {modified} modifications
 ```");
 			foreach (var c in results.Comparisons)
 			{
 				writer.WriteLine($@"
-## 📑 {c.First.Name}
+-----
+
+<details>
+<summary><b>📑 {c.First.Name}
+</b> <pre><b> Click here to see the {introduced+deleted+modified} differences </b>
+</summary>
 
 ```diff
 ");
 				c.Diff.Visit(((item, i) =>
 				{
+					var changedType = i == 2 && item.DiffType == DiffType.Modified;
 					if (item.DiffType == DiffType.Deleted)
-						writer.Write("- 🔴  ");
+						writer.Write("- 🔴 ");
 					else if (item.DiffType == DiffType.New)
-						writer.Write("+ 🌟  ");
+						writer.Write("+ 🌟 ");
 					else if (i> 2 && item.DiffType == DiffType.Modified)
 						writer.Write("+ 🔷 ");
-					else if (i == 2 && item.DiffType == DiffType.Modified)
+					else if (changedType)
 						writer.WriteLine($"```{Environment.NewLine}```diff");
 
+					var isAssemblyRefChange = item is AssemblyReferenceDiffItem;
+					var breakingMarker = !isAssemblyRefChange && i >= 2 && !changedType && item.IsBreakingChange;
 
-					writer.WriteLine($"{item.HumanReadable}");
+					writer.WriteLine($"{item.HumanReadable} {(breakingMarker ? "💥 " : "")}");
 				}));
-				writer.WriteLine("```");
+				writer.WriteLine(@"```");
+				writer.WriteLine("</details>");
 			}
-			//var x = results.Comparisons
-
-
-			// var xml = results.Diff.ToXml();
-			// var doc = XDocument.Parse(xml);
-			// var name = results.First.Name;
-			// using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md")));
-			//
-			// writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
-			// writer.WriteLine();
-			//
-			// foreach (var typeElement in doc.Descendants("Type"))
-			// 	this.WriteTypeElement(writer, typeElement);
 		}
 
 		private static bool IncludeDiffType(SuggestedVersionChange prevent, IDiffItem change)
 		{
 			switch (prevent)
 			{
-				case SuggestedVersionChange.Major: return change.IsBreakingChange;
+				case SuggestedVersionChange.Major:
+					return change.IsBreakingChange;
 				case SuggestedVersionChange.Minor:
 					return change.IsBreakingChange || change.DiffType == DiffType.New;
-				case SuggestedVersionChange.Patch: return true;
-				default: return false;
+				case SuggestedVersionChange.Patch:
+					return true;
+				default:
+					return false;
 			}
 		}
 
