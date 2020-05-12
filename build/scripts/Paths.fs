@@ -3,7 +3,7 @@ module Paths
 open System
 open System.IO
 
-let ToolName = "nupkg-validator"
+let ToolName = "assembly-differ"
 let Repository = sprintf "nullean/%s" ToolName
 
 let Root =
