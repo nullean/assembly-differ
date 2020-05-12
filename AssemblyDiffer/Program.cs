@@ -97,7 +97,7 @@ namespace Differ
 					return 1;
 				}
 
-				var result = new AllComparisonResults(pairs);
+				var result = new AllComparisonResults(pairs, _preventChange);
 				foreach (var assemblyPair in pairs)
 				{
 					assemblyPair.Diff =
