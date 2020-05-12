@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "minver-cli": {
+      "version": "2.2.0",
+      "commands": [
+        "minver"
+      ]
+    },
+    "release-notes": {
+      "version": "0.2.1",
+      "commands": [
+        "release-notes"
+      ]
+    },
+    "nupkg-validator": {
+      "version": "0.2.2",
+      "commands": [
+        "nupkg-validator"
+      ]
+    }
+  }
+}

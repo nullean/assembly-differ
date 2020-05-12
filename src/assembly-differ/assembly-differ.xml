@@ -1,0 +1,36 @@
+<Assembly Name="assembly-differ, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="assembly-differ.dll" DiffType="Modified">
+    <DeclarationDiffs>
+      <AssemblyReference Name="JustAssembly.Core, Version=0.0.7290.33974, Culture=neutral, PublicKeyToken=null" DiffType="Deleted" />
+    </DeclarationDiffs>
+    <Type Name="Differ.AllComparisonResults" DiffType="New" />
+    <Type Name="Differ.AssemblyComparison" DiffType="New" />
+    <Type Name="Differ.AssemblyDiffPair" DiffType="Deleted" />
+    <Type Name="Differ.Exporters.AsciiDocExporter" DiffType="Modified">
+      <Method Name="Export(AssemblyComparison, String)" DiffType="New" />
+      <Method Name="Export(AssemblyDiffPair, String)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Differ.Exporters.GitHubActionCommentExporter" DiffType="New" />
+    <Type Name="Differ.Exporters.IAllComparisonResultsExporter" DiffType="New" />
+    <Type Name="Differ.Exporters.IAssemblyComparisonExporter" DiffType="New" />
+    <Type Name="Differ.Exporters.IExporter" DiffType="Modified">
+      <Method Name="Export(AssemblyDiffPair, String)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Differ.Exporters.MarkdownExporter" DiffType="Modified">
+      <Method Name="Export(AssemblyComparison, String)" DiffType="New" />
+      <Method Name="Export(AssemblyDiffPair, String)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Differ.Exporters.XmlExporter" DiffType="Modified">
+      <Method Name="Export(AssemblyComparison, String)" DiffType="New" />
+      <Method Name="Export(AssemblyDiffPair, String)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Differ.Providers.NuGet.NuGet" DiffType="Modified">
+      <Method Name="GetPackageDependencies(PackageIdentity, NuGetFramework, SourceCacheContext, ILogger, IEnumerable&lt;SourceRepository&gt;, ISet&lt;SourcePackageDependencyInfo&gt;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+    <Type Name="Differ.SuggestedVersionChange" DiffType="New" />
+  </Module>
+</Assembly>

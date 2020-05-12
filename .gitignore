@@ -2,6 +2,7 @@
 *.local.xml
 *.sln.docstates
 *.obj
+*.swp
 *.exe
 *.pdb
 *.user
@@ -19,27 +20,67 @@
 *.cache
 *.ilk
 *.log
-
-[Bb]in/
+*.nupkg
+*.ncrunchsolution
+[Bb]in
 [Dd]ebug/
-[Oo]bj/
-
+test-results
+test-results/*
 *.lib
 *.sbr
-
-.vs/
-.vs/*
-packages/*
-.idea/
-
-# ReSharper
+*.DotSettings.user
+obj/
 _ReSharper*/
-*.DotSettings
+_NCrunch*/
+[Tt]est[Rr]esult*
 
-# Nuget packages
-/packages
-*.nupkg
+.fake/*
+.fake
+packages/*
+paket.exe
+paket-files/*.cached
 
-AssemblyDiffer/*.xml
-github-breaking-changes-comments.md
+BenchmarkDotNet.Artifacts
+build/*
+!build/tools
+!build/keys
+build/tools/*
+!build/tools/sn
+!build/tools/sn/*
+!build/tools/ilmerge
+!build/*.fsx
+!build/*.fsx
+!build/*.ps1
+!build/*.nuspec
+!build/*.png
+!build/*.targets
+!build/scripts
 
+
+/dep/Newtonsoft.Json.4.0.2
+!docs/build
+docs/node_modules
+doc/Help
+
+/src/Nest.Tests.Unit/*.ncrunchproject
+*.ncrunchproject
+Cache
+YamlCache
+tests.yaml
+
+*.DS_Store
+*.sln.ide
+
+launchSettings.json
+# https://github.com/elastic/elasticsearch-net/pull/1822#issuecomment-183722698
+*.project.lock.json
+project.lock.json
+.vs
+.vs/*
+
+.idea/
+*.sln.iml
+/src/.vs/restore.dg
+# temporary location for doc generation
+docs-temp
+*.binlog
