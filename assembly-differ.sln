@@ -13,6 +13,7 @@ ProjectSection(SolutionItems) = preProject
 	LICENSE = LICENSE
 	nuget-icon.png = nuget-icon.png
 	README.md = README.md
+	.github\workflows\ci.yml = .github\workflows\ci.yml
 EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "scripts", "build\scripts\scripts.fsproj", "{52FEFC30-5E2A-48C6-8814-ACF2CD4CC93B}"
