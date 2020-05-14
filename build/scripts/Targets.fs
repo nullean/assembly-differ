@@ -43,7 +43,7 @@ let private validatePackages (arguments:ParseResults<Arguments>) =
         let p = Paths.Output.GetFiles("*.nupkg") |> Seq.sortByDescending(fun f -> f.CreationTimeUtc) |> Seq.head
         Paths.RootRelative p.FullName
     exec "dotnet" ["nupkg-validator"; nugetPackage; "-v"; currentVersion.Value; "-a"; Paths.ToolName; "-k"; "96c599bbe3e70f5d"] |> ignore
-    
+
 let private labelMapping =
     Map.empty
         .Add("enhancement", "New Features")

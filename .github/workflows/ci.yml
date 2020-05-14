@@ -48,6 +48,7 @@ jobs:
     - run: ./build.sh generatereleasenotes -s true
       name: Generate release notes for tag
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
+      
     - run: ./build.sh createreleaseongithub -s true --token ${{secrets.GITHUB_TOKEN}}
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
