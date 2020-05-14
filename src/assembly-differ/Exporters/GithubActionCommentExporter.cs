@@ -76,9 +76,9 @@ Scanned: 📑 {results.Comparisons.Count} project(s)
 - ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} project(s) ⚠️
 ```
 ```diff
-+ {introduced} new additions
-- {deleted} removals
-- {modified} modifications
++ 🌟 {introduced} new additions
+- 🔴 {deleted} removals
+- 🔷 {modified} modifications
 Suggest change in version: {Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange)}
 ```");
 
