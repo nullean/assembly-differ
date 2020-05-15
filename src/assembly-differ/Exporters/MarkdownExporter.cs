@@ -11,13 +11,13 @@ namespace Differ.Exporters
 	{
 		public string Format { get; } = "markdown";
 
-		public void Export(AssemblyComparison assemblyComparison, string outputPath)
+		public void Export(AssemblyComparison assemblyComparison, OutputWriterFactory factory)
 		{
 			// IDiffItem implementations are internal so parse from XML for now
 			var xml = assemblyComparison.Diff.ToXml();
 			var doc = XDocument.Parse(xml);
 			var name = assemblyComparison.First.Name;
-			using var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(name, "md")));
+			using var writer = factory.Create(Path.ChangeExtension(name, "md"));
 
 			writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
 			writer.WriteLine();
@@ -26,7 +26,7 @@ namespace Differ.Exporters
 				WriteTypeElement(writer, typeElement);
 		}
 
-		private void WriteTypeElement(StreamWriter writer, XElement typeElement)
+		private void WriteTypeElement(OutputWriter writer, XElement typeElement)
 		{
 			var typeName = typeElement.Attribute("Name")?.Value;
 			var diffType = (DiffType) Enum.Parse(typeof(DiffType), typeElement.Attribute("DiffType").Value);
@@ -47,7 +47,7 @@ namespace Differ.Exporters
 			}
 		}
 
-		private void WriteMemberElements(StreamWriter writer, string typeName, XElement typeElement)
+		private void WriteMemberElements(OutputWriter writer, string typeName, XElement typeElement)
 		{
 			var memberElements = typeElement.Elements("Method").Concat(typeElement.Elements("Property"));
 
