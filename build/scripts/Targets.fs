@@ -11,8 +11,7 @@ open ProcNet
     
 let exec binary args =
     let r = Proc.Exec (binary, args |> List.map (fun a -> sprintf "\"%s\"" a) |> List.toArray)
-    match r.HasValue with | true -> r.Value | false -> failwithf "invocation of `%s` timed out" binary 
-
+    match r.HasValue with | true -> r.Value | false -> failwithf "invocation of `%s` timed out" binary
     
 let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
 let private currentVersion =
@@ -22,18 +21,18 @@ let private currentVersion =
         let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith("MinVer:")))
         o.Line
     )
-    
+
 let private clean (arguments:ParseResults<Arguments>) =
     if (Paths.Output.Exists) then Paths.Output.Delete (true)
     exec "dotnet" ["clean"] |> ignore
     
 let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
-    
+
 let private pristineCheck (arguments:ParseResults<Arguments>) =
     match Information.isCleanWorkingCopy "." with
     | true  -> printfn "The checkout folder does not have pending changes, proceeding"
     | _ -> failwithf "The checkout folder has pending changes, aborting"
-    
+
 let private generatePackages (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative Paths.Output.FullName
     exec "dotnet" ["pack"; "-c"; "Release"; "-o"; output] |> ignore
@@ -44,14 +43,20 @@ let private validatePackages (arguments:ParseResults<Arguments>) =
         Paths.RootRelative p.FullName
     exec "dotnet" ["nupkg-validator"; nugetPackage; "-v"; currentVersion.Value; "-a"; Paths.ToolName; "-k"; "96c599bbe3e70f5d"] |> ignore
 
-let private labelMapping =
-    Map.empty
-        .Add("enhancement", "New Features")
-        .Add("bug", "Bug Fixes")
-        .Add("documentation", "Documentation Improvements")
-    |> Map.toList
-    |> List.collect(fun (k, v) -> ["--label"; k; v])
-                    
+let private generateApiChanges (arguments:ParseResults<Arguments>) =
+    let output = Paths.RootRelative <| Paths.Output.FullName
+    let currentVersion = currentVersion.Value
+    let project = Paths.RootRelative Paths.ToolProject.FullName
+    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "netcoreapp3.1"; "-p"; project]
+    let args =
+        [
+            (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
+            (sprintf "directory|src/%s/bin/Release/netcoreapp3.1" Paths.ToolName);
+            "--target"; "release-notes"; "-f"; "github-comment"; "--output"; output
+        ]
+        
+    exec "dotnet" (dotnetRun @ ["--"] @ args) |> ignore
+    
 let private generateReleaseNotes (arguments:ParseResults<Arguments>) =
     let currentVersion = currentVersion.Value
     let output =
@@ -62,9 +67,12 @@ let private generateReleaseNotes (arguments:ParseResults<Arguments>) =
         | Some token -> ["--token"; token;]
     let releaseNotesArgs =
         (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["--version"; currentVersion; "--output"; output]
-        @ labelMapping
-        @ tokenArgs
+        @ ["--version"; currentVersion
+           "--label"; "enhancement"; "New Features"
+           "--label"; "bug"; "Bug Fixes"
+           "--label"; "documentation"; "Docs Improvements"
+        ] @ tokenArgs
+        @ ["--output"; output]
         
     exec "dotnet" (["release-notes"] @ releaseNotesArgs) |> ignore
 
@@ -74,16 +82,20 @@ let private createReleaseOnGithub (arguments:ParseResults<Arguments>) =
         match arguments.TryGetResult Token with
         | None -> []
         | Some token -> ["--token"; token;]
+    let releaseNotes = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
+    let breakingChanges = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, "github-breaking-changes-comments.md")
     let releaseArgs =
         (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["create-release"; "--version"; currentVersion]
-        @ labelMapping
-        @ tokenArgs
+        @ ["create-release"
+           "--version"; currentVersion
+           "--body"; releaseNotes; 
+           "--body"; breakingChanges; 
+        ] @ tokenArgs
         
     exec "dotnet" (["release-notes"] @ releaseArgs) |> ignore
     
 let private release (arguments:ParseResults<Arguments>) = printfn "release"
-
+    
 let private publish (arguments:ParseResults<Arguments>) = printfn "publish" 
 
 let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
@@ -98,7 +110,7 @@ let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
             | _ -> []
         let steps = steps |> Option.defaultValue []
         Targets.Target(name, deps @ steps, Action(action))
-    
+        
     step Clean.Name clean
     cmd Build.Name None (Some [Clean.Name]) <| fun _ -> build parsed
     
@@ -106,10 +118,12 @@ let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
     step GeneratePackages.Name generatePackages 
     step ValidatePackages.Name validatePackages 
     step GenerateReleaseNotes.Name generateReleaseNotes
+    step GenerateApiChanges.Name generateApiChanges
     cmd Release.Name
         (Some [PristineCheck.Name; Build.Name;])
-        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateReleaseNotes.Name])
+        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateReleaseNotes.Name; GenerateApiChanges.Name])
         <| fun _ -> release parsed
+        
     step CreateReleaseOnGithub.Name createReleaseOnGithub 
     cmd Publish.Name
         (Some [Release.Name])
