@@ -38,6 +38,8 @@ jobs:
       name: Generate local nuget packages
     - run: ./build.sh validatepackages -s true
       name: "validate *.npkg files that were created"
+    - run: ./build.sh generateapichanges -s true
+      name: "Inspect public API changes"
 
     - name: publish to github package repository
       if: github.event_name == 'push' && startswith(github.ref, 'refs/heads')
@@ -48,7 +50,6 @@ jobs:
     - run: ./build.sh generatereleasenotes -s true
       name: Generate release notes for tag
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
-      
     - run: ./build.sh createreleaseongithub -s true --token ${{secrets.GITHUB_TOKEN}}
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
