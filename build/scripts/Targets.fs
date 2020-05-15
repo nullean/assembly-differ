@@ -52,7 +52,7 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
         [
             (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
             (sprintf "directory|src/%s/bin/Release/netcoreapp3.1" Paths.ToolName);
-            "--target"; "release-notes"; "-f"; "github-comment"; "--output"; output
+            "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
         
     exec "dotnet" (dotnetRun @ ["--"] @ args) |> ignore
