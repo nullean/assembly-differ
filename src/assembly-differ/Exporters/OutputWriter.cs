@@ -16,15 +16,14 @@ namespace Differ.Exporters
 				return new OutputWriter();
 
 			var filePath = Path.GetFullPath(_configuredPath);
-			var attrs = File.GetAttributes(filePath);
-			if (attrs.HasFlag(FileAttributes.Directory))
+			if (Directory.Exists(filePath))
 			{
 				if (defaultFileName == null)
 					throw new Exception("output path is a directory but the current exporter"
 						+ " does not define a default filename make sure --ouput points to file instead");
 				filePath = Path.Combine(filePath, defaultFileName);
 			}
-			return new OutputWriter(filePath, defaultFileName);
+			return new OutputWriter(filePath);
 
 		}
 	}
@@ -36,20 +35,7 @@ namespace Differ.Exporters
 
 		public OutputWriter() => _console = Console.Out;
 
-		public OutputWriter(string outputFile, string defaultFileName = null) : this()
-		{
-			var path = Path.GetFullPath(outputFile);
-			var attrs = File.GetAttributes(path);
-			if (attrs.HasFlag(FileAttributes.Directory))
-			{
-				if (defaultFileName == null)
-					throw new Exception("output path is a directory but the current exporter"
-						+ " does not define a default filename make sure --ouput points to file instead");
-				path = Path.Combine(path, defaultFileName);
-			}
-
-			_writer = new StreamWriter(path);
-		}
+		public OutputWriter(string outputFile) : this() => _writer = new StreamWriter(outputFile);
 
 		public void WriteLine(string line)
 		{
