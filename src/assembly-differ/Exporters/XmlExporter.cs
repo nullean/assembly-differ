@@ -7,11 +7,11 @@ namespace Differ.Exporters
 	{
 		public string Format { get; } = "xml";
 
-		public void Export(AssemblyComparison assemblyComparison, string outputPath)
+		public void Export(AssemblyComparison assemblyComparison, OutputWriterFactory factory)
 		{
 			var xml = assemblyComparison.Diff.ToXml();
-			using (var writer = new StreamWriter(Path.Combine(outputPath, Path.ChangeExtension(assemblyComparison.First.Name, "xml"))))
-				writer.Write(xml);
+			using var writer = factory.Create(Path.ChangeExtension(assemblyComparison.First.Name, "xml"));
+			writer.Write(xml);
 		}
 	}
 }

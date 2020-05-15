@@ -17,7 +17,7 @@ namespace Differ
 	{
 		private static string _format = "xml";
 		private static bool _help;
-		private static string _output = Directory.GetCurrentDirectory();
+		private static OutputWriterFactory _output = new OutputWriterFactory(null);
 		private static SuggestedVersionChange _preventChange = SuggestedVersionChange.None;
 
 		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -43,7 +43,7 @@ namespace Differ
 			{
 				{"t|target=", "the assembly targets. Defaults to *all* assemblies located by the provider", AddTarget },
 				{"f|format=", $"the format of the diff output. Supported formats are {exporters.SupportedFormats}. Defaults to {_format}", f => _format = f},
-				{"o|output=", "the output directory. Defaults to current directory", o => _output = o},
+				{"o|output=", "the output directory or file name. If not specified only prints to console", o => _output = new OutputWriterFactory(o)},
 				{"p|prevent-change=", "Fail if the change detected is higher then specified: none|patch|minor|major. Defaults to `none` which will never fail.",
 					c => _preventChange = Enum.Parse<SuggestedVersionChange>(c, true)},
 				{"h|?|help", "show this message and exit", h => _help = h != null},
@@ -91,9 +91,9 @@ namespace Differ
 
 				if (!pairs.Any())
 				{
-					Console.Error.WriteLine($"Unable to create diff!");
-					Console.Error.WriteLine($" {firstProvider.GetType().Name}: {first.Count()} assemblies");
-					Console.Error.WriteLine($" {secondProvider.GetType().Name}: {second.Count()} assemblies");
+					Console.Error.WriteLine($"[diff] Unable to create diff!");
+					Console.Error.WriteLine($"[diff]   {firstProvider.GetType().Name}: {first.Count()} assemblies");
+					Console.Error.WriteLine($"[diff]   {secondProvider.GetType().Name}: {second.Count()} assemblies");
 					return 1;
 				}
 
@@ -105,10 +105,10 @@ namespace Differ
 
 					if (assemblyPair.Diff == null)
 					{
-						Console.WriteLine($"No diff between {assemblyPair.First.FullName} and {assemblyPair.Second.FullName}");
+						Console.WriteLine($"[diff] No diff between {assemblyPair.First.FullName} and {assemblyPair.Second.FullName}");
 						continue;
 					}
-					Console.WriteLine($"Difference found: {firstProvider.GetType().Name}:{assemblyPair.First.Name} and {secondProvider.GetType().Name}:{assemblyPair.Second.Name}");
+					Console.WriteLine($"[diff] Difference found: {firstProvider.GetType().Name}:{assemblyPair.First.Name} and {secondProvider.GetType().Name}:{assemblyPair.Second.Name}");
 
 					if (exporter is IAssemblyComparisonExporter c)
 						c.Export(assemblyPair, _output);
@@ -118,10 +118,10 @@ namespace Differ
 
 				if (_preventChange > SuggestedVersionChange.None && result.SuggestedVersionChange >= _preventChange)
 				{
-					Console.Error.WriteLine($"Needed version change '{result.SuggestedVersionChange}' exceeds or equals configured lock: '{_preventChange}");
+					Console.Error.WriteLine($"[diff] Needed version change '{result.SuggestedVersionChange}' exceeds or equals configured lock: '{_preventChange}");
 					return 4;
 				}
-				Console.WriteLine($"Suggested version change: {result.SuggestedVersionChange}");
+				Console.WriteLine($"[diff] Suggested version change: {result.SuggestedVersionChange}");
 
 			}
 			catch (Exception e)
