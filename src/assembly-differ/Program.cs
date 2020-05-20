@@ -19,6 +19,7 @@ namespace Differ
 		private static bool _help;
 		private static OutputWriterFactory _output = new OutputWriterFactory(null);
 		private static SuggestedVersionChange _preventChange = SuggestedVersionChange.None;
+		private static bool _allowEmptyPreviousNuget = false;
 
 		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -46,6 +47,8 @@ namespace Differ
 				{"o|output=", "the output directory or file name. If not specified only prints to console", o => _output = new OutputWriterFactory(o)},
 				{"p|prevent-change=", "Fail if the change detected is higher then specified: none|patch|minor|major. Defaults to `none` which will never fail.",
 					c => _preventChange = Enum.Parse<SuggestedVersionChange>(c, true)},
+				{"a|allow-empty-previous-nuget=", "",
+					n => _allowEmptyPreviousNuget = n != null},
 				{"h|?|help", "show this message and exit", h => _help = h != null},
 			};
 
@@ -79,6 +82,8 @@ namespace Differ
 			{
 				var firstProvider = providers.GetProvider(unflaggedArgs[0]);
 				var secondProvider = providers.GetProvider(unflaggedArgs[1]);
+				var firstProviderName = providers.GetProviderName(unflaggedArgs[0]);
+				var secondProviderName = providers.GetProviderName(unflaggedArgs[1]);
 
 				if (!exporters.Contains(_format))
 					throw new Exception($"No exporter for format '{_format}'");
@@ -91,6 +96,18 @@ namespace Differ
 
 				if (!pairs.Any())
 				{
+					if (_allowEmptyPreviousNuget &&
+						(firstProviderName == "previous-nuget" || secondProviderName == "previous-nuget"))
+					{
+						Console.WriteLine($"[diff] No previous nuget found for: {firstProviderName}");
+						Console.WriteLine($"[diff]   {firstProvider.GetType().Name}: {first.Count()} assemblies");
+						Console.WriteLine($"[diff]   {secondProvider.GetType().Name}: {second.Count()} assemblies");
+						Console.WriteLine($"[diff]");
+						Console.WriteLine($"[diff]   NOT treated as an error because --allow-empty-previous-nuget was set");
+						return 0;
+
+					}
+
 					Console.Error.WriteLine($"[diff] Unable to create diff!");
 					Console.Error.WriteLine($"[diff]   {firstProvider.GetType().Name}: {first.Count()} assemblies");
 					Console.Error.WriteLine($"[diff]   {secondProvider.GetType().Name}: {second.Count()} assemblies");
