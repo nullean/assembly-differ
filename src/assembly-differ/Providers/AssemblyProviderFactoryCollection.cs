@@ -27,6 +27,16 @@ namespace Differ.Providers
 			var provider = _providers[providerName].Create(commandParts.Skip(1).ToArray());
 			return provider;
 		}
+		public string GetProviderName(string command)
+		{
+			if (command == null)
+				throw new ArgumentNullException(nameof(command));
+
+			var commandParts = command.Split('|');
+			var providerName = commandParts[0];
+			return providerName;
+
+		}
 
 		private class AssemblyFileInfoProviderCollection : KeyedCollection<string, IAssemblyProviderFactory>
 		{
