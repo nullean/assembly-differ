@@ -23,7 +23,7 @@ namespace Differ
 		{
 			get
 			{
-				if (Diff == null) return SuggestedVersionChange.None;
+				if (Diff == null) return SuggestedVersionChange.Patch;
 
 				if (Diff.IsBreakingChange) return SuggestedVersionChange.Major;
 
