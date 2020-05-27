@@ -61,7 +61,7 @@ namespace Differ
 
 		public SuggestedVersionChange SuggestedVersionChange =>
 			Comparisons.Count == 0
-				? SuggestedVersionChange.None
+				? SuggestedVersionChange.Patch
 				: Comparisons
 					.Select(c => c.SuggestedVersionChange)
 					.OrderByDescending(c=>c)
