@@ -66,7 +66,7 @@ Suggest change in version: {Enum.GetName(typeof(SuggestedVersionChange), results
 -----
 
 <b>📑 {c.First.Name}
-</b> <pre><b> No public API Changes detected</b>
+</b> <pre><b> No public API Changes detected</pre></b>
 ");
 					continue;
 				}
