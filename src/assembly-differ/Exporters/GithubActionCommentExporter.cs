@@ -63,7 +63,7 @@ Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 				writer.WriteLine($@"
 ```diff
 Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
-+ {breakingChanges.Count} breaking change(s) detected in 📑 0 assemblies(s)
++ {breakingChanges.Count} breaking change(s) detected.
 ```");
 			}
 
