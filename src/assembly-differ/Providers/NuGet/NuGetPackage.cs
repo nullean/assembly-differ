@@ -99,7 +99,7 @@ namespace Differ.Providers.NuGet
 		public NuGetFramework GetNearest(string frameworkVersion)
 		{
 			var framework = NuGetFramework.Parse(frameworkVersion);
-			return Reducer.GetNearest(framework, FrameworkVersions);
+			return Reducer.GetNearest(framework, FrameworkVersions) ?? framework;
 		}
 	}
 

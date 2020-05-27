@@ -85,6 +85,7 @@ namespace Differ.Providers.NuGet
 			{
 				var nearest = dependency.GetNearest(frameworkVersion);
 				var dependencyPath = Path.Combine(dependency.Path, "lib", nearest.GetShortFolderName());
+				if (!Directory.Exists(dependencyPath)) continue;
 
 				foreach (var file in Directory.EnumerateFiles(dependencyPath))
 				{
