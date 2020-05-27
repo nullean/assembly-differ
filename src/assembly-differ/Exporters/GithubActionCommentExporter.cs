@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using JustAssembly.Core;
 using JustAssembly.Core.DiffItems.References;
@@ -42,18 +43,30 @@ namespace Differ.Exporters
 				});
 			}
 
-			writer.WriteLine($@"## Public API Changes
+			var totalChanges = deleted + modified + introduced;
+			if (results.Comparisons.Count == 1)
+				writer.WriteLine($@"### API Changes: `{Path.GetFileNameWithoutExtension(results.Comparisons.First().First.Name)}`");
+			else
+				writer.WriteLine($@"### API Changes");
 
+			writer.WriteLine($"Suggested change in version: {Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange)}");
+			if (breakingChanges.Count > 0)
+			{
+				writer.WriteLine($@"
 ```diff
-Scanned: 📑 {results.Comparisons.Count} project(s)
-- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} project(s) ⚠️
-```
+- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} assemblies(s) ⚠️
+```");
+			}
+
+			if (totalChanges > 0)
+			{
+				writer.WriteLine($@"
 ```diff
 + 🌟 {introduced} new additions
 - 🔴 {deleted} removals
 - 🔷 {modified} modifications
-Suggest change in version: {Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange)}
 ```");
+			}
 
 			if (results.SuggestedVersionChange < prevent)
 				return;
@@ -62,8 +75,7 @@ Suggest change in version: {Enum.GetName(typeof(SuggestedVersionChange), results
 			{
 				if (c.Diff == null)
 				{
-					writer.WriteLine($@"
------
+					writer.WriteLine($@"-----
 
 <b>📑 {c.First.Name}
 </b> <pre><b> No public API Changes detected</pre></b>
