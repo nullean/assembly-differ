@@ -45,16 +45,25 @@ namespace Differ.Exporters
 
 			var totalChanges = deleted + modified + introduced;
 			if (results.Comparisons.Count == 1)
-				writer.WriteLine($@"### API Changes: `{Path.GetFileNameWithoutExtension(results.Comparisons.First().First.Name)}`");
+				writer.WriteLine($@"## API Changes: `{Path.GetFileNameWithoutExtension(results.Comparisons.First().First.Name)}`");
 			else
-				writer.WriteLine($@"### API Changes");
+				writer.WriteLine($@"## API Changes");
 
-			writer.WriteLine($"Suggested change in version: {Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange)}");
+			var versionChange = Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange);
 			if (breakingChanges.Count > 0)
 			{
 				writer.WriteLine($@"
 ```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 - ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} assemblies(s) ⚠️
+```");
+			}
+			else
+			{
+				writer.WriteLine($@"
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
++ {breakingChanges.Count} breaking change(s) detected in 📑 0 assemblies(s)
 ```");
 			}
 
