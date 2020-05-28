@@ -45,9 +45,9 @@ namespace Differ.Exporters
 
 			var totalChanges = deleted + modified + introduced;
 			if (results.Comparisons.Count == 1)
-				writer.WriteLine($@"## API Changes: `{Path.GetFileNameWithoutExtension(results.Comparisons.First().First.Name)}`");
+				writer.WriteLine($@"### API Changes: `{Path.GetFileNameWithoutExtension(results.Comparisons.First().First.Name)}`");
 			else
-				writer.WriteLine($@"## API Changes");
+				writer.WriteLine($@"### API Changes");
 
 			var versionChange = Enum.GetName(typeof(SuggestedVersionChange), results.SuggestedVersionChange);
 			if (breakingChanges.Count > 0)
@@ -78,6 +78,9 @@ Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 			}
 
 			if (results.SuggestedVersionChange < prevent)
+				return;
+
+			if (results.Comparisons.Count == 1 && results.Comparisons.First().Diff == null)
 				return;
 
 			foreach (var c in results.Comparisons)
