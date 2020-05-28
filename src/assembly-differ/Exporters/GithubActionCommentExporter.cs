@@ -55,25 +55,28 @@ namespace Differ.Exporters
 				writer.WriteLine($@"
 ```diff
 Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
-- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} assemblies(s) ⚠️
-```");
+- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} assemblies(s)");
 			}
 			else
 			{
 				writer.WriteLine($@"
 ```diff
 Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
-+ {breakingChanges.Count} breaking change(s) detected.
-```");
++ {breakingChanges.Count} breaking change(s) detected.");
 			}
 
 			if (totalChanges > 0)
 			{
 				writer.WriteLine($@"
-```diff
 + 🌟 {introduced} new additions
 - 🔴 {deleted} removals
 - 🔷 {modified} modifications
+```");
+			}
+			else
+			{
+				writer.WriteLine($@"
+🌟 {introduced} new additions, 🔴 {deleted} removals, 🔷 {modified} modifications
 ```");
 			}
 
