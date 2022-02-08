@@ -17,7 +17,7 @@ let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
 let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
-        let r = Proc.Start("dotnet", "minver", "-d", "canary")
+        let r = Proc.Start("dotnet", "minver", "--default-pre-release-phase", "canary")
         let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith("MinVer:")))
         o.Line
     )
@@ -47,7 +47,7 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative <| Paths.Output.FullName
     let currentVersion = currentVersion.Value
     let project = Paths.RootRelative Paths.ToolProject.FullName
-    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "net5.0"; "-p"; project]
+    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "net6.0"; "--project"; project]
     let args =
         [
             (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
