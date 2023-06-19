@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.0;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
@@ -39,7 +39,7 @@
     <PackageReference Include="NuGet.Protocol" Version="5.4.0" />
     <PackageReference Include="NuGet.Packaging" Version="5.4.0" />
     <PackageReference Include="NuGet.Resolver" Version="5.4.0" />
-    <PackageReference Include="NuGet.Common" Version="5.4.0" />
+    <PackageReference Include="NuGet.Common" Version="5.11.5" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
