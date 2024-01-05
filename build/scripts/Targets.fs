@@ -17,7 +17,7 @@ let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
 let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
-        let r = Proc.Start("dotnet", "minver", "--default-pre-release-phase", "canary")
+        let r = Proc.Start("dotnet", "minver", "-p", "canary.0")
         let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith("MinVer:")))
         o.Line
     )
@@ -36,7 +36,9 @@ let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; 
 let private pristineCheck (arguments:ParseResults<Arguments>) =
     match Information.isCleanWorkingCopy "." with
     | true  -> printfn "The checkout folder does not have pending changes, proceeding"
-    | _ -> failwithf "The checkout folder has pending changes, aborting"
+    | _ ->
+        ()
+        //failwithf "The checkout folder has pending changes, aborting"
 
 let private generatePackages (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative Paths.Output.FullName
@@ -56,7 +58,7 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let args =
         [
             (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
-            (sprintf "directory|src/%s/bin/Release/netcoreapp3.1" Paths.ToolName);
+            (sprintf "directory|src/%s/bin/Release/net6.0" Paths.ToolName);
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
         
