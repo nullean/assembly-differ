@@ -21,6 +21,8 @@ namespace Differ
 		private static SuggestedVersionChange _preventChange = SuggestedVersionChange.None;
 		private static bool _allowEmptyPreviousNuget = false;
 
+		private static readonly NuGetInstallerOptions _nugetInstallerOptions = new NuGetInstallerOptions();
+
 		private static HashSet<string> Targets { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		private static int Main(string[] args)
@@ -28,8 +30,8 @@ namespace Differ
 			var providers = new AssemblyProviderFactoryCollection(
 				new AssemblyProviderFactory(),
 				new DirectoryAssemblyProviderFactory(),
-				new NuGetAssemblyProviderFactory(new Providers.NuGet.NuGet()),
-				new PreviousNuGetAssemblyProviderFactory(new PreviousNugetLocator()),
+				new NuGetAssemblyProviderFactory(new Providers.NuGet.NuGet(_nugetInstallerOptions)),
+				new PreviousNuGetAssemblyProviderFactory(new PreviousNugetLocator(_nugetInstallerOptions)),
 				new GitHubAssemblyProviderFactory(new Git(Environment.GetEnvironmentVariable("GIT")))
 			);
 
@@ -49,6 +51,8 @@ namespace Differ
 					c => _preventChange = Enum.Parse<SuggestedVersionChange>(c, true)},
 				{"a|allow-empty-previous-nuget=", "",
 					n => _allowEmptyPreviousNuget = n != null},
+				{"c|nuget-config-dir=", "the search directory for NuGet to find a NuGet.config file. Defaults to `null` which will use the root config. Use only if using NuGet as a provider.",
+					c => SetNugetConfigSearchDirectory(c) },
 				{"h|?|help", "show this message and exit", h => _help = h != null},
 			};
 
@@ -163,6 +167,21 @@ namespace Differ
 			var parts = input.Split(',', '|');
 			foreach (var part in parts)
 				Targets.Add(part);
+		}
+
+		private static void SetNugetConfigSearchDirectory(string searchDirectory)
+		{
+			if (string.IsNullOrEmpty(searchDirectory))
+			{
+				throw new ArgumentException("Cannot be null or empty", nameof(searchDirectory));
+			}
+
+			if (!Directory.Exists(searchDirectory))
+			{
+				throw new DirectoryNotFoundException($"Could not find directory from supplied value of '{searchDirectory}'.");
+			}
+
+			_nugetInstallerOptions.NuGetConfigSearchDirectory = searchDirectory;
 		}
 
 		private static void ShowHelp(OptionSet options, AssemblyProviderFactoryCollection providerFactoryCollection)

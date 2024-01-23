@@ -19,15 +19,25 @@ namespace Differ.Providers.NuGet
 		NuGetPackage InstallPackage(string packageName, string version, string targetDirectory);
 	}
 
+	public class NuGetInstallerOptions
+	{
+		public string NuGetConfigSearchDirectory { get; set; }
+	}
+
 	public class NuGet : INuGet
 	{
+		protected NuGetInstallerOptions Options { get; }
+
+		public NuGet(NuGetInstallerOptions options)
+			=> Options = options;
+
 		public virtual NuGetPackage InstallPackage(string packageName, string version, string targetDirectory)
 		{
 			if (!Directory.Exists(targetDirectory)) Directory.CreateDirectory(targetDirectory);
 
 			var packageVersion = NuGetVersion.Parse(version);
 			var nuGetFramework = NuGetFramework.AnyFramework;
-			var settings = Settings.LoadDefaultSettings(root: null);
+			var settings = Settings.LoadDefaultSettings(root: Options?.NuGetConfigSearchDirectory);
 			var sourceRepositoryProvider = new SourceRepositoryProvider(
 				new PackageSourceProvider(settings), Repository.Provider.GetCoreV3());
 
