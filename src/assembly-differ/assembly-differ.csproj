@@ -6,19 +6,16 @@
     <RootNamespace>AssemblyDiffer</RootNamespace>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-differ</ToolCommandName>
-
+    <RollForward>Major</RollForward>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
-
     <PackageIcon>nuget-icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/nullean/assembly-differ</RepositoryUrl>
     <PackageProjectUrl>https://github.com/nullean/assembly-differ</PackageProjectUrl>
     <PackageReleaseNotes>https://github.com/nullean/assembly-differ/releases</PackageReleaseNotes>
-
     <Title>assembly-differ: a dotnet tool to diff assemblies</Title>
     <Description>Diff assemblies and nuget packages</Description>
-
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,6 +39,7 @@
     <PackageReference Include="NuGet.Common" Version="6.13.1" />
     <PackageReference Update="MinVer" Version="4.3.0" />
   </ItemGroup>
+
   <ItemGroup>
     <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\JustAssembly.API.dll</HintPath>

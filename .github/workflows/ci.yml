@@ -42,9 +42,9 @@ jobs:
       name: Build
     - run: ./build.sh generatepackages -s true
       name: Generate local nuget packages
-    # - run: ./build.sh validatepackages -s true
+    - run: ./build.sh validatepackages -s true
     #   name: "validate *.npkg files that were created"
-    - run: ./build.sh generateapichanges -s true
+    # - run: ./build.sh generateapichanges -s true
       name: "Inspect public API changes"
 
     - name: publish to github package repository

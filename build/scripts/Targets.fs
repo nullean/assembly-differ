@@ -17,7 +17,7 @@ let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
         let r = Proc.Start("dotnet", "minver", "-p", "canary.0")
-        let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith("MinVer:")))
+        let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith "MinVer:"))
         o.Line
     )
     
@@ -45,19 +45,19 @@ let private generatePackages (arguments:ParseResults<Arguments>) =
     
 let private validatePackages (arguments:ParseResults<Arguments>) =
     let nugetPackage =
-        let p = Paths.Output.GetFiles("*.nupkg") |> Seq.sortByDescending(fun f -> f.CreationTimeUtc) |> Seq.head
+        let p = Paths.Output.GetFiles "*.nupkg" |> Seq.sortByDescending(fun f -> f.CreationTimeUtc) |> Seq.head
         Paths.RootRelative p.FullName
-    exec "dotnet" ["nupkg-validator"; nugetPackage; "-v"; currentVersionInformational.Value; "-a"; Paths.ToolName; "-k"; "96c599bbe3e70f5d"] |> ignore
+    exec "dotnet" ["nupkg-validator"; nugetPackage; "-v"; currentVersionInformational.Value; "-a"; Paths.ToolName; "-k"; "96c599bbe3e70f5d"; "--allow-roll-forward"] |> ignore
 
 let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative <| Paths.Output.FullName
     let currentVersion = currentVersion.Value
     let project = Paths.RootRelative Paths.ToolProject.FullName
-    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "net6.0"; "--project"; project]
+    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "net9.0"; "--project"; project]
     let args =
         [
-            (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
-            (sprintf "directory|src/%s/bin/Release/net6.0" Paths.ToolName);
+            sprintf "previous-nuget|%s|%s|net8.0" Paths.ToolName currentVersion;
+            sprintf "directory|src/%s/bin/Release/net9.0" Paths.ToolName;
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
         
