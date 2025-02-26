@@ -8,7 +8,6 @@ open CommandLine
 open Fake.Tools.Git
 open ProcNet
 
-    
 let exec binary args =
     let r = Proc.Exec (binary, args |> List.map (fun a -> sprintf "\"%s\"" a) |> List.toArray)
     match r.HasValue with | true -> r.Value | false -> failwithf "invocation of `%s` timed out" binary
