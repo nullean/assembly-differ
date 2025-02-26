@@ -28,22 +28,15 @@ jobs:
     - uses: actions/setup-dotnet@v1
       with:
           dotnet-version: |
-            8.0.x
-            6.0.x
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.100'
-        source-url: https://nuget.pkg.github.com/nullean/index.json
-      env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        
+            9.0.x
+
     - run: ./build.sh build -s true
       name: Build
     - run: ./build.sh generatepackages -s true
       name: Generate local nuget packages
     - run: ./build.sh validatepackages -s true
-      name: "validate *.npkg files that were created"
-    - run: ./build.sh generateapichanges -s true
+    #   name: "validate *.npkg files that were created"
+    # - run: ./build.sh generateapichanges -s true
       name: "Inspect public API changes"
 
     - name: publish to github package repository

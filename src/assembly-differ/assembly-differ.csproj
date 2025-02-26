@@ -1,24 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
     <AssemblyName>assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-differ</ToolCommandName>
-
+    <RollForward>Major</RollForward>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
-
     <PackageIcon>nuget-icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/nullean/assembly-differ</RepositoryUrl>
     <PackageProjectUrl>https://github.com/nullean/assembly-differ</PackageProjectUrl>
     <PackageReleaseNotes>https://github.com/nullean/assembly-differ/releases</PackageReleaseNotes>
-
     <Title>assembly-differ: a dotnet tool to diff assemblies</Title>
     <Description>Diff assemblies and nuget packages</Description>
-
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,18 +27,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Argu" Version="6.2.5" />
     <PackageReference Include="Mono.Options" Version="5.3.0.1" />
     <PackageReference Include="Proc" Version="0.3.7" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-
-    <PackageReference Include="NuGet.Frameworks" Version="5.11.5" />
-    <PackageReference Include="NuGet.Versioning" Version="5.11.5" />
-    <PackageReference Include="NuGet.Protocol" Version="5.11.5" />
-    <PackageReference Include="NuGet.Packaging" Version="5.11.5" />
-    <PackageReference Include="NuGet.Resolver" Version="5.11.5" />
-    <PackageReference Include="NuGet.Common" Version="5.11.5" />
+    <PackageReference Include="NuGet.Frameworks" Version="6.13.1" />
+    <PackageReference Include="NuGet.Versioning" Version="6.13.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.13.1" />
+    <PackageReference Include="NuGet.Packaging" Version="6.13.1" />
+    <PackageReference Include="NuGet.Resolver" Version="6.13.1" />
+    <PackageReference Include="NuGet.Common" Version="6.13.1" />
     <PackageReference Update="MinVer" Version="4.3.0" />
   </ItemGroup>
+
   <ItemGroup>
     <Reference Include="JustAssembly.API, Version=0.0.0.1, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\JustAssembly.API.dll</HintPath>
