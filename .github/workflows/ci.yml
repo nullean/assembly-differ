@@ -27,17 +27,23 @@ jobs:
         git tag --list
     - uses: actions/setup-dotnet@v4
       with:
-          dotnet-version: 9.0.x
+          # 6.x is required to run generate release notes (for now)
+          dotnet-version: |
+            9.0.x
+            6.0.x
           source-url: https://nuget.pkg.github.com/nullean/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
     - run: ./build.sh build -s true
       name: Build
+    
     - run: ./build.sh generatepackages -s true
       name: Generate local nuget packages
+    
     # - run: ./build.sh validatepackages -s true
     #   name: "validate *.npkg files that were created"
+    
     - run: ./build.sh generateapichanges -s true
       name: "Inspect public API changes"
 
@@ -50,6 +56,7 @@ jobs:
     - run: ./build.sh generatereleasenotes -s true
       name: Generate release notes for tag
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
+
     - run: ./build.sh createreleaseongithub -s true --token ${{secrets.GITHUB_TOKEN}}
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
