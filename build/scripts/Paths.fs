@@ -8,7 +8,7 @@ let Repository = sprintf "nullean/%s" ToolName
 
 let Root =
     let mutable dir = DirectoryInfo(".")
-    while dir.GetFiles("*.sln").Length = 0 do dir <- dir.Parent
+    while dir.GetFiles("*.slnx").Length = 0 do dir <- dir.Parent
     Environment.CurrentDirectory <- dir.FullName
     dir
     
