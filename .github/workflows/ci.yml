@@ -18,19 +18,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 1
     - run: |
         git fetch --prune --unshallow --tags
         echo exit code $?
         git tag --list
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
-          # 6.x is required to run generate release notes (for now)
           dotnet-version: |
-            9.0.x
-            6.0.x
+            10.0.x
           source-url: https://nuget.pkg.github.com/nullean/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -61,6 +59,6 @@ jobs:
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
       
-    - run: dotnet nuget push build/output/*.nupkg -k ${{secrets.NUGET_ORG_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols true
+    - run: dotnet nuget push 'build/output/*.nupkg' -k ${{secrets.NUGET_ORG_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols true
       name: release to nuget.org
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')

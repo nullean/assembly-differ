@@ -2,10 +2,10 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MinVerDefaultPreReleaseIdentifiers>canary.0</MinVerDefaultPreReleaseIdentifiers>
-    <MinVerMinimumMajorMinor>0.2</MinVerMinimumMajorMinor>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="2.5.0">
+    <PackageReference Include="MinVer" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>

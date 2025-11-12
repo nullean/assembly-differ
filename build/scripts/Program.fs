@@ -26,7 +26,8 @@ let main argv =
         Targets.Setup parsed arguments
         let swallowTypes = [typeof<ProcExecException>; typeof<ExceptionExiter>]
         
-        Targets.RunTargetsAndExit
-            ([target], (fun e -> swallowTypes |> List.contains (e.GetType()) ), ":")
+        task {
+            return! Targets.RunTargetsAndExitAsync([ target ], (fun e -> swallowTypes |> List.contains (e.GetType())), (fun _ -> ":"), null, null)
+        } |> Async.AwaitTask |> Async.RunSynchronously
         0
         
