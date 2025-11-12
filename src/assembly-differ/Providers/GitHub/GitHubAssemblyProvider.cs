@@ -55,10 +55,11 @@ namespace Differ.Providers.GitHub
 			var arguments = new StartArguments(_command.BuildCommand, _command.BuildArguments)
 			{
 				WorkingDirectory = repoDirectory,
+				Timeout = TimeSpan.FromMinutes(10),
 				WaitForStreamReadersTimeout = TimeSpan.FromMinutes(1),
 			};
 
-			result = Proc.Start(arguments, TimeSpan.FromMinutes(10));
+			result = Proc.Start(arguments);
 
 			var output = Path.GetFullPath(Path.Combine(repoDirectory, _command.Output));
 			var isFile = false;

@@ -9,22 +9,19 @@ open Fake.Tools.Git
 open ProcNet
 
 let exec binary args =
-    let r = Proc.Exec (binary, args |> List.map (fun a -> sprintf "\"%s\"" a) |> List.toArray)
-    match r.HasValue with | true -> r.Value | false -> failwithf "invocation of `%s` timed out" binary
+    Proc.Exec (binary, args |> List.toArray)
     
 let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
 let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
-        let r = Proc.Start("dotnet", "minver", "-p", "canary.0")
+        let r = Proc.Start("dotnet", "minver", "-p", "canary.0", "-m", "0.1")
         let o = r.ConsoleOut |> Seq.find (fun l -> not(l.Line.StartsWith "MinVer:"))
         o.Line
     )
     
 let private currentVersionInformational =
-    lazy(
-        sprintf "%s+%s" currentVersion.Value (Information.getCurrentSHA1( "."))
-    )
+    lazy(sprintf "%s+%s" currentVersion.Value (Information.getCurrentSHA1( ".")))
 
 let private clean (arguments:ParseResults<Arguments>) =
     if (Paths.Output.Exists) then Paths.Output.Delete (true)
