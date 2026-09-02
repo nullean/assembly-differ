@@ -15,10 +15,12 @@ type Arguments =
     | [<CliPrefix(CliPrefix.None);SubCommand>] Release
     
     | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] CreateReleaseOnGithub 
+    | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] PublishContainers
     | [<CliPrefix(CliPrefix.None);SubCommand>] Publish
     
     | [<Inherit;AltCommandLine("-s")>] SingleTarget of bool
     | [<Inherit>] Token of string 
+    | [<Inherit>] Push
 with
     interface IArgParserTemplate with
         member this.Usage =
@@ -30,6 +32,7 @@ with
             
             | SingleTarget _ -> "Runs the provided sub command without running their dependencies"
             | Token _ -> "Token to be used to authenticate with github"
+            | Push -> "publishcontainers only: push the built image to ghcr.io instead of building it into the local Docker daemon"
             
             | PristineCheck  
             | GeneratePackages
@@ -37,6 +40,7 @@ with
             | GenerateReleaseNotes
             | GenerateApiChanges
             | CreateReleaseOnGithub 
+            | PublishContainers
                 -> "Undocumented, dependent target"
     member this.Name =
         match FSharpValue.GetUnionFields(this, typeof<Arguments>) with

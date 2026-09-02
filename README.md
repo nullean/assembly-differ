@@ -24,6 +24,34 @@ On Linux, Windows and macOS/arm64, this resolves to a self-contained native-AOT 
 shared .NET runtime required, and no first-run JIT warmup. Everywhere else, it falls back to a
 framework-dependent build (requires the .NET runtime the tool targets to already be installed).
 
+## GitHub Action
+
+```yaml
+- uses: nullean/assembly-differ@main
+  with:
+    first: "nuget|NEST|6.1.0|net46"
+    second: "nuget|NEST|6.2.0|net46"
+    args: --target NEST --format markdown
+```
+
+Runs `assembly-differ` from a pre-built, distroless container (`ghcr.io/nullean/assembly-differ`) — no
+.NET SDK install needed in the workflow. `first` and `second` are the two provider specs (see below);
+extra flags pass through verbatim via `args`. Linux runners only (`ubuntu-latest` and similar) —
+container actions can't run on Windows or macOS runners.
+
+## Container image
+
+`ghcr.io/nullean/assembly-differ` also works as a general-purpose container, outside GitHub Actions —
+GitLab CI, a local machine without the .NET SDK, anywhere `docker run` works:
+
+```sh
+docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge diff "directory|/workspace/old" "directory|/workspace/new"
+```
+
+Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
+`assembly-differ`'s own releases — `edge` tracks the latest commit on `master`, `latest` and a semver
+tag (e.g. `0.17.0`) follow tagged releases.
+
 ## Run 
 
 ```bat
