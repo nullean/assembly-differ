@@ -16,7 +16,31 @@
     <PackageReleaseNotes>https://github.com/nullean/assembly-differ/releases</PackageReleaseNotes>
     <Title>assembly-differ: a dotnet tool to diff assemblies</Title>
     <Description>Diff assemblies and nuget packages</Description>
+
+    <!-- Native-AOT tool packaging: one package per RID plus an 'any' framework-dependent fallback.
+         The root package's DotnetToolSettings.xml (v2) maps each RID to its per-RID package.
+         Installing requires the .NET 10 SDK or greater. -->
+    <RuntimeIdentifiers>linux-x64;linux-arm64;win-x64;win-arm64;osx-arm64;any</RuntimeIdentifiers>
   </PropertyGroup>
+
+  <!-- AOT settings apply only when a specific RID is targeted (dotnet pack -r <rid>). Without this
+       guard they get baked into the runtimeconfig.json of the portable 'any' fallback too. Signing is
+       skipped for the same reason: a native-AOT build has no loadable managed assembly to sign. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <PublishAot>true</PublishAot>
+    <PublishSelfContained>true</PublishSelfContained>
+    <StripSymbols>true</StripSymbols>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+
+  <!-- The nuget/previous-nuget providers pull repository-signature metadata through
+       NuGet.Protocol, which leans on Newtonsoft.Json's reflection-based constructor resolution for
+       types like RepositoryCertificateInfo. Trimming removes the constructor that resolution needs,
+       so these two assemblies are rooted (kept whole) rather than trimmed. -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <TrimmerRootAssembly Include="NuGet.Protocol" />
+    <TrimmerRootAssembly Include="Newtonsoft.Json" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">

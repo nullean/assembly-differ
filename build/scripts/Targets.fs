@@ -38,11 +38,39 @@ let private pristineCheck (arguments:ParseResults<Arguments>) =
 
 let private generatePackages (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative Paths.Output.FullName
-    exec "dotnet" ["pack"; "-c"; "Release"; "-o"; output] |> ignore
-    
+    if not Paths.Output.Exists then Paths.Output.Create()
+
+    // A plain `dotnet pack` emits the root package (whose DotnetToolSettings.xml v2 maps each RID to
+    // its own package) AND a package per RID — but native AOT can only compile for the machine it
+    // runs on, so those per-RID outputs from a single machine are self-contained MANAGED builds,
+    // silently missing the AOT compilation. We therefore keep only the root and the portable 'any'
+    // fallback here, and take the real per-RID packages from the CI matrix, where each is compiled
+    // on a matching runner (see aot-pack in .github/workflows/ci.yml).
+    let staging = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, "..", "differ-staging")
+    if Directory.Exists staging then Directory.Delete(staging, true)
+    exec "dotnet" ["pack"; sprintf "src/%s/%s.csproj" Paths.ToolName Paths.ToolName; "-c"; "Release"; "-o"; staging] |> ignore
+
+    let isPerRidPackage (name: string) =
+        Paths.AotRuntimeIdentifiers |> List.exists (fun rid -> name.Contains(sprintf ".%s." rid))
+    DirectoryInfo(staging).GetFiles("*.nupkg")
+    |> Seq.filter (fun f -> not (isPerRidPackage f.Name))
+    |> Seq.iter (fun f ->
+        let destination = Path.Combine(Paths.Output.FullName, f.Name)
+        printfn "keeping %s" f.Name
+        f.CopyTo(destination, true) |> ignore)
+
+    Directory.Delete(staging, true)
+
 let private validatePackages (arguments:ParseResults<Arguments>) =
     let nugetPackage =
-        let p = Paths.Output.GetFiles "*.nupkg" |> Seq.sortByDescending(fun f -> f.CreationTimeUtc) |> Seq.head
+        // Only the root/`any` package carries a signed managed assembly; the per-RID AOT packages
+        // hold a native binary with no managed identity to check.
+        let isPerRidPackage (name: string) =
+            Paths.AotRuntimeIdentifiers |> List.exists (fun rid -> name.Contains(sprintf ".%s." rid))
+        let p =
+            Paths.Output.GetFiles "*.nupkg"
+            |> Seq.filter (fun f -> not (isPerRidPackage f.Name))
+            |> Seq.sortByDescending(fun f -> f.CreationTimeUtc) |> Seq.head
         Paths.RootRelative p.FullName
     exec "dotnet" ["nupkg-validator"; nugetPackage; "-v"; currentVersionInformational.Value; "-a"; Paths.ToolName; "-k"; "96c599bbe3e70f5d"; "--allow-roll-forward"] |> ignore
 

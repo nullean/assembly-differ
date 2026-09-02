@@ -20,6 +20,10 @@ Distributed as a .NET tool so install using the following
 dotnet tool install assembly-differ
 ```
 
+On Linux, Windows and macOS/arm64, this resolves to a self-contained native-AOT executable — no
+shared .NET runtime required, and no first-run JIT warmup. Everywhere else, it falls back to a
+framework-dependent build (requires the .NET runtime the tool targets to already be installed).
+
 ## Run 
 
 ```bat

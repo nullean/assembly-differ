@@ -6,6 +6,10 @@ open System.IO
 let ToolName = "assembly-differ"
 let Repository = sprintf "nullean/%s" ToolName
 
+/// The RIDs we ship native-AOT tool packages for. AOT compilation requires a matching
+/// OS/arch, so CI packs one RID per runner; this list only documents the set.
+let AotRuntimeIdentifiers = ["linux-x64"; "linux-arm64"; "win-x64"; "win-arm64"; "osx-arm64"]
+
 let Root =
     let mutable dir = DirectoryInfo(".")
     while dir.GetFiles("*.slnx").Length = 0 do dir <- dir.Parent
