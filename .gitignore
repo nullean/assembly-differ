@@ -84,3 +84,6 @@ project.lock.json
 # temporary location for doc generation
 docs-temp
 *.binlog
+
+# Claude Code personal settings
+.claude/settings.local.json
