@@ -22,6 +22,10 @@
          The root package's DotnetToolSettings.xml (v2) maps each RID to its per-RID package.
          Installing requires the .NET 10 SDK or greater. -->
     <RuntimeIdentifiers>linux-x64;linux-arm64;win-x64;win-arm64;osx-arm64;any</RuntimeIdentifiers>
+    <!-- Lets `dotnet publish -f net10.0 -r <rid> -t:PublishContainer` containerize this same AOT
+         publish output — see build/scripts/Targets.fs's publishContainers target and
+         ghcr.io/nullean/assembly-differ. -->
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
   </PropertyGroup>
 
   <!-- AOT settings apply only when a specific RID is targeted (dotnet pack -r <rid>). Without this

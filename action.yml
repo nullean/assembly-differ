@@ -1,0 +1,24 @@
+name: 'assembly-differ'
+description: 'Diff assemblies or NuGet packages from different sources and report API changes'
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'
+inputs:
+  first:
+    description: 'Old assembly provider, e.g. "nuget|NEST|6.1.0|net46" or "directory|C:\6.1.0"'
+    required: true
+  second:
+    description: 'New assembly provider, same format as "first"'
+    required: true
+  args:
+    description: 'Extra arguments passed through to assembly-differ verbatim, e.g. "--target NEST --format markdown"'
+    required: false
+    default: ''
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/nullean/assembly-differ:edge'
+  args:
+    - diff
+    - ${{ inputs.first }}
+    - ${{ inputs.second }}
+    - ${{ inputs.args }}

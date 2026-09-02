@@ -44,6 +44,21 @@ jobs:
       name: Pack native-AOT tool for ${{ matrix.rid }}
       shell: bash
 
+    # Container image, linux-x64 only for now — the platform every GitHub-hosted Linux runner
+    # already matches. No --push here and no registry login on this leg, so this only proves the
+    # container build itself still works: AOT compiles, the chiseled base image resolves, and the
+    # SDK's container tooling produces an image in the local Docker daemon. The real push to
+    # ghcr.io happens once, in the build job below, which does pass --push.
+    - name: Build container image (no push)
+      if: matrix.rid == 'linux-x64'
+      run: ./build.sh publishcontainers -s true
+      shell: bash
+
+    - name: Report container image size
+      if: matrix.rid == 'linux-x64'
+      shell: bash
+      run: docker images nullean/assembly-differ --format '{{.Tag}}\t{{.Size}}'
+
     - name: Upload per-RID package
       if: github.event_name == 'push'
       uses: actions/upload-artifact@v4
@@ -55,6 +70,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: aot-pack
+    permissions:
+      contents: write   # create GitHub release
+      packages: write   # push to GitHub Packages and ghcr.io
+      issues: write     # release-notes creates labels for its categories
     steps:
     - uses: actions/checkout@v5
       with:
@@ -96,6 +115,21 @@ jobs:
       shell: bash
       run:  |
          until dotnet nuget push build/output/*.nupkg -k ${{secrets.GITHUB_TOKEN}} --skip-duplicate --no-symbols true; do echo "Retrying"; sleep 1; done;
+
+    # ghcr.io/nullean/assembly-differ, matching curb's own tagging: "edge" on every push, plus
+    # "latest" and the semver when this push is an exact release tag — see
+    # publishContainers/containerImageTags in Targets.fs for how that split is decided.
+    - name: Log in to ghcr.io
+      if: github.event_name == 'push'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish container image
+      if: github.event_name == 'push'
+      run: ./build.sh publishcontainers -s true --push
 
     - run: ./build.sh generatereleasenotes -s true
       name: Generate release notes for tag
