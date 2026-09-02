@@ -103,6 +103,7 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "net10.0"; "--project"; project]
     let args =
         [
+            "diff";
             sprintf "previous-nuget|%s|%s|net8.0" Paths.ToolName currentVersion;
             sprintf "directory|src/%s/bin/Release/net10.0" Paths.ToolName;
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output

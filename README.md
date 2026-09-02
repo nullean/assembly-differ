@@ -36,7 +36,7 @@ You can omit `dotnet` if you install this as a global tool
 to see the supported Assembly Providers and outputs:
 
 ```bat
-assembly-differ <Old Assembly Provider> <New Assembly Provider> [Options]
+assembly-differ diff <Old Assembly Provider> <New Assembly Provider> [Options]
 
 Supported Assembly Providers:
 
@@ -47,32 +47,45 @@ Supported Assembly Providers:
   github|<owner>/<repo>|<commit>|<build command>|<relative output path>
 
 Options:
-  -t, --target=VALUE         the assembly targets. Defaults to *all* assemblies
-                               located by the provider
-  -f, --format=VALUE         the format of the diff output. Supported formats
-                               are xml, markdown, asciidoc. Defaults to xml
-  -o, --output=VALUE         the output directory. Defaults to current directory
-  -h, -?, --help             show this message and exit
+  -t, --target <values>              the assembly targets. Defaults to *all* assemblies
+                                      located by the provider. May be given more than once.
+  -f, --format <string>              the format of the diff output. Supported formats
+                                      are xml, markdown, asciidoc. Defaults to xml
+  -o, --output <string>              the output directory or file name. If not specified only prints to console
+  -p, --prevent-change <string>      fail if the change detected is higher than specified:
+                                      none, patch, minor, or major. Defaults to none
+  -a, --allow-empty-previous-nuget   don't fail when no previous nuget package could be found to diff against
+  -h, --help                         show this message and exit
 ```
+
+> [!NOTE]
+> Starting from `1.0.0`, the tool moved off `Mono.Options` onto [`Nullean.Argh`](https://github.com/nullean/argh)
+> for CLI parsing, which introduces an explicit `diff` subcommand alongside the bare invocation. `diff` is
+> optional as long as an option comes before the two provider arguments (e.g.
+> `assembly-differ --target NEST "nuget|..." "nuget|..."`); providers as the very first arguments
+> (`assembly-differ "nuget|..." "nuget|..."`) still need the explicit subcommand
+> (`assembly-differ diff "nuget|..." "nuget|..."`), since the CLI parser resolves a bare leading argument
+> as a subcommand name first. `--target` also moves from a single comma/pipe-separated value to a
+> repeatable flag (`--target a --target b` instead of `--target a,b`).
 
 #### Examples:
 
 Diff between two local assemblies:
 
 ```bat
-dotnet assembly-differ "assembly|C:\6.1.0\Nest.dll" "assembly|C:\6.2.0\Nest.dll"
+dotnet assembly-differ diff "assembly|C:\6.1.0\Nest.dll" "assembly|C:\6.2.0\Nest.dll"
 ```
 
 Diff between all assemblies in directories, matched by name:
 
 ```bat
-dotnet assembly-differ "directory|C:\6.1.0" "directory|C:\6.2.0"
+dotnet assembly-differ diff "directory|C:\6.1.0" "directory|C:\6.2.0"
 ```
 
 Diff NuGet packages:
 
 ```bat
-dotnet assembly-differ "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
+dotnet assembly-differ diff "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
 ```
 
 Diff Previous NuGet packages:
@@ -81,16 +94,16 @@ Imagine you want to release `6.2.0` and want to diff with whatever is the latest
 `previous-nuget` will do the heavy lifting of finding that previous release
 
 ```bat
-dotnet assembly-differ "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
+dotnet assembly-differ diff "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
 ```
 
 Diff GitHub commits:
 
 ```bat
-dotnet assembly-differ "github|elastic/elasticsearch-net|6.1.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46" "github|elastic/elasticsearch-net|6.2.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
+dotnet assembly-differ diff "github|elastic/elasticsearch-net|6.1.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46" "github|elastic/elasticsearch-net|6.2.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
 ```
 
-Any of the above can be mixed. For example, to compare GitHub HEAD against last NuGet package, and output in Markdown
+Any of the above can be mixed. For example, to compare GitHub HEAD against last NuGet package, and output in Markdown — note that leading with an option lets you drop the `diff` subcommand:
 
 ```bat
 dotnet assembly-differ --format markdown "nuget|NEST|6.2.0|net46" "github|elastic/elasticsearch-net|HEAD|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
@@ -102,7 +115,7 @@ You can run the tool locally against itself using the following during developme
 
 ```bat
 dotnet build -c Release
-dotnet run --framework netcoreapp3.1 -- "previous-nuget|assembly-differ|0.9.1|netcoreapp3.1" "directory|bin/Release/netcoreapp3.1" --target=assembly-differ
+dotnet run -f net10.0 -- diff "previous-nuget|assembly-differ|0.9.1|net10.0" "directory|bin/Release/net10.0" --target assembly-differ
 ```
 
 # FUTURE PLANS
