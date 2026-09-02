@@ -13,6 +13,9 @@ namespace Differ.Providers.PreviousNuGet
 {
 	public class PreviousNugetLocator : Differ.Providers.NuGet.NuGet
 	{
+		public PreviousNugetLocator(NuGetInstallerOptions options) : base(options)
+		{}
+
 		public override NuGetPackage InstallPackage(string packageName, string currentVersion, string targetDirectory)
 		{
 			var nugetVersion = new NuGetVersion(currentVersion);
