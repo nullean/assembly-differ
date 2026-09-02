@@ -1,0 +1,44 @@
+name: create-major-tag
+
+# Lets consumers pin `uses: docker://ghcr.io/nullean/assembly-differ:1` or a floating major git tag
+# instead of an exact patch version, matching elastic/docs-actions' own release workflow:
+# https://github.com/elastic/docs-actions/blob/main/.github/workflows/create-major-tag.yml
+
+on:
+  release:
+    types:
+      - published
+
+permissions: {}
+
+concurrency:
+  group: create-major-tag
+  cancel-in-progress: false
+
+jobs:
+  create-major-tag:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+
+      - name: Validate and extract major version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '${TAG}' does not match expected semver format (N.N.N)"
+            exit 1
+          fi
+          echo "MAJOR_VERSION=${TAG%%.*}" >> "${GITHUB_ENV}"
+
+      - name: Create major tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git tag "v${MAJOR_VERSION}"
+          git push -f origin "refs/tags/v${MAJOR_VERSION}"
