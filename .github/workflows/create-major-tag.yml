@@ -1,8 +1,7 @@
 name: create-major-tag
 
-# Lets consumers pin `uses: docker://ghcr.io/nullean/assembly-differ:1` or a floating major git tag
-# instead of an exact patch version, matching elastic/docs-actions' own release workflow:
-# https://github.com/elastic/docs-actions/blob/main/.github/workflows/create-major-tag.yml
+# Lets a workflow pin this repo as a GitHub Action with `uses: nullean/assembly-differ@v1` instead of
+# an exact release tag, the same way actions/checkout@v5 stays on v5 across patch and minor releases.
 
 on:
   release:
