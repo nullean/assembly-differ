@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <AssemblyName>assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
     <PackAsTool>true</PackAsTool>
@@ -16,7 +17,31 @@
     <PackageReleaseNotes>https://github.com/nullean/assembly-differ/releases</PackageReleaseNotes>
     <Title>assembly-differ: a dotnet tool to diff assemblies</Title>
     <Description>Diff assemblies and nuget packages</Description>
+
+    <!-- Native-AOT tool packaging: one package per RID plus an 'any' framework-dependent fallback.
+         The root package's DotnetToolSettings.xml (v2) maps each RID to its per-RID package.
+         Installing requires the .NET 10 SDK or greater. -->
+    <RuntimeIdentifiers>linux-x64;linux-arm64;win-x64;win-arm64;osx-arm64;any</RuntimeIdentifiers>
   </PropertyGroup>
+
+  <!-- AOT settings apply only when a specific RID is targeted (dotnet pack -r <rid>). Without this
+       guard they get baked into the runtimeconfig.json of the portable 'any' fallback too. Signing is
+       skipped for the same reason: a native-AOT build has no loadable managed assembly to sign. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <PublishAot>true</PublishAot>
+    <PublishSelfContained>true</PublishSelfContained>
+    <StripSymbols>true</StripSymbols>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+
+  <!-- The nuget/previous-nuget providers pull repository-signature metadata through
+       NuGet.Protocol, which leans on Newtonsoft.Json's reflection-based constructor resolution for
+       types like RepositoryCertificateInfo. Trimming removes the constructor that resolution needs,
+       so these two assemblies are rooted (kept whole) rather than trimmed. -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <TrimmerRootAssembly Include="NuGet.Protocol" />
+    <TrimmerRootAssembly Include="Newtonsoft.Json" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
@@ -27,15 +52,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Argu" Version="6.2.5" />
-    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
+    <PackageReference Include="Nullean.Argh" Version="0.18.0" />
     <PackageReference Include="Proc" Version="0.9.1" />
-    <PackageReference Include="NuGet.Frameworks" Version="6.13.1" />
-    <PackageReference Include="NuGet.Versioning" Version="6.13.1" />
-    <PackageReference Include="NuGet.Protocol" Version="6.13.1" />
-    <PackageReference Include="NuGet.Packaging" Version="6.13.1" />
-    <PackageReference Include="NuGet.Resolver" Version="6.13.1" />
-    <PackageReference Include="NuGet.Common" Version="6.13.1" />
+    <PackageReference Include="NuGet.Frameworks" Version="7.9.0" />
+    <PackageReference Include="NuGet.Versioning" Version="7.9.0" />
+    <PackageReference Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageReference Include="NuGet.Packaging" Version="7.9.0" />
+    <PackageReference Include="NuGet.Resolver" Version="7.9.0" />
+    <PackageReference Include="NuGet.Common" Version="7.9.0" />
   </ItemGroup>
 
   <ItemGroup>
