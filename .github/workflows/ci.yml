@@ -74,6 +74,7 @@ jobs:
       contents: write   # create GitHub release
       packages: write   # push to GitHub Packages and ghcr.io
       issues: write     # release-notes creates labels for its categories
+      id-token: write   # NuGet trusted publishing: exchange the workflow's OIDC token for a short-lived key
     steps:
     - uses: actions/checkout@v5
       with:
@@ -139,6 +140,16 @@ jobs:
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
       
-    - run: dotnet nuget push 'build/output/*.nupkg' -k ${{secrets.NUGET_ORG_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
+    # Trusted publishing: nuget.org trusts this repository's ci.yml (a policy owned by the nullean
+    # organization), so there is no long-lived API key to expire. The key it returns lasts an hour, so the
+    # login sits right before the push. NUGET_USER is the nuget.org profile name, set at the org level.
+    - name: Log in to nuget.org (trusted publishing)
+      id: nuget-login
+      if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
+      uses: NuGet/login@v1
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
+    - run: dotnet nuget push 'build/output/*.nupkg' -k ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
       name: release to nuget.org
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
