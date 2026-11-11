@@ -49,7 +49,7 @@ docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge diff
 ```
 
 Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
-`assembly-differ`'s own releases — `edge` tracks the latest commit on `master`, `latest` and a semver
+`assembly-differ`'s own releases — `edge` tracks the latest commit on `main`, `latest` and a semver
 tag (e.g. `0.17.0`) follow tagged releases.
 
 ## Run 

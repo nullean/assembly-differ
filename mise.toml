@@ -1,0 +1,41 @@
+# Bootstraps the toolchain and is the one entry point: `mise run <task>`, the same task names in every nullean repo.
+# The .NET SDK version lives only in global.json: the first dotnet entry reads it from there (sdk.version is the first
+# "version" key). The net10.0 runtime is listed after it because the build project, nupkg-validator and the public
+# API diff run on net10.0.
+
+[env]
+DOTNET_NOLOGO = "1"
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+
+[tools]
+dotnet = ["""{{ read_file(path='global.json') | split(pat='"version"') | nth(n=1) | split(pat='"') | nth(n=1) }}""", "10"]
+gh = "latest"
+zizmor = "1"
+
+[tasks.setup]
+description = "Restore the local .NET tools (minver, release-notes, nupkg-validator)"
+run = "dotnet tool restore"
+
+[tasks.build]
+description = "Build the solution"
+depends = ["setup"]
+run = "dotnet run --project build/scripts -- build"
+
+[tasks.check]
+description = "Fail on workflow findings (zizmor)"
+run = "zizmor --min-severity medium ."
+
+[tasks.pack]
+description = "Build, pack the NuGet packages, validate them and report public API changes"
+depends = ["setup"]
+run = "dotnet run --project build/scripts -- pack"
+
+[tasks.clean]
+description = "Delete build output"
+run = "dotnet run --project build/scripts -- clean"
+
+[tasks.ci]
+description = "What CI's build job runs on every push: build, then pack, validate and diff the public API"
+depends = ["setup"]
+run = "dotnet run --project build/scripts -- ci"
