@@ -1,0 +1,13 @@
+name: dependabot-automerge
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  automerge:
+    uses: nullean/.github/.github/workflows/dependabot-automerge.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
+    permissions:
+      contents: write
+      pull-requests: write

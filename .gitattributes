@@ -1,0 +1,10 @@
+# The shared .editorconfig sets end_of_line = lf, and IDE0055 is an error: without this, a Windows checkout gets CRLF
+# and every C# line fails the build. Binary files a repository adds need their own `binary` line below.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.snk binary
+*.nupkg binary
+*.zip binary

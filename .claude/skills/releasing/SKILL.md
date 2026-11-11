@@ -5,11 +5,11 @@ description: Release this repository. Use when the user asks to release, ship a 
 
 # Release
 
-Releases are never cut from a pushed tag. release-drafter keeps a **draft release** up to date from the labels of merged
-pull requests; **publishing that draft** creates the tag and runs `.github/workflows/ci.yml` on it. There the `aot-pack`
-matrix builds the native-AOT package for every RID, and the `build` job packs the rest at the tag's version (MinVer),
-diffs their public API, pushes the container image (`ghcr.io/nullean/assembly-differ`, tagged `latest` and the version),
-pushes the packages to nuget.org with trusted publishing and appends the public API changes to the release notes.
+Releases are never cut from a pushed tag. release-drafter keeps a **draft release** up to date from the labels of
+merged pull requests; **publishing that draft** creates the tag and runs `.github/workflows/ci.yml` on it. Its release
+jobs pack at the tag's version (MinVer), push to nuget.org with trusted publishing (always from a job of `ci.yml`
+itself, which the nuget.org policy names) and, in repositories that ship binaries, attach them to the release. Which
+jobs those are, and anything else this repository does on a release, is in the Releasing section of `AGENTS.md`.
 
 ## Steps
 
@@ -33,7 +33,7 @@ pushes the packages to nuget.org with trusted publishing and appends the public 
 
    The maintainer often promotes the draft from the GitHub UI instead; both do the same.
 
-4. Follow the run and report the outcome, packages and container image included:
+4. Follow the run and report the outcome, packages and assets included:
 
    ```bash
    gh run watch "$(gh run list --workflow ci.yml --event release --limit 1 --json databaseId --jq '.[0].databaseId')"
@@ -42,8 +42,9 @@ pushes the packages to nuget.org with trusted publishing and appends the public 
 
 ## When it fails
 
-- Re-run the failed jobs (`gh run rerun <id> --failed`). The push uses `--skip-duplicate`, the image tags are
-  overwritten and the API changes are appended once, so a re-run is safe.
-- `trusted publishing` errors mean nuget.org's policy no longer names this repo's `ci.yml`. Only the maintainer can
-  fix that on nuget.org.
+- Re-run the failed jobs (`gh run rerun <id> --failed`). The push uses `--skip-duplicate` and asset uploads use
+  `--clobber`, so a re-run is safe.
+- `Token exchange failed (HTTP 401)` at the NuGet login means the push ran outside a job of this repo's `ci.yml` (for
+  example inside a shared workflow), or nuget.org's policy no longer names `ci.yml`. The first is a workflow fix; only
+  the maintainer can fix the second, on nuget.org.
 - Never delete a published tag or release to retry. Fix forward with a patch release.

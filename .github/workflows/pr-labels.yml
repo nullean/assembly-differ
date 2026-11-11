@@ -8,5 +8,5 @@ permissions: {}
 
 jobs:
   release-label:
-    uses: nullean/.github/.github/workflows/pr-labels.yml@83ef343759c443afe1964e9c33327527f8677b05 # v1.3.0
+    uses: nullean/.github/.github/workflows/pr-labels.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
     permissions: {}

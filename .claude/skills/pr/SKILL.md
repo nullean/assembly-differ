@@ -157,6 +157,18 @@ EOF
 )"
 ```
 
-### 9. Return the PR URL
+### 9. Turn on auto-merge
+
+Every nullean repository squash-merges and requires the release label, zizmor and CI. Once the PR exists, let it merge
+itself when those pass, unless the user asked to hold it:
+
+```bash
+gh pr merge --auto --squash
+```
+
+Say so in your reply: "auto-merge is on; it squash-merges once the required checks pass". Don't merge it with `--admin`
+to skip checks.
+
+### 10. Return the PR URL
 
 Always print the URL so the user can open it directly.
