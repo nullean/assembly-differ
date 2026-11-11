@@ -2,13 +2,7 @@ name: Always be deploying
 
 on:
   pull_request:
-    paths-ignore: 
-      - 'README.md'
-      - '.editorconfig'
   push:
-    paths-ignore:
-      - 'README.md'
-      - '.editorconfig'
     branches:
       - main
   # nuget.org's trusted publishing policies name this file, so releasing happens here too: publishing the
