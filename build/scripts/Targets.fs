@@ -35,7 +35,10 @@ let private currentVersionInformational =
 
 let private clean (arguments:ParseResults<Arguments>) =
     if (Paths.Output.Exists) then Paths.Output.Delete (true)
-    exec "dotnet" ["clean"] |> ignore
+    // clean the tool project but not this build itself: `dotnet clean` on the solution would delete the
+    // assemblies the running build still loads lazily (Fake, Proc) and fail the next target
+    Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories)
+    |> Seq.iter (fun p -> exec "dotnet" ["clean"; p; "-c"; "Release"; "-v"; "q"] |> ignore)
     
 let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
 
@@ -163,7 +166,7 @@ let private createReleaseOnGithub (arguments:ParseResults<Arguments>) =
     exec "dotnet" (["release-notes"] @ releaseArgs) |> ignore
 
 /// Tags for the container image, mirroring the versioning currentVersion already derives from git:
-/// "edge" always (so `ghcr.io/nullean/assembly-differ:edge` is always the latest master build), plus
+/// "edge" always (so `ghcr.io/nullean/assembly-differ:edge` is always the latest main build), plus
 /// "latest" and the plain semver when this is an exact release tag rather than a canary commit —
 /// MinVer's canary suffix always contains a hyphen, a clean tag never does.
 let private containerImageTags =
@@ -221,6 +224,13 @@ let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
     step Clean.Name clean
     cmd Build.Name None (Some [Clean.Name]) <| fun _ -> build parsed
     
+    // there are no tests, so ci is pack: build, then create, validate and diff the packages
+    cmd Pack.Name
+        (Some [Build.Name;])
+        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateApiChanges.Name])
+        ignore
+    cmd Ci.Name (Some [Pack.Name;]) None ignore
+
     step PristineCheck.Name pristineCheck
     step GeneratePackages.Name generatePackages 
     step ValidatePackages.Name validatePackages 

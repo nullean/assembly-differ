@@ -1,11 +1,13 @@
 <Solution>
   <Folder Name="/build/">
+    <File Path="AGENTS.md" />
     <File Path=".github/workflows/ci.yml" />
     <File Path="build.bat" />
     <File Path="build.sh" />
     <File Path="Directory.Build.props" />
     <File Path="dotnet-tools.json" />
     <File Path="global.json" />
+    <File Path="mise.toml" />
     <File Path="LICENSE" />
     <File Path="nuget-icon.png" />
     <File Path="README.md" />

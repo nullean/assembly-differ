@@ -10,9 +10,13 @@ on:
       - 'README.md'
       - '.editorconfig'
     branches:
-      - master 
+      - main
     tags:
       - "*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read # jobs that publish raise their own permissions
 
 jobs:
   # Native AOT can only compile for the OS/arch it runs on, so each leg compiles its own RID and
@@ -32,17 +36,21 @@ jobs:
           && '[{"rid":"linux-x64","runner":"ubuntu-latest"}]'
           || '[{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"win-arm64","runner":"windows-11-arm"},{"rid":"osx-arm64","runner":"macos-latest"}]') }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 1
-    - uses: actions/setup-dotnet@v5
+        persist-credentials: false
+    - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
-        dotnet-version: |
-          10.0.x
+        cache: false # this workflow publishes what these jobs build; never restore a cache a PR could have written
+      env:
+        MISE_JOBS: "1" # dotnet versions share one DOTNET_ROOT; installing them in parallel races
 
-    - run: dotnet pack src/assembly-differ/assembly-differ.csproj -c Release -r ${{ matrix.rid }} -o build/output
+    - run: dotnet pack src/assembly-differ/assembly-differ.csproj -c Release -r "$RID" -o build/output
       name: Pack native-AOT tool for ${{ matrix.rid }}
       shell: bash
+      env:
+        RID: ${{ matrix.rid }}
 
     # Container image, linux-x64 only for now — the platform every GitHub-hosted Linux runner
     # already matches. No --push here and no registry login on this leg, so this only proves the
@@ -61,7 +69,7 @@ jobs:
 
     - name: Upload per-RID package
       if: github.event_name == 'push'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: nupkg-${{ matrix.rid }}
         path: build/output/*.nupkg
@@ -76,20 +84,19 @@ jobs:
       issues: write     # release-notes creates labels for its categories
       id-token: write   # NuGet trusted publishing: exchange the workflow's OIDC token for a short-lived key
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 1
+        persist-credentials: false
     - run: |
         git fetch --prune --unshallow --tags
         echo exit code $?
         git tag --list
-    - uses: actions/setup-dotnet@v5
+    - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
-          dotnet-version: |
-            10.0.x
-          source-url: https://nuget.pkg.github.com/nullean/index.json
+        cache: false # this workflow publishes what these jobs build; never restore a cache a PR could have written
       env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        MISE_JOBS: "1" # dotnet versions share one DOTNET_ROOT; installing them in parallel races
 
     - run: ./build.sh build -s true
       name: Build
@@ -99,7 +106,7 @@ jobs:
 
     - name: Download per-RID AOT packages
       if: github.event_name == 'push'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         pattern: nupkg-*
         path: build/output
@@ -114,15 +121,17 @@ jobs:
     - name: publish to github package repository
       if: github.event_name == 'push' && startswith(github.ref, 'refs/heads')
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run:  |
-         until dotnet nuget push build/output/*.nupkg -k ${{secrets.GITHUB_TOKEN}} --skip-duplicate --no-symbols; do echo "Retrying"; sleep 1; done;
+         until dotnet nuget push build/output/*.nupkg -k "$GITHUB_TOKEN" -s https://nuget.pkg.github.com/nullean/index.json --skip-duplicate --no-symbols; do echo "Retrying"; sleep 1; done;
 
     # ghcr.io/nullean/assembly-differ, matching curb's own tagging: "edge" on every push, plus
     # "latest" and the semver when this push is an exact release tag — see
     # publishContainers/containerImageTags in Targets.fs for how that split is decided.
     - name: Log in to ghcr.io
       if: github.event_name == 'push'
-      uses: docker/login-action@v3
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -136,9 +145,11 @@ jobs:
       name: Generate release notes for tag
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
 
-    - run: ./build.sh createreleaseongithub -s true --token ${{secrets.GITHUB_TOKEN}}
+    - run: ./build.sh createreleaseongithub -s true --token "$GITHUB_TOKEN"
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
       name: Create or update release for tag on github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     # Trusted publishing: nuget.org trusts this repository's ci.yml (a policy owned by the nullean
     # organization), so there is no long-lived API key to expire. The key it returns lasts an hour, so the
@@ -146,10 +157,17 @@ jobs:
     - name: Log in to nuget.org (trusted publishing)
       id: nuget-login
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
-      uses: NuGet/login@v1
+      uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
       with:
         user: ${{ secrets.NUGET_USER }}
 
-    - run: dotnet nuget push 'build/output/*.nupkg' -k ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
+    - run: dotnet nuget push 'build/output/*.nupkg' -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
       name: release to nuget.org
       if: github.event_name == 'push' && startswith(github.ref, 'refs/tags')
+      env:
+        NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+
+  zizmor:
+    uses: nullean/.github/.github/workflows/zizmor.yml@83ef343759c443afe1964e9c33327527f8677b05 # v1.3.0
+    permissions:
+      contents: read
