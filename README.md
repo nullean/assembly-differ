@@ -1,154 +1,150 @@
-<p>
-<img align="right" src="nuget-icon.png">  
-
-# assembly-differ
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-544x192.png">
+    <img src="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-light-544x192.png" width="272" alt="nullean">
+  </picture>
 </p>
 
-Compare and Diff assemblies from different sources.
-Useful for determining what changes are introduced across versions, and if any are _breaking_.
+<h1 align="center">assembly-differ</h1>
 
-Outputs differences in XML, Markdown or AsciiDoc. 
+<p align="center">Diff the public API of two versions of your assemblies, from disk, NuGet or a git commit, and find out whether the change is breaking.</p>
 
-Differ builds on the amazing work done by [JustAssembly, licensed under Apache 2.0](https://github.com/telerik/JustAssembly)
+<p align="center">
+  <a href="https://www.nuget.org/packages/assembly-differ"><img src="https://img.shields.io/nuget/v/assembly-differ?style=flat-square" alt="NuGet"></a>
+  <a href="https://github.com/nullean/assembly-differ/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/nullean/assembly-differ/ci.yml?branch=main&style=flat-square&label=ci" alt="CI"></a>
+</p>
 
-## Installation
+Proc 0.14.0 added a `CancellationToken` to its `Start*` methods. Diffing it against 0.13.0 straight from nuget.org shows
+each old overload deleted and its replacement added, which makes the release a major change:
 
-
-Distributed as a .NET tool so install using the following
-
+```console
+$ assembly-differ diff "nuget|Proc|0.13.0|netstandard2.0" "nuget|Proc|0.14.0|netstandard2.0" -t proc
+[diff] Difference found: NuGetAssemblyProvider:proc.dll and NuGetAssemblyProvider:proc.dll
+<Assembly Name="proc, Version=0.0.0.0, Culture=neutral, PublicKeyToken=96c599bbe3e70f5d" DiffType="Modified">
+  <Module Name="proc.dll" DiffType="Modified">
+    <Type Name="ProcNet.LongRunningApplicationSubscription" DiffType="Modified">
+      <Property Name="WaitHandle" DiffType="Modified">
+        <Method Name="get" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Property>
+    </Type>
+    <Type Name="ProcNet.ObservableProcessBase&lt;TConsoleOut&gt;" DiffType="Modified">
+      <Method Name="WaitForCompletion(Nullable&lt;TimeSpan&gt;, CancellationToken)" DiffType="New" />
+      <Method Name="WaitForCompletion(Nullable&lt;TimeSpan&gt;)" DiffType="Deleted" />
+    </Type>
+    <Type Name="ProcNet.Proc" DiffType="Modified">
+      <Method Name="Start(StartArguments, CancellationToken)" DiffType="New" />
+      <Method Name="Start(StartArguments)" DiffType="Deleted" />
+      <Method Name="StartLongRunning(LongRunningArguments, TimeSpan, IConsoleOutWriter, CancellationToken)" DiffType="New" />
+      <Method Name="StartLongRunning(LongRunningArguments, TimeSpan, IConsoleOutWriter)" DiffType="Deleted" />
+      <Method Name="StartRedirected(StartArguments, StandardInputHandler, IConsoleLineHandler, CancellationToken)" DiffType="New" />
+      <Method Name="StartRedirected(StartArguments, StandardInputHandler, IConsoleLineHandler)" DiffType="Deleted" />
+      <Method Name="StartRedirected(StartArguments, IConsoleLineHandler, CancellationToken)" DiffType="New" />
+      <Method Name="StartRedirected(StartArguments, IConsoleLineHandler)" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
 ```
-dotnet tool install assembly-differ
+
+## Install
+
+```sh
+dotnet tool install --global assembly-differ
 ```
 
-On Linux, Windows and macOS/arm64, this resolves to a self-contained native-AOT executable — no
-shared .NET runtime required, and no first-run JIT warmup. Everywhere else, it falls back to a
-framework-dependent build (requires the .NET runtime the tool targets to already be installed).
+On Linux (x64, arm64), Windows (x64, arm64) and macOS (arm64) this installs a self-contained native-AOT executable: no
+shared .NET runtime, no JIT warm-up. Everywhere else it falls back to a framework-dependent build, which needs the .NET
+runtime installed.
 
-## GitHub Action
+## Quick start
+
+Diff the last release on nuget.org against what you just built, as Markdown, and fail the build on a breaking change:
+
+```sh
+assembly-differ diff "previous-nuget|MyLib|1.3.0|net8.0" "directory|src/MyLib/bin/Release/net8.0" -t MyLib -f markdown -p major
+```
+
+`previous-nuget` finds the latest release before `1.3.0`, so the same command keeps working as you release.
+
+Each side is a provider spec, and the two sides can mix:
+
+| Spec | Assemblies |
+|---|---|
+| `assembly\|<path>` | one dll |
+| `directory\|<path>` | every dll in a directory, matched by file name against the other side |
+| `nuget\|<id>\|<version>\|[tfm]` | a package from the NuGet sources your NuGet.config lists |
+| `previous-nuget\|<id>\|<version>\|[tfm]` | the release on nuget.org before `<version>` |
+| `github\|<owner/repo>\|<commit>\|<build command>\|<relative output path>` | a commit, cloned and built with the command you give |
+
+| Flag | What |
+|---|---|
+| `-t`, `--target` | only diff these assemblies (repeatable); defaults to every assembly both sides have |
+| `-f`, `--format` | `xml` (default), `markdown`, `asciidoc` or `github-comment` (a pull request comment with a collapsible diff per assembly) |
+| `-o`, `--output` | output directory or file; without it the diff only goes to the console |
+| `-p`, `--prevent-change` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
+| `-a`, `--allow-empty-previous-nuget` | succeed when `previous-nuget` finds no earlier release, for a first release |
+
+The suggested change is `Patch` when the public API is unchanged and `Major` when something was deleted or changed.
+Additions alone are currently reported as `Major` too: diffing Proc 0.12.0 against 0.13.0, which only adds
+`NoWrapInThread`, suggests `Major`. Always name the `diff` subcommand: a provider spec as the first argument is read as
+a command name.
+
+More examples:
+
+```sh
+# two local builds, every dll matched by name
+assembly-differ diff "directory|build/1.2.0" "directory|build/1.3.0"
+
+# two published packages
+assembly-differ diff "nuget|Proc|0.13.0|netstandard2.0" "nuget|Proc|0.14.0|netstandard2.0" -t proc -f markdown
+
+# the last release before 0.14.0 against a local build
+assembly-differ diff "previous-nuget|Proc|0.14.0|netstandard2.0" "directory|build/proc" -t proc
+```
+
+### GitHub Action
 
 ```yaml
 - uses: nullean/assembly-differ@main
   with:
-    first: "nuget|NEST|6.1.0|net46"
-    second: "nuget|NEST|6.2.0|net46"
-    args: --target NEST --format markdown
+    first: "previous-nuget|MyLib|1.3.0|net8.0"
+    second: "directory|src/MyLib/bin/Release/net8.0"
+    args: --target MyLib --format markdown
 ```
 
-Runs `assembly-differ` from a pre-built, distroless container (`ghcr.io/nullean/assembly-differ`) — no
-.NET SDK install needed in the workflow. `first` and `second` are the two provider specs (see below);
-extra flags pass through verbatim via `args`. Linux runners only (`ubuntu-latest` and similar) —
-container actions can't run on Windows or macOS runners.
+The action runs `assembly-differ diff <first> <second> <args>` in the prebuilt, distroless
+`ghcr.io/nullean/assembly-differ:edge` container, so the workflow needs no .NET SDK. `args` passes through verbatim.
+Container actions run on Linux runners only.
 
-## Container image
+### Container
 
-`ghcr.io/nullean/assembly-differ` also works as a general-purpose container, outside GitHub Actions —
-GitLab CI, a local machine without the .NET SDK, anywhere `docker run` works:
+The same image works anywhere `docker run` does, such as GitLab CI or a machine without the .NET SDK:
 
 ```sh
 docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge diff "directory|/workspace/old" "directory|/workspace/new"
 ```
 
-Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
-`assembly-differ`'s own releases — `edge` tracks the latest commit on `main`, `latest` and a semver
-tag (e.g. `0.17.0`) follow tagged releases.
+It is native-AOT on a chiseled `runtime-deps` base, with no shell, running as a non-root user. `edge` tracks the latest
+build of `main`; `latest` and the version tags (for example `0.18.1`) follow releases.
 
-## Run 
+## Packages
 
-```bat
-dotnet assembly-differ
-```
+The tool ships as one package per platform. Install the root package; the .NET SDK picks the right one.
 
-You can omit `dotnet` if you install this as a global tool
+| Package | What it is | |
+|---|---|---|
+| [`assembly-differ`](src/assembly-differ/README.md) | the tool; points the SDK at the package for your platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ?style=flat-square)](https://www.nuget.org/packages/assembly-differ) |
+| `assembly-differ.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-differ.linux-x64) |
+| `assembly-differ.any` | the framework-dependent fallback (net8.0, net10.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.any?style=flat-square)](https://www.nuget.org/packages/assembly-differ.any) |
 
+## Learn more
 
-to see the supported Assembly Providers and outputs:
+- [Releases](https://github.com/nullean/assembly-differ/releases)
+- [Contributing](https://github.com/nullean/.github/blob/main/CONTRIBUTING.md)
 
-```bat
-assembly-differ diff <Old Assembly Provider> <New Assembly Provider> [Options]
+assembly-differ builds on [JustAssembly](https://github.com/telerik/JustAssembly), licensed under Apache 2.0.
 
-Supported Assembly Providers:
-
-  assembly|<assembly path>
-  directory|<directory path>
-  nuget|<package id>|<version>|[framework version]
-  previous-nuget|<package id>|<version>|[framework version]
-  github|<owner>/<repo>|<commit>|<build command>|<relative output path>
-
-Options:
-  -t, --target <values>              the assembly targets. Defaults to *all* assemblies
-                                      located by the provider. May be given more than once.
-  -f, --format <string>              the format of the diff output. Supported formats
-                                      are xml, markdown, asciidoc. Defaults to xml
-  -o, --output <string>              the output directory or file name. If not specified only prints to console
-  -p, --prevent-change <string>      fail if the change detected is higher than specified:
-                                      none, patch, minor, or major. Defaults to none
-  -a, --allow-empty-previous-nuget   don't fail when no previous nuget package could be found to diff against
-  -h, --help                         show this message and exit
-```
-
-> [!NOTE]
-> Starting from `1.0.0`, the tool moved off `Mono.Options` onto [`Nullean.Argh`](https://github.com/nullean/argh)
-> for CLI parsing, which introduces an explicit `diff` subcommand alongside the bare invocation. `diff` is
-> optional as long as an option comes before the two provider arguments (e.g.
-> `assembly-differ --target NEST "nuget|..." "nuget|..."`); providers as the very first arguments
-> (`assembly-differ "nuget|..." "nuget|..."`) still need the explicit subcommand
-> (`assembly-differ diff "nuget|..." "nuget|..."`), since the CLI parser resolves a bare leading argument
-> as a subcommand name first. `--target` also moves from a single comma/pipe-separated value to a
-> repeatable flag (`--target a --target b` instead of `--target a,b`).
-
-#### Examples:
-
-Diff between two local assemblies:
-
-```bat
-dotnet assembly-differ diff "assembly|C:\6.1.0\Nest.dll" "assembly|C:\6.2.0\Nest.dll"
-```
-
-Diff between all assemblies in directories, matched by name:
-
-```bat
-dotnet assembly-differ diff "directory|C:\6.1.0" "directory|C:\6.2.0"
-```
-
-Diff NuGet packages:
-
-```bat
-dotnet assembly-differ diff "nuget|NEST|6.1.0|net46" "nuget|NEST|6.2.0|net46"
-```
-
-Diff Previous NuGet packages:
-
-Imagine you want to release `6.2.0` and want to diff with whatever is the latest nuget package before `6.2.0`
-`previous-nuget` will do the heavy lifting of finding that previous release
-
-```bat
-dotnet assembly-differ diff "previous-nuget|NEST|6.2.0|net46" "directory|C:\6.2.0" 
-```
-
-Diff GitHub commits:
-
-```bat
-dotnet assembly-differ diff "github|elastic/elasticsearch-net|6.1.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46" "github|elastic/elasticsearch-net|6.2.0|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
-```
-
-Any of the above can be mixed. For example, to compare GitHub HEAD against last NuGet package, and output in Markdown — note that leading with an option lets you drop the `diff` subcommand:
-
-```bat
-dotnet assembly-differ --format markdown "nuget|NEST|6.2.0|net46" "github|elastic/elasticsearch-net|HEAD|cmd /C call build.bat skiptests skipdocs|build\output\Nest\net46"
-```
-
-## Development
-
-You can run the tool locally against itself using the following during development
-
-```bat
-dotnet build -c Release
-dotnet run -f net10.0 -- diff "previous-nuget|assembly-differ|0.9.1|net10.0" "directory|bin/Release/net10.0" --target assembly-differ
-```
-
-# FUTURE PLANS
-
-* Instruct the tool to emit errors if breaking changes exists
-* Pass the tool with the version you intend to release and have the tool report the version it thinks it should be based on the differences between the assemblies
-* Wrap all of this in Github Actions
-
+MIT licensed. Copyright Nullean and contributors.
