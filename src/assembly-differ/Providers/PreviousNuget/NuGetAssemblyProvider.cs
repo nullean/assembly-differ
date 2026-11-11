@@ -1,14 +1,13 @@
-﻿using Differ.Providers.NuGet;
+using Differ.Providers.NuGet;
 
-namespace Differ.Providers.PreviousNuGet
+namespace Differ.Providers.PreviousNuGet;
+
+public class PreviousNuGetAssemblyProviderFactory : NuGetAssemblyProviderFactory
 {
-	public class PreviousNuGetAssemblyProviderFactory : NuGetAssemblyProviderFactory
-	{
-		public PreviousNuGetAssemblyProviderFactory(PreviousNugetLocator installer) : base(installer) { }
+	public PreviousNuGetAssemblyProviderFactory(PreviousNugetLocator installer) : base(installer)
+	{ }
 
-		public override string Name { get; } = "previous-nuget";
+	public override string Name { get; } = "previous-nuget";
 
-		public override IAssemblyProvider Create(string[] command) =>
-			new NuGetAssemblyProvider(Installer, command);
-	}
+	public override IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command);
 }

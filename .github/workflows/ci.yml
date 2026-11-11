@@ -119,6 +119,10 @@ jobs:
     - run: ./build.sh generateapichanges -s true
       name: "Inspect public API changes"
 
+    # the tools are restored by the steps above
+    - run: dotnet curb check .
+      name: Check formatting (curb)
+
     - name: publish to github package repository
       if: github.event_name == 'push' && startswith(github.ref, 'refs/heads')
       shell: bash

@@ -1,10 +1,9 @@
-﻿namespace Differ.Providers
-{
-	public interface IAssemblyProviderFactory
-	{
-		string Name { get; }
-		string Format { get; }
+namespace Differ.Providers;
 
-		IAssemblyProvider Create(string[] command);
-	}
+public interface IAssemblyProviderFactory
+{
+	string Name { get; }
+	string Format { get; }
+
+	IAssemblyProvider Create(string[] command);
 }

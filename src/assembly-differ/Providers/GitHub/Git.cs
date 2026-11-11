@@ -1,49 +1,47 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using ProcNet;
 
-namespace Differ.Providers.GitHub
+namespace Differ.Providers.GitHub;
+
+public interface IGit
 {
-	public interface IGit
+	ProcessResult Execute(string workingDirectory, params string[] args);
+}
+
+public class Git : ExecutableBase, IGit
+{
+	private readonly string _executable;
+	private const string GitExe = "git.exe";
+	private const string GitCommand = "git";
+
+	public Git(string executable = null)
 	{
-		ProcessResult Execute(string workingDirectory, params string[] args);
+		if (!string.IsNullOrEmpty(executable))
+		{
+			if (!File.Exists(executable))
+				throw new FileNotFoundException($"{GitExe} does not exist at {executable}");
+
+			_executable = executable;
+		}
+		else
+			_executable = IsWindows ? FindExecutable(GitExe) : GitCommand;
 	}
 
-	public class Git : ExecutableBase, IGit
+	public ProcessResult Execute(string workingDirectory, params string[] args)
 	{
-		private readonly string _executable;
-		private const string GitExe = "git.exe";
-		private const string GitCommand = "git";
-
-		public Git(string executable = null)
+		var startArguments = new StartArguments(_executable, args)
 		{
-			if (!string.IsNullOrEmpty(executable))
-			{
-				if (!File.Exists(executable))
-					throw new FileNotFoundException($"{GitExe} does not exist at {executable}");
+			WorkingDirectory = workingDirectory,
+			WaitForStreamReadersTimeout = TimeSpan.FromSeconds(30)
+		};
 
-				_executable = executable;
-			}
-			else
-				_executable = IsWindows ? FindExecutable(GitExe) : GitCommand;
-		}
+		var processResult = Proc.Start(startArguments);
+		if (processResult.ExitCode == 0)
+			return processResult;
 
-
-		public ProcessResult Execute(string workingDirectory, params string[] args)
-		{
-			var startArguments = new StartArguments(_executable, args)
-			{
-				WorkingDirectory = workingDirectory,
-				WaitForStreamReadersTimeout = TimeSpan.FromSeconds(30)
-			};
-
-			var processResult = Proc.Start(startArguments);
-			if (processResult.ExitCode == 0)
-				return processResult;
-
-			var lines = string.Join(Environment.NewLine, processResult.ConsoleOut.Select(c => c.Line));
-			throw new Exception($"{GitExe} returned non-zero exit code: {lines}");
-		}
+		var lines = string.Join(Environment.NewLine, processResult.ConsoleOut.Select(c => c.Line));
+		throw new Exception($"{GitExe} returned non-zero exit code: {lines}");
 	}
 }

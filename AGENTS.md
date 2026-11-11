@@ -25,8 +25,9 @@ everything through it:
 ```bash
 mise run build    # build the solution
 mise run pack     # build, pack, validate the packages, report public API changes
-mise run ci       # build, pack, validate and diff (there are no tests, so this is pack)
-mise run check    # workflow security checks (zizmor)
+mise run ci       # build, pack, validate and diff (there are no tests), then the curb check
+mise run format   # format the repository with curb
+mise run check    # formatting drift (curb) and workflow security checks (zizmor); CI runs the curb half
 mise run clean    # delete build output
 mise run release  # show the release draft; `mise run release publish` releases
 ```

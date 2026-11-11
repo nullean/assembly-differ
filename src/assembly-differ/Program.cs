@@ -1,4 +1,4 @@
-﻿using Differ;
+using Differ;
 using Nullean.Argh;
 
 var app = new ArghApp();

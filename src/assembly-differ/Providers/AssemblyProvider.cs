@@ -1,46 +1,45 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Telerik.JustDecompiler.Ast.Expressions;
 
-namespace Differ.Providers
+namespace Differ.Providers;
+
+public class AssemblyProvider : IAssemblyProvider
 {
-	public class AssemblyProvider : IAssemblyProvider
+	private readonly string _assemblyPath;
+
+	public AssemblyProvider(string assemblyPath)
 	{
-		private readonly string _assemblyPath;
+		if (assemblyPath == null)
+			throw new ArgumentNullException(nameof(assemblyPath));
 
-		public AssemblyProvider(string assemblyPath)
-		{
-			if (assemblyPath == null)
-				throw new ArgumentNullException(nameof(assemblyPath));
+		if (!File.Exists(assemblyPath))
+			throw new FileNotFoundException($"no file found at {assemblyPath}");
 
-			if (!File.Exists(assemblyPath))
-				throw new FileNotFoundException($"no file found at {assemblyPath}");
+		if (Path.GetExtension(assemblyPath) != ".dll")
+			throw new Exception("file is not a dll");
 
-			if (Path.GetExtension(assemblyPath) != ".dll")
-				throw new Exception("file is not a dll");
-
-			_assemblyPath = assemblyPath;
-		}
-
-		public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
-		{
-			yield return new FileInfo(_assemblyPath);
-		}
+		_assemblyPath = assemblyPath;
 	}
 
-	public class AssemblyProviderFactory : IAssemblyProviderFactory
+	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		public string Name { get; } = "assembly";
+		yield return new FileInfo(_assemblyPath);
+	}
+}
 
-		public string Format => $"{Name}|<assembly path>";
+public class AssemblyProviderFactory : IAssemblyProviderFactory
+{
+	public string Name { get; } = "assembly";
 
-		public IAssemblyProvider Create(string[] command)
-		{
-			if (command.Length != 1)
-				throw new Exception("command must have a length of 1");
+	public string Format => $"{Name}|<assembly path>";
 
-			return new AssemblyProvider(command[0]);
-		}
+	public IAssemblyProvider Create(string[] command)
+	{
+		if (command.Length != 1)
+			throw new Exception("command must have a length of 1");
+
+		return new AssemblyProvider(command[0]);
 	}
 }
