@@ -5,6 +5,7 @@
     <File Path="build.bat" />
     <File Path="build.sh" />
     <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
     <File Path="dotnet-tools.json" />
     <File Path="global.json" />
     <File Path="mise.toml" />

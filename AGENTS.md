@@ -28,11 +28,20 @@ mise run pack     # build, pack, validate the packages, report public API change
 mise run ci       # build, pack, validate and diff (there are no tests, so this is pack)
 mise run check    # workflow security checks (zizmor)
 mise run clean    # delete build output
+mise run release  # show the release draft; `mise run release publish` releases
 ```
 
 `mise tasks ls` lists them all. Packages and API reports go to `build/output`. `./build.sh <target>` runs the same
-build targets directly; CI calls it for each step, and for the ones `mise` has no task for (`publishcontainers`, the
-release steps).
+build targets directly; CI calls it for each step, and for the one `mise` has no task for (`publishcontainers`).
+
+## Releasing
+
+release-drafter keeps a draft release up to date from the labels of merged pull requests. **Publishing the draft**
+releases: it creates the tag, and `ci.yml` runs on it to build every RID's native-AOT package, push
+`ghcr.io/nullean/assembly-differ` (tagged `latest` and the version) and push the packages to nuget.org.
+`mise run release` shows the draft. The [releasing](.claude/skills/releasing/SKILL.md) and
+[breaking-changes](.claude/skills/breaking-changes/SKILL.md) skills have the details. Every pull request carries exactly
+one release label.
 
 ## Packaging
 

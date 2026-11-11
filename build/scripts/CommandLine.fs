@@ -9,19 +9,12 @@ type Arguments =
     | [<CliPrefix(CliPrefix.None);SubCommand>] Pack
     | [<CliPrefix(CliPrefix.None);SubCommand>] Ci
     
-    | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] PristineCheck 
     | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] GeneratePackages
     | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] ValidatePackages 
-    | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] GenerateReleaseNotes 
     | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] GenerateApiChanges 
-    | [<CliPrefix(CliPrefix.None);SubCommand>] Release
-    
-    | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] CreateReleaseOnGithub 
     | [<CliPrefix(CliPrefix.None);Hidden;SubCommand>] PublishContainers
-    | [<CliPrefix(CliPrefix.None);SubCommand>] Publish
     
     | [<Inherit;AltCommandLine("-s")>] SingleTarget of bool
-    | [<Inherit>] Token of string 
     | [<Inherit>] Push
 with
     interface IArgParserTemplate with
@@ -31,19 +24,13 @@ with
             | Build -> "Run build and tests"
             | Pack -> "Runs build, then creates and validates the packages and reports public API changes"
             | Ci -> "Runs build, then creates and validates the packages and reports public API changes"
-            | Release -> "runs build, and create an validates the packages shy of publishing them"
-            | Publish -> "Runs the full release"
             
             | SingleTarget _ -> "Runs the provided sub command without running their dependencies"
-            | Token _ -> "Token to be used to authenticate with github"
             | Push -> "publishcontainers only: push the built image to ghcr.io instead of building it into the local Docker daemon"
             
-            | PristineCheck  
             | GeneratePackages
             | ValidatePackages 
-            | GenerateReleaseNotes
             | GenerateApiChanges
-            | CreateReleaseOnGithub 
             | PublishContainers
                 -> "Undocumented, dependent target"
     member this.Name =

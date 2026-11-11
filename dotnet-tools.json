@@ -9,13 +9,6 @@
       ],
       "rollForward": false
     },
-    "release-notes": {
-      "version": "0.11.0",
-      "commands": [
-        "release-notes"
-      ],
-      "rollForward": false
-    },
     "nupkg-validator": {
       "version": "0.10.1",
       "commands": [

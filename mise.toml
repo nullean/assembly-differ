@@ -14,7 +14,7 @@ gh = "latest"
 zizmor = "1"
 
 [tasks.setup]
-description = "Restore the local .NET tools (minver, release-notes, nupkg-validator)"
+description = "Restore the local .NET tools (minver, nupkg-validator)"
 run = "dotnet tool restore"
 
 [tasks.build]
@@ -39,3 +39,23 @@ run = "dotnet run --project build/scripts -- clean"
 description = "What CI's build job runs on every push: build, then pack, validate and diff the public API"
 depends = ["setup"]
 run = "dotnet run --project build/scripts -- ci"
+
+[tasks.release]
+description = "Open the release-drafter draft; `mise run release publish` publishes it, which releases"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+tag=$(gh release list --json tagName,isDraft --jq '[.[] | select(.isDraft)][0].tagName')
+if [ -z "$tag" ]; then
+  echo "no draft release; merge a labelled pull request to main first" >&2
+  exit 1
+fi
+if [ "${1:-}" = "publish" ]; then
+  gh release edit "$tag" --draft=false
+  echo "published $tag; the release workflow is now packing and pushing it"
+else
+  gh release view "$tag"
+  echo
+  echo "publish with: mise run release publish   (or promote the draft on github.com)"
+fi
+'''

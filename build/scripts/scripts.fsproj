@@ -6,10 +6,12 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Argu" Version="6.2.5" />
-    <PackageReference Include="Bullseye" Version="6.0.0" />
-    <PackageReference Include="Proc" Version="0.14.0" />
-    <PackageReference Include="Fake.Tools.Git" Version="5.20.3" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="Argu" />
+    <PackageReference Include="Bullseye" />
+    <!-- the build runs a newer Proc than the tool ships with -->
+    <PackageReference Include="Proc" VersionOverride="0.14.0" />
+    <PackageReference Include="Fake.Tools.Git" />
   </ItemGroup>
 
   <ItemGroup>
