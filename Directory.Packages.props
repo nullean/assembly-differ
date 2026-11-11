@@ -1,0 +1,28 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- the tool -->
+  <ItemGroup>
+    <PackageVersion Include="MinVer" Version="6.0.0" />
+    <PackageVersion Include="Nullean.Argh" Version="0.18.0" />
+    <!-- the tool's own Proc; build/scripts overrides it with a newer one (VersionOverride in scripts.fsproj) -->
+    <PackageVersion Include="Proc" Version="0.9.1" />
+    <PackageVersion Include="NuGet.Common" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Resolver" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
+  </ItemGroup>
+
+  <!-- build/scripts -->
+  <ItemGroup>
+    <!-- under CPM the F# SDK adds no implicit FSharp.Core: this is the version the build resolved before -->
+    <PackageVersion Include="FSharp.Core" Version="11.0.101" />
+    <PackageVersion Include="Argu" Version="6.2.5" />
+    <PackageVersion Include="Bullseye" Version="6.0.0" />
+    <PackageVersion Include="Fake.Tools.Git" Version="5.20.3" />
+  </ItemGroup>
+</Project>

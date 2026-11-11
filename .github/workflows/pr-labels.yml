@@ -1,0 +1,12 @@
+name: pr-labels
+
+on:
+  pull_request:
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+permissions: {}
+
+jobs:
+  release-label:
+    uses: nullean/.github/.github/workflows/pr-labels.yml@83ef343759c443afe1964e9c33327527f8677b05 # v1.3.0
+    permissions: {}
