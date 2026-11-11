@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 
-namespace Differ.Providers
+namespace Differ.Providers;
+
+public interface IAssemblyProvider
 {
-	public interface IAssemblyProvider
-	{
-		IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets);
-	}
+	IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets);
 }
