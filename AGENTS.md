@@ -13,14 +13,14 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
 | `src/assembly-differ/lib` | the vendored JustAssembly/JustDecompile assemblies that do the comparison |
-| `build/scripts` | the F# build the `mise` tasks and CI call |
+| `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's own assembly is signed with |
 | `action.yml` | the GitHub Action: runs the `edge` container image |
 
 ## Commands
 
-mise installs the SDK pinned in `global.json` (plus the net10.0 runtime the build, nupkg-validator and the API diff run
-on). Run everything through it:
+mise installs the SDK pinned in `global.json` (plus the net10.0 runtime nupkg-validator and the API diff run on). Run
+everything through it:
 
 ```bash
 mise run build    # build the solution
@@ -60,3 +60,6 @@ one release label.
 - The CLI surface (`diff`, the provider specs and the flags) is the contract `action.yml`, the container and other
   repositories' builds rely on. Removing or renaming any of it is a breaking change.
 - The build diffs this tool against its own previous release (`generateapichanges`), so a broken diff fails its own CI.
+- Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
+  lines; values come from `text` inside `shell { }` (`Versions.fs`). Do not call the C# `ProcNet` API from the build.
+  CI calls targets by name (`./build.sh generatepackages -s true`): keep multi-word case names as one word.
