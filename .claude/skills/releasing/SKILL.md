@@ -5,11 +5,11 @@ description: Release this repository. Use when the user asks to release, ship a 
 
 # Release
 
-Releases are never cut from a pushed tag. release-drafter keeps a **draft release** up to date from the labels of
-merged pull requests; **publishing that draft** creates the tag and runs `.github/workflows/ci.yml` on it. There the
-`aot-pack` matrix builds the native-AOT package for every RID, and the `build` job packs the rest at the tag's version
-(MinVer), diffs their public API, pushes the container image (`ghcr.io/nullean/assembly-differ`, tagged `latest` and the version), pushes
-the packages to nuget.org with trusted publishing and appends the public API changes to the release notes.
+Releases are never cut from a pushed tag. release-drafter keeps a **draft release** up to date from the labels of merged
+pull requests; **publishing that draft** creates the tag and runs `.github/workflows/ci.yml` on it. There the `aot-pack`
+matrix builds the native-AOT package for every RID, and the `build` job packs the rest at the tag's version (MinVer),
+diffs their public API, pushes the container image (`ghcr.io/nullean/assembly-differ`, tagged `latest` and the version),
+pushes the packages to nuget.org with trusted publishing and appends the public API changes to the release notes.
 
 ## Steps
 
