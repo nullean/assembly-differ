@@ -57,7 +57,7 @@ public class MarkdownExporter : IAssemblyComparisonExporter
 		foreach (var memberElement in memberElements)
 		{
 			var memberName = memberElement.Attribute("Name")?.Value;
-			if (!string.IsNullOrEmpty(memberName) && Enum.TryParse(typeElement.Attribute("DiffType")?.Value, out DiffType diffType))
+			if (!string.IsNullOrEmpty(memberName) && Enum.TryParse(memberElement.Attribute("DiffType")?.Value, out DiffType diffType))
 			{
 				switch (diffType)
 				{
@@ -72,7 +72,7 @@ public class MarkdownExporter : IAssemblyComparisonExporter
 							writer.WriteLine(Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).", "changed from `$1` to `$2`."));
 						}
 						else
-							writer.WriteLine($"### `{memberName}` is added");
+							writer.WriteLine($"### `{memberName}` is changed");
 						break;
 					case DiffType.New:
 						writer.WriteLine($"### `{memberName}` is added");
