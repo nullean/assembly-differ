@@ -10,7 +10,7 @@ Versions live in one place each:
 | What | Where |
 |---|---|
 | NuGet packages | `Directory.Packages.props` (Central Package Management); never put `Version=` on a `PackageReference` |
-| .NET tools | `dotnet-tools.json` |
+| .NET tools | `.config/dotnet-tools.json` (or `dotnet-tools.json` at the root) |
 | .NET SDK | `global.json` only; mise reads it from there |
 | other CLI tools | `mise.toml` `[tools]` |
 | GitHub Actions | pinned by commit SHA with a `# vX.Y.Z` comment; reusable workflows from `nullean/.github` likewise |
@@ -25,7 +25,8 @@ Versions live in one place each:
 5. Label the PR `dependencies` unless the bump forces consumers to change something; then it is `breaking` (see
    [breaking-changes](../breaking-changes/SKILL.md)).
 
-For dependabot PRs: check CI, read the changelog for majors, merge groups that pass. Do not rebase a dependabot PR by
+For dependabot PRs: patch and minor updates merge themselves once CI passes (`dependabot-automerge.yml`). Majors
+wait for you: read the changelog, then `gh pr merge --auto --squash`. Do not rebase a dependabot PR by
 hand; comment `@dependabot rebase`.
 
 Pin an action to the commit its release tag points at:
