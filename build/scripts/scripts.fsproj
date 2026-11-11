@@ -2,22 +2,20 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
+    <!-- Nullean.Make.Fs reads the target descriptions from the /// comments in Program.fs -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
-    <PackageReference Include="Argu" />
-    <PackageReference Include="Bullseye" />
-    <!-- the build runs a newer Proc than the tool ships with -->
-    <PackageReference Include="Proc" VersionOverride="0.14.0" />
-    <PackageReference Include="Fake.Tools.Git" />
+    <PackageReference Include="Nullean.Make.Fs" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Paths.fs" />
-    <Compile Include="CommandLine.fs" />
-    <Compile Include="Targets.fs" />
+    <Compile Include="Versions.fs" />
+    <Compile Include="Packaging.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

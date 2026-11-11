@@ -1,7 +1,7 @@
 # Bootstraps the toolchain and is the one entry point: `mise run <task>`, the same task names in every nullean repo.
 # The .NET SDK version lives only in global.json: the first dotnet entry reads it from there (sdk.version is the first
-# "version" key). The net10.0 runtime is listed after it because the build project, nupkg-validator and the public
-# API diff run on net10.0.
+# "version" key). The net10.0 runtime is listed after it because nupkg-validator and the public API diff run on
+# net10.0.
 
 [env]
 DOTNET_NOLOGO = "1"
