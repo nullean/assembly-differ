@@ -5,9 +5,9 @@
 
   <!-- the tool -->
   <ItemGroup>
-    <PackageVersion Include="MinVer" Version="6.0.0" />
-    <PackageVersion Include="Nullean.Argh" Version="0.18.0" />
-    <PackageVersion Include="Proc" Version="0.9.1" />
+    <PackageVersion Include="MinVer" Version="8.0.0" />
+    <PackageVersion Include="Nullean.Argh" Version="0.21.0" />
+    <PackageVersion Include="Proc" Version="0.14.0" />
     <PackageVersion Include="NuGet.Common" Version="7.9.0" />
     <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
     <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
