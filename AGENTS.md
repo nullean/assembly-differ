@@ -9,7 +9,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 
 | Path | What |
 |---|---|
-| `src/assembly-differ` | the tool (net8.0 and net10.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
+| `src/assembly-differ` | the tool (net10.0 and net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
 | `src/assembly-differ/lib` | the vendored JustAssembly/JustDecompile assemblies that do the comparison |
@@ -19,8 +19,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 
 ## Commands
 
-mise installs the SDK pinned in `global.json` (plus the net10.0 runtime the API diff runs on). Run everything through
-it:
+mise installs the SDK pinned in `global.json`. Run everything through it:
 
 ```bash
 mise run build    # build the solution
