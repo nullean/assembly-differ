@@ -15,23 +15,31 @@ public class NuGetAssemblyProviderFactory : IAssemblyProviderFactory
 
 	public string Format => $"{Name}|<package id>|<version>|[framework version]";
 
-	public virtual IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command);
+	public virtual IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command, Name);
 }
 
 public class NuGetAssemblyProvider : IAssemblyProvider
 {
 	private readonly INuGet _installer;
 	private readonly NuGetDiffCommand _command;
+	private readonly string _providerName;
 
-	public NuGetAssemblyProvider(INuGet installer, string[] command)
+	public NuGetAssemblyProvider(INuGet installer, string[] command) : this(installer, command, "nuget") { }
+
+	/// <param name="providerName">
+	/// Names the folder the package is unpacked to, so that providers which install different versions for the same
+	/// command (nuget and previous-nuget) don't share one.
+	/// </param>
+	public NuGetAssemblyProvider(INuGet installer, string[] command, string providerName)
 	{
 		_installer = installer ?? throw new ArgumentNullException(nameof(installer));
 		_command = new NuGetDiffCommand(command);
+		_providerName = providerName ?? throw new ArgumentNullException(nameof(providerName));
 	}
 
 	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		var tempDir = Path.Combine(_command.TempDir, "differ", "nuget");
+		var tempDir = Path.Combine(_command.TempDir, "differ", _providerName);
 		if (!Directory.Exists(tempDir))
 			Directory.CreateDirectory(tempDir);
 
