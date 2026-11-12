@@ -48,8 +48,8 @@ let main argv =
               for project in Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories) do
                   sh $"dotnet clean {project} -c Release -v q" }
         | Build -> command {
-              composes [Clean]
-              executes (shell { sh $"dotnet build -c Release" }) }
+              composes [Clean] }
+                   |> executes { sh $"dotnet build -c Release" }
         // there are no tests, so ci is pack: build, then create, validate and diff the packages
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
         | Ci -> command { requires [Pack]; composes [] }

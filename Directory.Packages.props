@@ -6,8 +6,8 @@
   <!-- the tool -->
   <ItemGroup>
     <PackageVersion Include="MinVer" Version="8.0.0" />
-    <PackageVersion Include="Nullean.Argh" Version="0.27.2" />
-    <PackageVersion Include="Proc" Version="0.20.0" />
+    <PackageVersion Include="Nullean.Argh" Version="0.30.0" />
+    <PackageVersion Include="Proc" Version="0.22.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net8.0'">
     <PackageVersion Include="NuGet.Common" Version="8.0.0" />
@@ -37,6 +37,6 @@
     <!-- under CPM the F# SDK adds no implicit FSharp.Core; Nullean.Make.Fs needs 11.0.100 or later -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
     <!-- brings its own Proc and Proc.Fs -->
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.27.2" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.30.0" />
   </ItemGroup>
 </Project>
