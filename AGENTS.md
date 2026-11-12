@@ -38,8 +38,10 @@ build targets directly; CI calls it for each step, and for the one `mise` has no
 ## Releasing
 
 release-drafter keeps a draft release up to date from the labels of merged pull requests. **Publishing the draft**
-releases: it creates the tag, and `ci.yml` runs on it to build every RID's native-AOT package, push
-`ghcr.io/nullean/assembly-differ` (tagged `latest` and the version) and push the packages to nuget.org.
+releases: it creates the tag, and `ci.yml` runs on it. Its `main-green` job first waits for main's push run of `ci.yml` on
+the released commit and fails unless it passed (macOS runs only on pushes to main, plus the osx-arm64 AOT pack on a
+release); then it builds every RID's native-AOT package, pushes
+`ghcr.io/nullean/assembly-differ` (tagged `latest` and the version) and pushes the packages to nuget.org.
 `mise run release` shows the draft. The [releasing](.claude/skills/releasing/SKILL.md) and
 [breaking-changes](.claude/skills/breaking-changes/SKILL.md) skills have the details. Every pull request carries exactly
 one release label.
