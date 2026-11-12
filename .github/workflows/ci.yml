@@ -55,7 +55,7 @@ jobs:
     # ghcr.io happens once, in the build job below, which does pass --push.
     - name: Build container image (no push)
       if: matrix.rid == 'linux-x64'
-      run: ./build.sh publishcontainers -s true
+      run: ./build.sh publishcontainers -s
       shell: bash
 
     - name: Report container image size
@@ -93,10 +93,10 @@ jobs:
       env:
         MISE_JOBS: "1" # dotnet versions share one DOTNET_ROOT; installing them in parallel races
 
-    - run: ./build.sh build -s true
+    - run: ./build.sh build -s
       name: Build
     
-    - run: ./build.sh generatepackages -s true
+    - run: ./build.sh generatepackages -s
       name: Generate local nuget packages
 
     - name: Download per-RID AOT packages
@@ -107,10 +107,10 @@ jobs:
         path: build/output
         merge-multiple: true
 
-    # - run: ./build.sh validatepackages -s true
+    # - run: ./build.sh validatepackages -s
     #   name: "validate *.npkg files that were created"
     
-    - run: ./build.sh generateapichanges -s true
+    - run: ./build.sh generateapichanges -s
       name: "Inspect public API changes"
 
     # the tools are restored by the steps above
@@ -130,7 +130,7 @@ jobs:
     # publishContainers/containerImageTags in Targets.fs for how that split is decided.
     - name: Log in to ghcr.io
       if: github.event_name == 'push' || github.event_name == 'release'
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -138,7 +138,7 @@ jobs:
 
     - name: Publish container image
       if: github.event_name == 'push' || github.event_name == 'release'
-      run: ./build.sh publishcontainers -s true --push
+      run: ./build.sh publishcontainers -s --push
 
     # Trusted publishing: nuget.org trusts this repository's ci.yml (a policy owned by the nullean
     # organization), so there is no long-lived API key to expire. The key it returns lasts an hour, so the
@@ -181,6 +181,6 @@ jobs:
         gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/notes.md"
 
   zizmor:
-    uses: nullean/.github/.github/workflows/zizmor.yml@83ef343759c443afe1964e9c33327527f8677b05 # v1.3.0
+    uses: nullean/.github/.github/workflows/zizmor.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
     permissions:
       contents: read
