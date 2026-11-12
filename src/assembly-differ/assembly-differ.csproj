@@ -34,13 +34,16 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
-  <!-- The nuget/previous-nuget providers pull repository-signature metadata through
-       NuGet.Protocol, which leans on Newtonsoft.Json's reflection-based constructor resolution for
-       types like RepositoryCertificateInfo. Trimming removes the constructor that resolution needs,
-       so these two assemblies are rooted (kept whole) rather than trimmed. -->
-  <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
-    <TrimmerRootAssembly Include="NuGet.Protocol" />
-    <TrimmerRootAssembly Include="Newtonsoft.Json" />
+  <!-- NuGet.Protocol deserialises feed JSON (service index, registration pages, repository
+       signatures) with Newtonsoft.Json by reflection unless this feature switch is on. Under native
+       AOT that reflection fails at run time, because trimming removes the constructors and
+       properties it binds to (#62: no constructor for NuGet.Packaging.PackageDependencyGroup). With
+       the switch, NuGet uses its source-generated System.Text.Json path instead, and Trim="true"
+       lets the trimmer drop the Newtonsoft.Json path altogether. See
+       https://github.com/NuGet/NuGet.Client/blob/dev/docs/aot-compatibility.md. It is set for the
+       framework-dependent build too, so every build runs the same deserialisation code. -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="NuGet.UseSystemTextJsonDeserialization" Value="true" Trim="true" />
   </ItemGroup>
 
   <ItemGroup>
