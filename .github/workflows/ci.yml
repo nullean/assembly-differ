@@ -48,6 +48,11 @@ jobs:
       env:
         RID: ${{ matrix.rid }}
 
+    # Trimming breaks only the native-AOT binary (#62), so run it against real packages
+    - run: ./build.sh smokeaot -s true
+      name: Run the native-AOT binary on the nuget providers
+      shell: bash
+
     # Container image, linux-x64 only for now — the platform every GitHub-hosted Linux runner
     # already matches. No --push here and no registry login on this leg, so this only proves the
     # container build itself still works: AOT compiles, the chiseled base image resolves, and the
