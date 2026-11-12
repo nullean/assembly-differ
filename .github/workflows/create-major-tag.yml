@@ -15,7 +15,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A release moves the major tag only for a commit main has already proven: wait for main's push run of ci.yml on the
+  # released commit and stop unless it passed.
+  main-green:
+    name: main is green
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      actions: read # read main's ci.yml runs
+    steps:
+      - uses: nullean/.github/actions/require-green-main@f9eb30d28e48b3f6b8ff1f4e7dae1d2b7b2d544b # v1.6.0
+
   create-major-tag:
+    needs: main-green
     permissions:
       contents: write
     runs-on: ubuntu-latest
