@@ -55,6 +55,8 @@
     <PackageReference Include="NuGet.Packaging" />
     <PackageReference Include="NuGet.Resolver" />
     <PackageReference Include="NuGet.Common" />
+    <!-- raises NuGet.Packaging's transitive floor past its vulnerable version; see Directory.Packages.props -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <ItemGroup>

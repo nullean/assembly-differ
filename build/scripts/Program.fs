@@ -83,7 +83,7 @@ let main argv =
                   |> Seq.head
                   |> fun p -> Paths.RootRelative p.FullName
               let version = Versions.informational.Value
-              sh $"dotnet nupkg-validator {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d --allow-roll-forward" }
+              sh $"dotnet nupkg-validator validate {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d" }
         | Generateapichanges -> target [] {
               let version = Versions.current.Value
               let tool = Paths.ToolName

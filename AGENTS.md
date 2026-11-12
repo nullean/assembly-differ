@@ -19,8 +19,8 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 
 ## Commands
 
-mise installs the SDK pinned in `global.json` (plus the net10.0 runtime nupkg-validator and the API diff run on). Run
-everything through it:
+mise installs the SDK pinned in `global.json` (plus the net10.0 runtime the API diff runs on). Run everything through
+it:
 
 ```bash
 mise run build    # build the solution
@@ -65,4 +65,4 @@ one release label.
 - The build diffs this tool against its own previous release (`generateapichanges`), so a broken diff fails its own CI.
 - Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
   lines; values come from `text` inside `shell { }` (`Versions.fs`). Do not call the C# `ProcNet` API from the build.
-  CI calls targets by name (`./build.sh generatepackages -s true`): keep multi-word case names as one word.
+  CI calls targets by name (`./build.sh generatepackages -s`): keep multi-word case names as one word.
