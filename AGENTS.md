@@ -53,8 +53,10 @@ one release label.
 - `dotnet pack` puts the unsigned `obj/` assembly into the `any` package; `generatePackages` swaps in the signed
   `bin/` copy (`fixAnyPackageSigning`). `Paths.ManagedTargetFrameworks` must mirror the csproj's
   `TargetFrameworks`.
-- The AOT build roots `NuGet.Protocol` and `Newtonsoft.Json` (`TrimmerRootAssembly`): the NuGet providers need
-  constructors trimming would remove.
+- The csproj turns on NuGet's `NuGet.UseSystemTextJsonDeserialization` feature switch, so NuGet.Protocol reads feed
+  JSON with source-generated System.Text.Json rather than Newtonsoft.Json reflection, which trimming breaks (#62).
+  `./build.sh smokeaot` publishes the native-AOT binary for this machine and runs `previous-nuget` and `nuget` with
+  it; CI's `aot-pack` job runs it on every RID.
 
 ## Rules
 

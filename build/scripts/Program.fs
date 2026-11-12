@@ -1,6 +1,8 @@
 module Program
 
+open System
 open System.IO
+open System.Runtime.InteropServices
 open Nullean.Make.Fs
 open Proc.Fs
 
@@ -23,6 +25,8 @@ type Target =
     | Generateapichanges
     /// Publish the native-AOT build as the ghcr.io/nullean/assembly-differ container image
     | Publishcontainers
+    /// Publish the native-AOT build for this machine and run the previous-nuget and nuget providers with it
+    | Smokeaot
 
 /// build/output, relative to the repository root
 let private output = Paths.RootRelative Paths.Output.FullName
@@ -110,5 +114,20 @@ let main argv =
                   sh $"dotnet publish {toolProject} -c Release -f net10.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001 -p ContainerRegistry=ghcr.io"
               else
                   sh $"dotnet publish {toolProject} -c Release -f net10.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001" }
+
+        // The framework-dependent build cannot catch what trimming breaks: #62 crashed only in the native-AOT
+        // binary, when NuGet deserialised registration metadata by reflection. So this publishes that binary and
+        // diffs real, immutable package versions with it. Proc 0.18.0's previous release is 0.17.0.
+        | Smokeaot -> target [] {
+              let rid = RuntimeInformation.RuntimeIdentifier
+              let publishDirectory = Path.Combine(Paths.Output.FullName, "aot-smoke")
+              let publish = Paths.RootRelative publishDirectory
+              sh $"dotnet publish {toolProject} -c Release -f net10.0 -r {rid} -o {publish}"
+              let executable = if OperatingSystem.IsWindows() then $"{Paths.ToolName}.exe" else Paths.ToolName
+              let binary = Paths.RootRelative <| Path.Combine(publishDirectory, executable)
+              let! result = text $"{binary} diff 'previous-nuget|Proc|0.18.0' 'nuget|Proc|0.20.0' --target Proc -f markdown"
+              printfn "%s" result
+              for expected in [ "Found previous nuget package found for Proc 0.18.0: 0.17.0"; "Suggested version change: Major" ] do
+                  if not (result.Contains expected) then failwithf "the native-AOT binary did not print '%s'" expected }
 
     app.RunAsync(argv).GetAwaiter().GetResult()
