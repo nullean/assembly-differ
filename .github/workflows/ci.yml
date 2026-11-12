@@ -49,7 +49,7 @@ jobs:
         RID: ${{ matrix.rid }}
 
     # Trimming breaks only the native-AOT binary (#62), so run it against real packages
-    - run: ./build.sh smokeaot -s true
+    - run: ./build.sh smokeaot -s
       name: Run the native-AOT binary on the nuget providers
       shell: bash
 
