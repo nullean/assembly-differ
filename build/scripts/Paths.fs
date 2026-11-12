@@ -12,7 +12,7 @@ let AotRuntimeIdentifiers = ["linux-x64"; "linux-arm64"; "win-x64"; "win-arm64";
 
 /// Must mirror assembly-differ.csproj's TargetFrameworks. Used to patch the signed managed dll back
 /// into the packed 'any' fallback for every TFM it ships — see fixAnyPackageSigning in Targets.fs.
-let ManagedTargetFrameworks = ["net8.0"; "net10.0"]
+let ManagedTargetFrameworks = ["net10.0"; "net11.0"]
 
 let Root =
     let mutable dir = DirectoryInfo(".")

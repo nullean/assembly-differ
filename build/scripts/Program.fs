@@ -48,8 +48,8 @@ let main argv =
               for project in Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories) do
                   sh $"dotnet clean {project} -c Release -v q" }
         | Build -> command {
-              composes [Clean]
-              executes (shell { sh $"dotnet build -c Release" }) }
+              composes [Clean] }
+                   |> executes { sh $"dotnet build -c Release" }
         // there are no tests, so ci is pack: build, then create, validate and diff the packages
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
         | Ci -> command { requires [Pack]; composes [] }
@@ -92,7 +92,7 @@ let main argv =
               // so NuGetAssemblyProvider would find 0 assemblies there. The portable, signed managed build
               // lives in "assembly-differ.any" instead. This diffs with the tool built from this checkout.
               // The provider specs are quoted: an unquoted | would pipe.
-              sh $"dotnet run -c Release -f net10.0 --project {toolProject} -- diff 'previous-nuget|{tool}.any|{version}|net8.0' 'directory|src/{tool}/bin/Release/net10.0' --target {tool} -f github-comment --output {output}" }
+              sh $"dotnet run -c Release -f net11.0 --project {toolProject} -- diff 'previous-nuget|{tool}.any|{version}|net10.0' 'directory|src/{tool}/bin/Release/net10.0' --target {tool} -f github-comment --output {output}" }
         // Publishes the CLI's native-AOT build as a container image via the .NET SDK's own container
         // support (`dotnet publish -t:PublishContainer`), the same mechanism used for curb — see
         // https://github.com/nullean/curb/pull/72. linux-x64 only for now; a second RID becomes a second
@@ -107,13 +107,13 @@ let main argv =
         // works, with no ghcr.io credentials configured there. Only the build job, which does log in, passes
         // --push.
         | Publishcontainers -> target [] {
-              let baseImage = "mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled"
+              let baseImage = "mcr.microsoft.com/dotnet/runtime-deps:11.0-resolute-chiseled"
               // MSBuild reads the quotes: without them the tags' `;` would split the property
               let tags = $"ContainerImageTags=\"{Packaging.containerImageTags Versions.current.Value}\""
               if push.Value then
-                  sh $"dotnet publish {toolProject} -c Release -f net10.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001 -p ContainerRegistry=ghcr.io"
+                  sh $"dotnet publish {toolProject} -c Release -f net11.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001 -p ContainerRegistry=ghcr.io"
               else
-                  sh $"dotnet publish {toolProject} -c Release -f net10.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001" }
+                  sh $"dotnet publish {toolProject} -c Release -f net11.0 -r linux-x64 /t:PublishContainer -p DebugType=none -p ContainerBaseImage={baseImage} -p ContainerRepository={Paths.Repository} -p {tags} -p ContainerUser=1001:1001" }
 
         // The framework-dependent build cannot catch what trimming breaks: #62 crashed only in the native-AOT
         // binary, when NuGet deserialised registration metadata by reflection. So this publishes that binary and
@@ -122,7 +122,7 @@ let main argv =
               let rid = RuntimeInformation.RuntimeIdentifier
               let publishDirectory = Path.Combine(Paths.Output.FullName, "aot-smoke")
               let publish = Paths.RootRelative publishDirectory
-              sh $"dotnet publish {toolProject} -c Release -f net10.0 -r {rid} -o {publish}"
+              sh $"dotnet publish {toolProject} -c Release -f net11.0 -r {rid} -o {publish}"
               let executable = if OperatingSystem.IsWindows() then $"{Paths.ToolName}.exe" else Paths.ToolName
               let binary = Paths.RootRelative <| Path.Combine(publishDirectory, executable)
               let! result = text $"{binary} diff 'previous-nuget|Proc|0.18.0' 'nuget|Proc|0.20.0' --target Proc -f markdown"

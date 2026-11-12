@@ -1,6 +1,6 @@
 # Bootstraps the toolchain and is the one entry point: `mise run <task>`, the same task names in every nullean repo.
 # The .NET SDK version lives only in global.json: the first dotnet entry reads it from there (sdk.version is the first
-# "version" key). The net10.0 runtime is listed after it because the public API diff runs the tool on net10.0.
+# "version" key). List further runtimes after it when tests run on older target frameworks too.
 
 [env]
 DOTNET_NOLOGO = "1"
@@ -8,7 +8,7 @@ DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
 
 [tools]
-dotnet = ["""{{ read_file(path='global.json') | split(pat='"version"') | nth(n=1) | split(pat='"') | nth(n=1) }}""", "10"]
+dotnet = ["""{{ read_file(path='global.json') | split(pat='"version"') | nth(n=1) | split(pat='"') | nth(n=1) }}"""]
 gh = "latest"
 zizmor = "1"
 
