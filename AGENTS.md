@@ -12,7 +12,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ` | the tool (net10.0 and net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
-| `src/assembly-differ/lib` | the vendored JustAssembly/JustDecompile assemblies that do the comparison |
+| `src/assembly-differ/Engine` | the comparison: reads both assemblies with System.Reflection.Metadata and reports what differs |
 | `tests/assembly-differ.Tests` | TUnit tests that run the built tool as a process on assemblies Roslyn compiles from C# source |
 | `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's own assembly is signed with |
@@ -68,10 +68,17 @@ one release label.
 - `DiffCommandTests` are characterization tests: Nullean.Snapshots keeps what `diff` prints, writes and returns in
   `.snapshots/`, wrong answers included. A changed snapshot is a change to the CLI contract: review the received
   file, then accept it with `snap accept` or `SNAPSHOT_ACCEPT=1` and say why in the pull request.
+- `CorpusTests` snapshots every format for 100 generated library versions (`RichApi`). The snapshots were written by
+  the JustAssembly engine this tool used before `Engine/`, so they pin its reports down exactly.
+- `ReferenceTests` compares this build with another one on more generated versions. It runs only when
+  `ASSEMBLY_DIFFER_REFERENCE` names the other build's `assembly-differ.dll` (`ASSEMBLY_DIFFER_SEEDS` sets how many).
 - `Properties` holds CsCheck properties over generated APIs. A known bug is a property marked `[Skip]` with its
   issue link; the fix removes the `[Skip]`.
 
 ## Rules
+
+- `Engine/` reproduces the reports of JustAssembly, which it replaced, quirks included: a type that became less visible
+  is reported as more visible, and nested types are named `.Name`. Changing a report is a change to the CLI contract.
 
 - The CLI surface (`diff`, the provider specs and the flags) is the contract `action.yml`, the container and other
   repositories' builds rely on. Removing or renaming any of it is a breaking change.

@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using JustAssembly.Core;
-using JustAssembly.Core.DiffItems.References;
+using Differ.Engine;
 
 namespace Differ.Exporters;
 

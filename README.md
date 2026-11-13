@@ -145,6 +145,6 @@ The tool ships as one package per platform. Install the root package; the .NET S
 - [Releases](https://github.com/nullean/assembly-differ/releases)
 - [Contributing](https://github.com/nullean/.github/blob/main/CONTRIBUTING.md)
 
-assembly-differ builds on [JustAssembly](https://github.com/telerik/JustAssembly), licensed under Apache 2.0.
+assembly-differ's comparison is a port of [JustAssembly](https://github.com/telerik/JustAssembly), licensed under Apache 2.0.
 
 MIT licensed. Copyright Nullean and contributors.
