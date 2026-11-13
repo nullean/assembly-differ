@@ -1,0 +1,90 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Type Name=".N4" DiffType="Modified">
+        <Method Name="N4()" DiffType="Deleted" />
+        <Method Name="X4()" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member changed to static.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N4`
+### `N4()` is added
+### `X4()`
+Member changed to static.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N4`
+
+[horizontal]
+`N4()` method:: deleted
+`X4()` method::
+Member changed to static.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 0 new additions
+- 🔴 1 removals
+- 🔷 3 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 4 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
++ 🔷 .N4 💥 
+- 🔴 N4() 💥 
++ 🔷 X4() 💥 
++ 🔷 Member changed to static. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

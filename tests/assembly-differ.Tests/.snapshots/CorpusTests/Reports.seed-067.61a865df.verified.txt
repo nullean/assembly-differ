@@ -1,0 +1,111 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Type Name=".N4" DiffType="Modified">
+        <Method Name="N4()" DiffType="New" />
+        <Method Name="X4()" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member changed to instance.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+    <Type Name="Lib.C1" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Type Name=".N2" DiffType="New" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N4`
+### `N4()` is added
+### `X4()`
+Member changed to instance.
+## `.N2` is new
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N4`
+
+[horizontal]
+`N4()` method:: added
+`X4()` method::
+Member changed to instance.
+
+
+[discrete]
+=== `.N2`
+
+[horizontal]
+type:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 3 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 7 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
++ 🔷 .N4 💥 
++ 🌟 N4() 
++ 🔷 X4() 💥 
++ 🔷 Member changed to instance. 💥 
+```
+```diff
+Lib.C1 
+- 🔴 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🌟 .N2 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

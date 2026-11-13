@@ -1,0 +1,118 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C2" DiffType="Modified">
+      <DeclarationDiffs>
+        <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+      </DeclarationDiffs>
+      <Event Name="Ev6" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)" DiffType="New" />
+        </DeclarationDiffs>
+      </Event>
+      <Type Name=".N0" DiffType="Modified">
+        <Method Name="X0()" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+            <DiffItem DiffType="Modified">Member type changed from Object to Int32.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+    <Type Name="Lib.C4" DiffType="Modified">
+      <Method Name="M2(Int32&amp;)" DiffType="Deleted" />
+      <Method Name="op_Addition(C4, C4)" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N0`
+### `X0()`
+Member type changed from `Object` to `Int32`.
+## `Lib.C4`
+### `M2(Int32&)` is added
+### `op_Addition(C4, C4)` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N0`
+
+[horizontal]
+`X0()` method::
+Member type changed from `Object` to `Int32`.
+
+[discrete]
+=== `Lib.C4`
+
+[horizontal]
+`M2(Int32&)` method:: deleted
+`op_Addition(C4, C4)` method:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 3 removals
+- 🔷 5 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 9 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C4 
+- 🔴 M2(Int32&) 💥 
+- 🔴 op_Addition(C4, C4) 💥 
+```
+```diff
+Lib.C2 
++ 🔷 Member is more visible. 
++ 🔷 .N0 💥 
++ 🔷 X0() 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 Member type changed from Object to Int32. 💥 
++ 🔷 Ev6 
++ 🌟 System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

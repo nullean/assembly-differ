@@ -1,0 +1,96 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C1&lt;T&gt;" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Method Name="op_Subtraction(C1&lt;T&gt;, C1&lt;T&gt;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+    <Type Name="Lib.C2" DiffType="Modified">
+      <Type Name=".N2" DiffType="New" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C1<T>`
+### `op_Subtraction(C1<T>, C1<T>)` is added
+## `.N2` is new
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+
+[discrete]
+=== `.N2`
+
+[horizontal]
+type:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 1 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 5 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C2 
++ 🌟 .N2 
+```
+```diff
+Lib.C1<T> 
+- 🔴 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 op_Subtraction(C1<T>, C1<T>) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

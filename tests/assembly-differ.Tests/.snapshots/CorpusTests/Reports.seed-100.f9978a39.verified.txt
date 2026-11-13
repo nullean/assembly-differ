@@ -1,0 +1,97 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C4" DiffType="Modified">
+      <Method Name="G1&lt;U&gt;(U, Int32)" DiffType="Deleted" />
+      <Type Name=".N5" DiffType="Modified">
+        <Method Name="X5()" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+            <DiffItem DiffType="Modified">Member type changed from Int32 to Int32[,].</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C4`
+### `G1<U>(U, Int32)` is added
+## `.N5`
+### `X5()`
+Member type changed from `Int32` to `Int32[,]`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C4`
+
+[horizontal]
+`G1<U>(U, Int32)` method:: deleted
+
+[discrete]
+=== `.N5`
+
+[horizontal]
+`X5()` method::
+Member type changed from `Int32` to `Int32[,]`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 1 removals
+- 🔷 3 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 5 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C4 
+- 🔴 G1<U>(U, Int32) 💥 
++ 🔷 .N5 💥 
++ 🔷 X5() 💥 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🔷 Member type changed from Int32 to Int32[,]. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

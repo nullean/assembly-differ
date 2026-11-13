@@ -1,0 +1,94 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0&lt;T&gt;" DiffType="Modified">
+      <Property Name="P3" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="New" />
+          <DiffItem DiffType="Modified">Member type changed from CancellationToken to String.</DiffItem>
+        </DeclarationDiffs>
+        <Method Name="get" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+          </DeclarationDiffs>
+        </Method>
+      </Property>
+      <Method Name="op_Addition(C0&lt;T&gt;, C0&lt;T&gt;)" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0<T>`
+### `op_Addition(C0<T>, C0<T>)` is added
+### `P3`
+Member type changed from `CancellationToken` to `String`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0<T>`
+
+[horizontal]
+`op_Addition(C0<T>, C0<T>)` method:: deleted
+`P3` property getter::
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 1 removals
+- 🔷 3 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 6 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0<T> 
+- 🔴 op_Addition(C0<T>, C0<T>) 💥 
++ 🔷 P3 💥 
++ 🌟 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 
++ 🔷 Member type changed from CancellationToken to String. 💥 
++ 🔷 get 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

@@ -1,0 +1,119 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0&lt;T&gt;" DiffType="Modified">
+      <Method Name="M5(String&amp;, String)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+          <DiffItem DiffType="Modified">Member changed to static.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="op_Division(C0&lt;T&gt;, C0&lt;T&gt;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="op_Modulus(C0&lt;T&gt;, C0&lt;T&gt;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="op_Subtraction(C0&lt;T&gt;, C0&lt;T&gt;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        </DeclarationDiffs>
+      </Method>
+      <Event Name="Ev2" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.S1" DiffType="Deleted" />
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0<T>`
+### `M5(String&, String)`
+Member changed to static.
+### `op_Division(C0<T>, C0<T>)` is added
+### `op_Modulus(C0<T>, C0<T>)` is added
+### `op_Subtraction(C0<T>, C0<T>)` is added
+## `Lib.S1` is deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0<T>`
+
+[horizontal]
+`M5(String&, String)` method::
+Member changed to static.
+
+[discrete]
+=== `Lib.S1`
+
+[horizontal]
+type:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 0 new additions
+- 🔴 6 removals
+- 🔷 5 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 11 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+- 🔴 Lib.S1 💥 
+```
+```diff
+Lib.C0<T> 
+- 🔴 Ev2 💥 
++ 🔷 op_Division(C0<T>, C0<T>) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 op_Modulus(C0<T>, C0<T>) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 op_Subtraction(C0<T>, C0<T>) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 M5(String&, String) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 Member changed to static. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

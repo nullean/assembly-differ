@@ -1,0 +1,89 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Method Name="C0(SByte)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.ObsoleteAttribute::.ctor()" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="G0&lt;U&gt;(U, Boolean)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0`
+### `C0(SByte)` is added
+### `G0<U>(U, Boolean)` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 6 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
+- 🔴 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 C0(SByte) 
++ 🌟 System.ObsoleteAttribute::.ctor() 
++ 🔷 G0<U>(U, Boolean) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

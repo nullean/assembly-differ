@@ -1,0 +1,138 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Reflection.DefaultMemberAttribute::.ctor(System.String)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Property Name="Item" DiffType="Deleted" />
+      <Method Name="G1&lt;U&gt;(U)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="M5(Int64&amp;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="op_BitwiseOr(C0, C0)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+      <Type Name=".N0" DiffType="Modified">
+        <Method Name="X0()" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+            <DiffItem DiffType="Modified">Member type changed from CancellationToken to List&lt;Int32&gt;.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+    <Type Name="Lib.C1" DiffType="Modified">
+      <DeclarationDiffs>
+        <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+      </DeclarationDiffs>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0`
+### `G1<U>(U)` is added
+### `M5(Int64&)`
+Member is more visible.
+### `op_BitwiseOr(C0, C0)` is added
+### `Item` is added
+## `.N0`
+### `X0()`
+Member type changed from `CancellationToken` to `List<Int32>`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0`
+
+[horizontal]
+`M5(Int64&)` method::
+Member is more visible.
+`Item` property:: deleted
+
+[discrete]
+=== `.N0`
+
+[horizontal]
+`X0()` method::
+Member type changed from `CancellationToken` to `List<Int32>`.
+
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 3 new additions
+- 🔴 2 removals
+- 🔷 8 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 13 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C1 
++ 🔷 Member is more visible. 
+```
+```diff
+Lib.C0 
+- 🔴 System.Reflection.DefaultMemberAttribute::.ctor(System.String) 💥 
+- 🔴 Item 💥 
++ 🔷 .N0 💥 
++ 🔷 X0() 💥 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🔷 Member type changed from CancellationToken to List<Int32>. 💥 
++ 🔷 G1<U>(U) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🔷 M5(Int64&) 
++ 🔷 Member is more visible. 
++ 🔷 op_BitwiseOr(C0, C0) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

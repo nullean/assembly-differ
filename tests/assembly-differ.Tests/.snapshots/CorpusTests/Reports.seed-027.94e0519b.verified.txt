@@ -1,0 +1,92 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C1" DiffType="New" />
+    <Type Name="Lib.I0&lt;out T&gt;" DiffType="Modified">
+      <Method Name="G1&lt;U&gt;(U)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="M2(ValueTuple&lt;Int32, String&gt;)" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C1` is new
+## `Lib.I0<out T>`
+### `G1<U>(U)` is added
+### `M2(ValueTuple<Int32, String>)` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C1`
+
+[horizontal]
+type:: added
+
+[discrete]
+=== `Lib.I0<out T>`
+
+[horizontal]
+`M2(ValueTuple<Int32, String>)` method:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 2 removals
+- 🔷 1 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 4 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
++ 🌟 Lib.C1 
+```
+```diff
+Lib.I0<out T> 
+- 🔴 M2(ValueTuple<Int32, String>) 💥 
++ 🔷 G1<U>(U) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

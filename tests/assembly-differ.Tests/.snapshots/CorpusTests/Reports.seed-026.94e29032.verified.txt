@@ -1,0 +1,127 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Property Name="P1" DiffType="Deleted" />
+      <Method Name="M0(Nullable&lt;Int32&gt;&amp;, Int32[])" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Parameter name changed from b to index.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+    <Type Name="Lib.C1" DiffType="Modified">
+      <Field Name="F4" DiffType="Deleted" />
+      <Type Name=".N3" DiffType="Modified">
+        <Method Name="N3()" DiffType="New" />
+        <Method Name="X3()" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member changed to instance.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+      <Type Name=".N9" DiffType="New" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0`
+### `M0(Nullable<Int32>&, Int32[])`
+Parameter name changed from `b` to `index`.
+### `P1` is added
+## `.N3`
+### `N3()` is added
+### `X3()`
+Member changed to instance.
+## `.N9` is new
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0`
+
+[horizontal]
+`M0(Nullable<Int32>&, Int32[])` method::
+Parameter name changed from `b` to `index`.
+`P1` property:: deleted
+
+
+[discrete]
+=== `.N3`
+
+[horizontal]
+`N3()` method:: added
+`X3()` method::
+Member changed to instance.
+
+[discrete]
+=== `.N9`
+
+[horizontal]
+type:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 5 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 9 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
+- 🔴 P1 💥 
++ 🔷 M0(Nullable<Int32>&, Int32[]) 💥 
++ 🔷 Parameter name changed from b to index. 💥 
+```
+```diff
+Lib.C1 
++ 🌟 .N9 
+- 🔴 F4 💥 
++ 🔷 .N3 💥 
++ 🌟 N3() 
++ 🔷 X3() 💥 
++ 🔷 Member changed to instance. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

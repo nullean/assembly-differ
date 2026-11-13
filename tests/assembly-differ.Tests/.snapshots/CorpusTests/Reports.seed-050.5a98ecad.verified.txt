@@ -1,0 +1,126 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <DeclarationDiffs>
+        <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+      </DeclarationDiffs>
+    </Type>
+    <Type Name="Lib.C3" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Reflection.DefaultMemberAttribute::.ctor(System.String)" DiffType="Deleted" />
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="New" />
+        <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+      </DeclarationDiffs>
+      <Property Name="Item" DiffType="Deleted" />
+      <Method Name="C3()" DiffType="New" />
+      <Event Name="Ev2" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+        </DeclarationDiffs>
+        <Method Name="add" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+          </DeclarationDiffs>
+        </Method>
+        <Method Name="remove" DiffType="Modified">
+          <DeclarationDiffs>
+            <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+          </DeclarationDiffs>
+        </Method>
+      </Event>
+      <Type Name=".N4" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)" DiffType="New" />
+        </DeclarationDiffs>
+      </Type>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C3`
+### `C3()` is added
+### `Item` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `Lib.C3`
+
+[horizontal]
+`C3()` method:: added
+`Item` property:: deleted
+
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 4 new additions
+- 🔴 5 removals
+- 🔷 5 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 14 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
++ 🔷 Member is more visible. 
+```
+```diff
+Lib.C3 
+- 🔴 System.Reflection.DefaultMemberAttribute::.ctor(System.String) 💥 
++ 🌟 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🌟 C3() 
+- 🔴 Item 💥 
++ 🔷 .N4 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🔷 Ev2 💥 
+- 🔴 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 💥 
++ 🔷 add 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 remove 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

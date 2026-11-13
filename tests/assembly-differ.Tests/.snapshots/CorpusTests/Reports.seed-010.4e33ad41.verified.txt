@@ -1,0 +1,89 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C2" DiffType="Modified">
+      <Method Name="M2(DateTime)" DiffType="New" />
+      <Method Name="M2(DateTime&amp;)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.E4" DiffType="Modified">
+      <Field Name="V0" DiffType="Deleted" />
+      <Field Name="V1" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C2`
+### `M2(DateTime)` is added
+### `M2(DateTime&)` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C2`
+
+[horizontal]
+`M2(DateTime)` method:: added
+`M2(DateTime&)` method:: deleted
+
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 3 removals
+- 🔷 0 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 4 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C2 
++ 🌟 M2(DateTime) 
+- 🔴 M2(DateTime&) 💥 
+```
+```diff
+Lib.E4 
+- 🔴 V0 💥 
+- 🔴 V1 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

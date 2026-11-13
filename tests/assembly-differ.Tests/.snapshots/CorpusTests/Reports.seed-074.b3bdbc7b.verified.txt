@@ -1,0 +1,84 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C2" DiffType="Modified">
+      <Method Name="op_Addition(C2, C2)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.S0" DiffType="New" />
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C2`
+### `op_Addition(C2, C2)` is added
+## `Lib.S0` is new
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C2`
+
+[horizontal]
+`op_Addition(C2, C2)` method:: deleted
+
+[discrete]
+=== `Lib.S0`
+
+[horizontal]
+type:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 1 removals
+- 🔷 0 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 2 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
++ 🌟 Lib.S0 
+```
+```diff
+Lib.C2 
+- 🔴 op_Addition(C2, C2) 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

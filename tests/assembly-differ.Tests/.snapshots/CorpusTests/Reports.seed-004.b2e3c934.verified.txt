@@ -1,0 +1,97 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C1" DiffType="Modified">
+      <Type Name=".N0" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.C2" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.ObsoleteAttribute::.ctor(System.String)" DiffType="New" />
+      </DeclarationDiffs>
+    </Type>
+    <Type Name="Lib.S3" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.ObsoleteAttribute::.ctor(System.String)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Event Name="Ev4" DiffType="New" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N0` is deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N0`
+
+[horizontal]
+type:: deleted
+
+
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 0 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 4 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C1 
+- 🔴 .N0 💥 
+```
+```diff
+Lib.C2 
++ 🌟 System.ObsoleteAttribute::.ctor(System.String) 
+```
+```diff
+Lib.S3 
+- 🔴 System.ObsoleteAttribute::.ctor(System.String) 💥 
++ 🌟 Ev4 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr
