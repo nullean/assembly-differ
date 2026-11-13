@@ -18,6 +18,21 @@
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
   </ItemGroup>
 
+  <!-- tests/: TUnit, AwesomeAssertions and the snapshot packages track the latest stable release -->
+  <ItemGroup>
+    <PackageVersion Include="TUnit" Version="1.84.0" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
+    <PackageVersion Include="CsCheck" Version="5.0.1" />
+    <PackageVersion Include="Nullean.Snapshots.AwesomeAssertions" Version="0.12.1" />
+    <PackageVersion Include="Nullean.Snapshots.TUnit" Version="0.12.1" />
+    <!-- Nullean.Snapshots 0.12.1 brings Nullean.ScopedFileSystem 0.7.1, which was built against Testably's file system
+         interface 10.x while 11.0.0 resolves, so loading it throws TypeLoadException (CreateHardLink). 0.7.2 is built
+         against 11.0.0. Drop this once a Nullean.Snapshots release depends on 0.7.2 or later. -->
+    <PackageVersion Include="Nullean.ScopedFileSystem" Version="0.7.2" />
+    <!-- compiles the old and new fixture assemblies a test diffs -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
+  </ItemGroup>
+
   <!-- build/scripts -->
   <ItemGroup>
     <!-- under CPM the F# SDK adds no implicit FSharp.Core; Nullean.Make.Fs needs 11.0.100 or later -->

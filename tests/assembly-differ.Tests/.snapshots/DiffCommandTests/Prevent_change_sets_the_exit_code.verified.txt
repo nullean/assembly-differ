@@ -1,0 +1,12 @@
+scenario: none patch minor major
+unchanged: 0 4 0 0
+method-added: 0 4 4 4
+method-removed: 0 4 4 4
+type-added: 0 4 4 4
+type-removed: 0 4 4 4
+property-type-changed: 0 4 4 4
+parameter-added: 0 4 4 4
+visibility-reduced: 0 4 4 4
+interface-member-added: 0 4 4 4
+required-property-added: 0 4 4 4
+added-and-removed: 0 4 4 4

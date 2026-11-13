@@ -1,0 +1,44 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 6 new additions
+- 🔴 1 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 9 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.Widget 
++ 🌟 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 
++ 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
++ 🌟 System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor() 
++ 🌟 Label 
++ 🔷 Name(Int32) 💥 
+- 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
++ 🔷 Widget() 
++ 🌟 System.ObsoleteAttribute::.ctor(System.String,System.Boolean) 
++ 🌟 System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute::.ctor(System.String) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+github-breaking-changes-comments.md

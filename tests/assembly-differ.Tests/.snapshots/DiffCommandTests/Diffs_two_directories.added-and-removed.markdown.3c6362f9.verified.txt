@@ -1,0 +1,13 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Draw()` is added
+### `Paint()` is added
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+Lib.md

@@ -87,3 +87,6 @@ docs-temp
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# Microsoft.Testing.Platform reports
+TestResults/

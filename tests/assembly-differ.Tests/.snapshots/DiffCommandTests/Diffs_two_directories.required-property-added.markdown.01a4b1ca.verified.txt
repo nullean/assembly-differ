@@ -1,0 +1,14 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Widget()` is added
+### `Name(Int32)` is added
+### `Label` is added
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+Lib.md

@@ -13,9 +13,11 @@ type Target =
     | Clean
     /// Run build
     | Build
+    /// Runs build, then the tests in tests/
+    | Test
     /// Runs build, then creates and validates the packages and reports public API changes
     | Pack
-    /// Runs build, then creates and validates the packages: what CI's build job runs
+    /// Runs build, the tests, then creates and validates the packages: what CI's build job runs
     | Ci
     /// Pack the root and 'any' tool packages into build/output; CI's aot-pack matrix builds the per-RID ones
     | Generatepackages
@@ -50,9 +52,12 @@ let main argv =
         | Build -> command {
               composes [Clean] }
                    |> executes { sh $"dotnet build -c Release" }
-        // there are no tests, so ci is pack: build, then create, validate and diff the packages
+        | Test -> command {
+              requires [Build] }
+                   |> executes { sh $"dotnet test --project tests/assembly-differ.Tests -c Release --no-build" }
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
-        | Ci -> command { requires [Pack]; composes [] }
+        // ci is build, test, then create, validate and diff the packages
+        | Ci -> command { requires [Pack]; composes [Test] }
         | Generatepackages -> target [] {
               if not Paths.Output.Exists then Paths.Output.Create()
               // A plain `dotnet pack` emits the root package (whose DotnetToolSettings.xml v2 maps each RID to
