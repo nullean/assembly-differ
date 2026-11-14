@@ -87,10 +87,9 @@ Each side is a provider spec, and the two sides can mix:
 | `-p`, `--prevent-change` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
 | `-a`, `--allow-empty-previous-nuget` | succeed when `previous-nuget` finds no earlier release, for a first release |
 
-The suggested change is `Patch` when the public API is unchanged and `Major` when something was deleted or changed.
-Additions alone are currently reported as `Major` too: diffing Proc 0.12.0 against 0.13.0, which only adds
-`NoWrapInThread`, suggests `Major`. Always name the `diff` subcommand: a provider spec as the first argument is read as
-a command name.
+The suggested change is `Patch` when the public API is unchanged, `Minor` when something was only added (diffing Proc
+0.12.0 against 0.13.0 suggests `Minor`) and `Major` when something was deleted or changed. Always name the `diff`
+subcommand: a provider spec as the first argument is read as a command name.
 
 More examples:
 
