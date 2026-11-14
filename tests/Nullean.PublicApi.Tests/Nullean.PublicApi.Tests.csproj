@@ -20,5 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Nullean.PublicApi/Nullean.PublicApi.csproj" />
+    <ProjectReference Include="../../src/Nullean.PublicApi.Diff/Nullean.PublicApi.Diff.csproj" />
   </ItemGroup>
 </Project>

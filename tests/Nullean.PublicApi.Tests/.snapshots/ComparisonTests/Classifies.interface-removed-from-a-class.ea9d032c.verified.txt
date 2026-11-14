@@ -1,0 +1,2 @@
+A › interfaces  changed: IDisposable → -  [Major, breaks Callers Binary, Source]
+suggested: Major

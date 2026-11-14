@@ -1,0 +1,2 @@
+A › ToString()  removed: public override string ToString() → -  [Patch] (still inherited from the overridden member)
+suggested: Patch

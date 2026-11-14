@@ -1,0 +1,2 @@
+A › M(int) › parameter 1 name  changed: count → total  [Major, breaks Callers Source] (callers that pass it by name)
+suggested: Major

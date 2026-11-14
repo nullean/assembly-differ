@@ -8,6 +8,9 @@ using System.Reflection;
 
 namespace Nullean.PublicApi.Diff;
 
+// inside the namespace, so these win over Nullean.PublicApi's types of the same names
+using Nullean.PublicApi.Diff.JustAssembly;
+
 /// <summary>Compares the public API of two assemblies.</summary>
 public static class ApiDiff
 {

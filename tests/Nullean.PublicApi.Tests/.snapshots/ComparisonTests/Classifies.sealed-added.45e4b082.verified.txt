@@ -1,0 +1,2 @@
+A › sealed  changed: not sealed → sealed  [Major, breaks Inheritors Binary, Source]
+suggested: Major

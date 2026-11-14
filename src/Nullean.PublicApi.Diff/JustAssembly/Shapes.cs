@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
 
-namespace Nullean.PublicApi.Diff;
+namespace Nullean.PublicApi.Diff.JustAssembly;
 
 /// <summary>
 /// A type as a signature spells it. Every shape renders two ways: <see cref="FullName"/>, the spelling Mono.Cecil

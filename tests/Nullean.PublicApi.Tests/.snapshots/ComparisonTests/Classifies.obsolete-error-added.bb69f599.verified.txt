@@ -1,0 +1,2 @@
+A › M() › attribute  changed: - → [Obsolete("use N", true)]  [Major, breaks Callers Source]
+suggested: Major

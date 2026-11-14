@@ -1,0 +1,2 @@
+A › M() › virtual  changed: virtual → not virtual  [Major, breaks Inheritors Binary, Source]
+suggested: Major

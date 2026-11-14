@@ -1,0 +1,2 @@
+A › Name  added: - → public required string Name { get; init; }  [Major, breaks Callers Source] (every object initializer has to set it)
+suggested: Major

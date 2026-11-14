@@ -11,7 +11,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 
-namespace Nullean.PublicApi.Diff;
+namespace Nullean.PublicApi.Diff.JustAssembly;
 
 /// <summary>An attribute, named by its constructor: <c>System.ObsoleteAttribute::.ctor(System.String)</c>.</summary>
 /// <param name="Signature">The constructor's declaring type and parameter types.</param>

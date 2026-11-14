@@ -1,0 +1,3 @@
+Shape › Draw()  added: - → public void Draw()  [Minor]
+Widget › Draw()  removed: public void Draw() → -  [Patch] (still inherited from Shape)
+suggested: Minor
