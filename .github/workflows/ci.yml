@@ -123,6 +123,11 @@ jobs:
 
     - run: ./build.sh build -s
       name: Build
+
+    # Not on a release: main's run on this commit ran them
+    - run: ./build.sh test -s
+      name: Test
+      if: github.event_name != 'release'
     
     - run: ./build.sh generatepackages -s
       name: Generate local nuget packages

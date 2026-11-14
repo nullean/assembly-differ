@@ -1,0 +1,7 @@
+exit code: 0
+--- stdout
+[diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
+[diff] Suggested version change: Patch
+--- stderr
+
+--- files

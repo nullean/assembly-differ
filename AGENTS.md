@@ -13,6 +13,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
 | `src/assembly-differ/lib` | the vendored JustAssembly/JustDecompile assemblies that do the comparison |
+| `tests/assembly-differ.Tests` | TUnit tests that run the built tool as a process on assemblies Roslyn compiles from C# source |
 | `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's own assembly is signed with |
 | `action.yml` | the GitHub Action: runs the `edge` container image |
@@ -23,8 +24,9 @@ mise installs the SDK pinned in `global.json`. Run everything through it:
 
 ```bash
 mise run build    # build the solution
+mise run test     # build, then run the tests
 mise run pack     # build, pack, validate the packages, report public API changes
-mise run ci       # build, pack, validate and diff (there are no tests), then the curb check
+mise run ci       # build, test, pack, validate and diff, then the curb check
 mise run format   # format the repository with curb
 mise run check    # formatting drift (curb) and workflow security checks (zizmor); CI runs the curb half
 mise run clean    # delete build output
@@ -58,6 +60,16 @@ one release label.
   JSON with source-generated System.Text.Json rather than Newtonsoft.Json reflection, which trimming breaks (#62).
   `./build.sh smokeaot` publishes the native-AOT binary for this machine and runs `previous-nuget` and `nuget` with
   it; CI's `aot-pack` job runs it on every RID.
+
+## Tests
+
+- The tests run the tool as a process, so they hold for whatever engine sits behind the CLI. `Fixture` compiles an
+  old and a new `Lib.dll` from C# source with Roslyn; `Cli` starts the net11.0 build of the tool on them.
+- `DiffCommandTests` are characterization tests: Nullean.Snapshots keeps what `diff` prints, writes and returns in
+  `.snapshots/`, wrong answers included. A changed snapshot is a change to the CLI contract: review the received
+  file, then accept it with `snap accept` or `SNAPSHOT_ACCEPT=1` and say why in the pull request.
+- `Properties` holds CsCheck properties over generated APIs. A known bug is a property marked `[Skip]` with its
+  issue link; the fix removes the `[Skip]`.
 
 ## Rules
 

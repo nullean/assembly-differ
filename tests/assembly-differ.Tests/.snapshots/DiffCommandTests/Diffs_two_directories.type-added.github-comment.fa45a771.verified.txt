@@ -1,0 +1,33 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 0 removals
+- 🔷 0 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 1 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
++ 🌟 Lib.Gadget 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+github-breaking-changes-comments.md

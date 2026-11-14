@@ -21,6 +21,11 @@ description = "Build the solution"
 depends = ["setup"]
 run = "dotnet run --project build/scripts -- build"
 
+[tasks.test]
+description = "Build, then run the tests"
+depends = ["setup"]
+run = "dotnet run --project build/scripts -- test"
+
 [tasks.format]
 description = "Format the repository with curb"
 depends = ["setup"]
@@ -41,7 +46,7 @@ description = "Delete build output"
 run = "dotnet run --project build/scripts -- clean"
 
 [tasks.ci]
-description = "What CI's build job runs on every push: build, pack, validate and diff the public API, then fail on formatting drift (curb)"
+description = "What CI's build job runs on every push: build, test, pack, validate and diff the public API, then fail on formatting drift (curb)"
 depends = ["setup"]
 run = ["dotnet run --project build/scripts -- ci", "dotnet curb check ."]
 

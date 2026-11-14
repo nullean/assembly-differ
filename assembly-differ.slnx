@@ -17,4 +17,7 @@
   <Folder Name="/src/">
     <Project Path="src/assembly-differ/assembly-differ.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/assembly-differ.Tests/assembly-differ.Tests.csproj" />
+  </Folder>
 </Solution>

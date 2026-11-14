@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Differ.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="CsCheck" />
+    <PackageReference Include="Nullean.Snapshots.AwesomeAssertions" />
+    <PackageReference Include="Nullean.Snapshots.TUnit" />
+    <!-- pinned, see Directory.Packages.props -->
+    <PackageReference Include="Nullean.ScopedFileSystem" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <!-- The tests run the tool the way its users do, as a process: the CLI is the contract (AGENTS.md). Building
+       the tool first is all the reference is for; the tests find its net11.0 output through ToolPath. -->
+  <ItemGroup>
+    <ProjectReference Include="../../src/assembly-differ/assembly-differ.csproj" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=net11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ToolPath</_Parameter1>
+      <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../src/assembly-differ/bin/$(Configuration)/net11.0/assembly-differ.dll'))</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

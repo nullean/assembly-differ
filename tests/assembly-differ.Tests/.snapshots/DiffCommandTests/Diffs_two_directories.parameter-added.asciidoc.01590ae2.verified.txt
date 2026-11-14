@@ -1,0 +1,16 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.Widget`
+
+[horizontal]
+`Name(Int32, Boolean)` method:: added
+`Name(Int32)` method:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+Lib.asciidoc
