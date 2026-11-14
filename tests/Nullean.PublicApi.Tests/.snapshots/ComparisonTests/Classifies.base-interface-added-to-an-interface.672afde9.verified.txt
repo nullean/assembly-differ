@@ -1,0 +1,2 @@
+I › interfaces  changed: - → IBase  [Major, breaks Implementers Binary, Source]
+suggested: Major

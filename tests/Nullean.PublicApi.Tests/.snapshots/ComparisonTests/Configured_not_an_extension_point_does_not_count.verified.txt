@@ -1,0 +1,2 @@
+Lib.Internal › I › N()  added: - → void N()  [Minor, breaks Implementers Binary, Source, does not count] (I is not an extension point (configured))
+suggested: Minor

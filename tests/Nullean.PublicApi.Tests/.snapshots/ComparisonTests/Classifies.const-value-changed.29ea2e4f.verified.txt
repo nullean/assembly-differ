@@ -1,0 +1,2 @@
+A › Max › constant  changed: 1 → 2  [Major, breaks Callers Binary] (compiled code keeps the old value)
+suggested: Major

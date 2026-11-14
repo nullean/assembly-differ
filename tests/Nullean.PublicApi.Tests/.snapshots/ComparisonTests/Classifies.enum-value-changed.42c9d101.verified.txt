@@ -1,0 +1,2 @@
+E › B › value  changed: 2 → 3  [Major, breaks Callers Binary] (compiled code keeps the old value)
+suggested: Major

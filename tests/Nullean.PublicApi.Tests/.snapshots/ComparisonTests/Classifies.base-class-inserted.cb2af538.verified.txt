@@ -1,0 +1,2 @@
+Widget › base type  changed: Shape → Mid  [Minor] (Shape is still a base)
+suggested: Minor

@@ -1,0 +1,2 @@
+A › M() › accessibility  changed: public → protected  [Major, breaks Callers Binary, Source]
+suggested: Major

@@ -1,0 +1,2 @@
+A › M()  removed: public void M() → -  [Major, breaks Callers Binary, Source] (deprecated, now removed)
+suggested: Major

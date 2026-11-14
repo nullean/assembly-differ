@@ -1,0 +1,3 @@
+A › M(int, int)  added: - → public void M(int a, int b = 0)  [Minor]
+A › M(int)  removed: public void M(int a) → -  [Major, breaks Callers Binary] (an overload with more optional parameters replaces it; callers compile, but compiled callers fail)
+suggested: Major

@@ -1,0 +1,2 @@
+A › M() › return type  changed: string → string?  [Minor] (nullability)
+suggested: Minor

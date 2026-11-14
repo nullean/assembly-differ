@@ -75,6 +75,36 @@ public static class ApiWriter
 		return builder.ToString();
 	}
 
+	/// <summary>A type's declaration line, as in a <c>.api</c> file: <c>public sealed class Widget : Shape</c>.</summary>
+	public static string Declaration(ApiType type)
+	{
+		var builder = new StringBuilder();
+		new Writer(builder, new Names(Alone(type))).Type(type with { Members = type.Kind == ApiTypeKind.Delegate ? type.Members : [], NestedTypes = [] }, 0);
+		return LastLine(builder);
+	}
+
+	/// <summary>A member's declaration line, as in a <c>.api</c> file: <c>public void Draw(Canvas canvas)</c>.</summary>
+	public static string Declaration(ApiMember member, ApiType declaringType)
+	{
+		var builder = new StringBuilder();
+		new Writer(builder, new Names(Alone(declaringType))).Member(member, declaringType, 0);
+		return LastLine(builder);
+	}
+
+	/// <summary>A type as a declaration spells it, with short names: <c>List&lt;string?&gt;</c>.</summary>
+	public static string Reference(ApiTypeReference type, ApiType? context = null) =>
+		new Writer(new StringBuilder(), new Names(context is null ? new ApiAssembly(string.Empty, new Version(), null, null, []) : Alone(context))).Reference(
+			type
+		);
+
+	private static ApiAssembly Alone(ApiType type) => new(string.Empty, new Version(), null, null, [type]);
+
+	private static string LastLine(StringBuilder builder)
+	{
+		var lines = builder.ToString().TrimEnd('\n').Split('\n');
+		return lines[lines.Length - 1].Trim();
+	}
+
 	/// <summary><c>Dictionary`2</c> as <c>Dictionary&lt;,&gt;</c>.</summary>
 	private static string Unbound(string metadataName)
 	{
@@ -304,7 +334,7 @@ public static class ApiWriter
 				Type(nested, depth + 1);
 		}
 
-		private void Member(ApiMember member, ApiType type, int depth)
+		public void Member(ApiMember member, ApiType type, int depth)
 		{
 			if (member is ApiMethod { ReturnAttributes: var returnAttributes })
 				Attributes(returnAttributes, depth, "return");
