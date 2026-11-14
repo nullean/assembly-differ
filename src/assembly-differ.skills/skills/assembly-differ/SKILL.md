@@ -22,6 +22,7 @@ dotnet tool install --global assembly-differ
 |---|---|
 | What would updating package X to 2.0.0 break here? | `dotnet build && assembly-differ nuget X 2.0.0` |
 | What would updating X to its latest release break here? | `dotnet build && assembly-differ nuget X` |
+| Which of this solution's packages can be updated, and which updates break this code? | `dotnet build && assembly-differ upgrades` |
 | What did my changes do to this repo's libraries since their last release? | `dotnet build -c Release && assembly-differ` |
 | What does this packed package change since the release before it? | `assembly-differ release path/to/MyLib.1.3.0.nupkg` |
 | What changed between two published versions? | `assembly-differ nuget X 1.0.0 2.0.0` |
