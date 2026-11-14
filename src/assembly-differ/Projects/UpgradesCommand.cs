@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using Differ.Engine;
 using Differ.Exporters;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;

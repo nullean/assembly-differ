@@ -78,7 +78,10 @@ let main argv =
                           Packaging.fixAnyPackageSigning destination
               Directory.Delete(staging, true)
               // the agent skill, a content-only package published with the tool
-              sh $"dotnet pack src/assembly-differ.skills -c Release -o {output}" }
+              sh $"dotnet pack src/assembly-differ.skills -c Release -o {output}"
+              // the libraries the tool is built on, published with it
+              for library in Paths.Libraries do
+                  sh $"dotnet pack src/{library} -c Release -o {output}" }
         | Validatepackages -> target [] {
               // Only the 'any' package carries a signed managed assembly to check: the root package is
               // just a DotnetToolSettings.xml pointer with no dll of its own, and the per-RID AOT packages
@@ -90,7 +93,10 @@ let main argv =
                   |> Seq.head
                   |> fun p -> Paths.RootRelative p.FullName
               let version = Versions.informational.Value
-              sh $"dotnet nupkg-validator validate {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d" }
+              sh $"dotnet nupkg-validator validate {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d"
+              for library in Paths.Libraries do
+                  let libraryPackage = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, $"{library}.{Versions.current.Value}.nupkg")
+                  sh $"dotnet nupkg-validator validate {libraryPackage} -v {version} -a {library} -k 96c599bbe3e70f5d" }
         | Generateapichanges -> target [] {
               let version = Versions.current.Value
               let tool = Paths.ToolName

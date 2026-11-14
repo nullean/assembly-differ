@@ -1,5 +1,3 @@
-using Differ.Engine;
-
 namespace Differ.Exporters;
 
 public interface IExporter

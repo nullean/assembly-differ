@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using Differ.Engine;
 
 namespace Differ.Exporters;
 
@@ -103,7 +102,7 @@ public class JsonExporter : IAllComparisonResultsExporter
 				_ => "modified",
 			}
 		);
-		json.WriteString("suggestedVersionChange", AssemblyComparison.Classify(item).ToString());
+		json.WriteString("suggestedVersionChange", VersionChange.Classify(item).ToString());
 		if (item is MemberDiffItem { AddsObligation: true })
 			json.WriteBoolean("addsObligation", true);
 		if (item is IMetadataDiffItem { Count: > 0 } parent)
@@ -133,7 +132,7 @@ public class JsonExporter : IAllComparisonResultsExporter
 		var count = 0;
 		diff.Visit((item, _) =>
 		{
-			if (item is not IMetadataDiffItem { DiffType: DiffType.Modified } && AssemblyComparison.Classify(item) == SuggestedVersionChange.Major)
+			if (item is not IMetadataDiffItem { DiffType: DiffType.Modified } && VersionChange.Classify(item) == SuggestedVersionChange.Major)
 				count++;
 		});
 		return count;

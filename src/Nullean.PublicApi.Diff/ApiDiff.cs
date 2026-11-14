@@ -6,16 +6,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Differ.Engine;
+using Nullean.PublicApi;
+
+namespace Nullean.PublicApi.Diff;
 
 /// <summary>Compares the public API of two assemblies.</summary>
 public static class ApiDiff
 {
 	/// <summary>The differences between two assemblies' public API, or <c>null</c> when there are none.</summary>
-	public static IMetadataDiffItem? Compare(string oldAssemblyPath, string newAssemblyPath)
+	public static IMetadataDiffItem? Compare(string oldAssemblyPath, string newAssemblyPath) =>
+		Compare(ApiReader.Read(oldAssemblyPath), ApiReader.Read(newAssemblyPath));
+
+	/// <summary>The differences between two assemblies' public API, or <c>null</c> when there are none.</summary>
+	public static IMetadataDiffItem? Compare(ApiAssembly oldAssembly, ApiAssembly newAssembly)
 	{
-		var oldAssembly = ModelReader.Read(oldAssemblyPath);
-		var newAssembly = ModelReader.Read(newAssemblyPath);
 		var declarationDiffs = Comparers.Attributes(oldAssembly.Attributes, newAssembly.Attributes);
 		var childrenDiffs = Comparers.Modules.Differences(oldAssembly.Modules, newAssembly.Modules);
 		if (declarationDiffs.Count == 0 && childrenDiffs.Count == 0)
@@ -93,7 +97,7 @@ internal static class Comparers
 {
 	public static readonly ModuleComparer Modules = new();
 
-	public static List<IDiffItem> Attributes(IEnumerable<AttributeModel> oldAttributes, IEnumerable<AttributeModel> newAttributes) =>
+	public static List<IDiffItem> Attributes(IEnumerable<ApiAttribute> oldAttributes, IEnumerable<ApiAttribute> newAttributes) =>
 		AttributeComparer.Instance.Differences(oldAttributes, newAttributes);
 
 	/// <summary>Public is the most visible; a positive result means the new element is more visible.</summary>
@@ -130,19 +134,19 @@ internal static class Comparers
 	}
 }
 
-internal sealed class AttributeComparer : Comparer<AttributeModel>
+internal sealed class AttributeComparer : Comparer<ApiAttribute>
 {
 	public static readonly AttributeComparer Instance = new();
 
-	protected override int Compare(AttributeModel x, AttributeModel y) => Order(x.Signature, y.Signature);
+	protected override int Compare(ApiAttribute x, ApiAttribute y) => Order(x.Signature, y.Signature);
 
-	protected override bool IsApi(AttributeModel element) => true;
+	protected override bool IsApi(ApiAttribute element) => true;
 
-	protected override IDiffItem Missing(AttributeModel element) => new CustomAttributeDiffItem(DiffType.Deleted, element.Signature);
+	protected override IDiffItem Missing(ApiAttribute element) => new CustomAttributeDiffItem(DiffType.Deleted, element.Signature);
 
-	protected override IDiffItem Added(AttributeModel element) => new CustomAttributeDiffItem(DiffType.New, element.Signature);
+	protected override IDiffItem Added(ApiAttribute element) => new CustomAttributeDiffItem(DiffType.New, element.Signature);
 
-	protected override IDiffItem? Changed(AttributeModel oldElement, AttributeModel newElement) => null;
+	protected override IDiffItem? Changed(ApiAttribute oldElement, ApiAttribute newElement) => null;
 }
 
 internal sealed class ReferenceComparer : Comparer<string>
@@ -161,17 +165,17 @@ internal sealed class ReferenceComparer : Comparer<string>
 	protected override IDiffItem? Changed(string oldElement, string newElement) => null;
 }
 
-internal sealed class ModuleComparer : Comparer<ModuleModel>
+internal sealed class ModuleComparer : Comparer<ApiModule>
 {
-	protected override int Compare(ModuleModel x, ModuleModel y) => Order(x.Name, y.Name);
+	protected override int Compare(ApiModule x, ApiModule y) => Order(x.Name, y.Name);
 
-	protected override bool IsApi(ModuleModel element) => element.Types.Any(t => t.Visibility == TypeAttributes.Public);
+	protected override bool IsApi(ApiModule element) => element.Types.Any(t => t.Visibility == TypeAttributes.Public);
 
-	protected override IDiffItem Missing(ModuleModel element) => new ModuleDiffItem(true, false, element.Name, null, null);
+	protected override IDiffItem Missing(ApiModule element) => new ModuleDiffItem(true, false, element.Name, null, null);
 
-	protected override IDiffItem Added(ModuleModel element) => new ModuleDiffItem(false, true, element.Name, null, null);
+	protected override IDiffItem Added(ApiModule element) => new ModuleDiffItem(false, true, element.Name, null, null);
 
-	protected override IDiffItem? Changed(ModuleModel oldElement, ModuleModel newElement)
+	protected override IDiffItem? Changed(ApiModule oldElement, ApiModule newElement)
 	{
 		var declarationDiffs = Comparers
 			.Attributes(oldElement.Attributes, newElement.Attributes)
@@ -184,20 +188,20 @@ internal sealed class ModuleComparer : Comparer<ModuleModel>
 	}
 }
 
-internal sealed partial class TypeComparer : Comparer<TypeModel>
+internal sealed partial class TypeComparer : Comparer<ApiType>
 {
 	public static readonly TypeComparer Instance = new();
 
-	protected override int Compare(TypeModel x, TypeModel y) => Order(x.FullName, y.FullName);
+	protected override int Compare(ApiType x, ApiType y) => Order(x.FullName, y.FullName);
 
-	protected override bool IsApi(TypeModel element) =>
+	protected override bool IsApi(ApiType element) =>
 		element.Visibility is TypeAttributes.Public or TypeAttributes.NestedPublic or TypeAttributes.NestedFamily or TypeAttributes.NestedFamORAssem;
 
-	protected override IDiffItem Missing(TypeModel element) => new TypeDiffItem(true, false, element.DisplayName, null, null) { Key = element.FullName };
+	protected override IDiffItem Missing(ApiType element) => new TypeDiffItem(true, false, element.DisplayName, null, null) { Key = element.FullName };
 
-	protected override IDiffItem Added(TypeModel element) => new TypeDiffItem(false, true, element.DisplayName, null, null) { Key = element.FullName };
+	protected override IDiffItem Added(ApiType element) => new TypeDiffItem(false, true, element.DisplayName, null, null) { Key = element.FullName };
 
-	protected override IDiffItem? Changed(TypeModel oldElement, TypeModel newElement)
+	protected override IDiffItem? Changed(ApiType oldElement, ApiType newElement)
 	{
 		var declarationDiffs = Comparers
 			.Attributes(oldElement.Attributes, newElement.Attributes)
@@ -224,25 +228,25 @@ internal sealed partial class TypeComparer
 	/// a positive one. A type that became less visible is therefore reported as more visible, and not as breaking;
 	/// the reports keep that until it is fixed on purpose.
 	/// </summary>
-	private static int TypeVisibilityChange(TypeModel oldElement, TypeModel newElement) =>
+	private static int TypeVisibilityChange(ApiType oldElement, ApiType newElement) =>
 		(byte)(Comparers.Visibility(newElement.Visibility) - Comparers.Visibility(oldElement.Visibility));
 }
 
-internal sealed class MethodComparer : Comparer<MethodModel>
+internal sealed class MethodComparer : Comparer<ApiMethod>
 {
 	public static readonly MethodComparer Instance = new();
 
-	protected override int Compare(MethodModel x, MethodModel y) => Order(x.Signature, y.Signature);
+	protected override int Compare(ApiMethod x, ApiMethod y) => Order(x.Signature, y.Signature);
 
-	protected override bool IsApi(MethodModel element) => element.IsApi;
+	protected override bool IsApi(ApiMethod element) => element.IsApi;
 
-	protected override IDiffItem Missing(MethodModel element) =>
+	protected override IDiffItem Missing(ApiMethod element) =>
 		new MemberDiffItem(MetadataType.Method, true, false, element.Display.Name, null, null) { Key = element.Name };
 
-	protected override IDiffItem Added(MethodModel element) =>
+	protected override IDiffItem Added(ApiMethod element) =>
 		new MemberDiffItem(MetadataType.Method, false, true, element.Display.Name, null, null) { AddsObligation = element.IsAbstract, Key = element.Name };
 
-	protected override IDiffItem? Changed(MethodModel oldElement, MethodModel newElement)
+	protected override IDiffItem? Changed(ApiMethod oldElement, ApiMethod newElement)
 	{
 		var declarationDiffs = DeclarationDiffs(oldElement, newElement).ToList();
 		if (declarationDiffs.Count == 0)
@@ -250,7 +254,7 @@ internal sealed class MethodComparer : Comparer<MethodModel>
 		return new MemberDiffItem(MetadataType.Method, true, true, newElement.Display.Name, declarationDiffs, null) { Key = newElement.Name };
 	}
 
-	public static IEnumerable<IDiffItem> DeclarationDiffs(MethodModel oldMethod, MethodModel newMethod)
+	public static IEnumerable<IDiffItem> DeclarationDiffs(ApiMethod oldMethod, ApiMethod newMethod)
 	{
 		foreach (var item in Comparers.Attributes(oldMethod.Attributes, newMethod.Attributes))
 			yield return item;
@@ -273,7 +277,7 @@ internal sealed class MethodComparer : Comparer<MethodModel>
 	/// A property's or event's accessor: <c>get</c>, <c>set</c>, <c>add</c> or <c>remove</c>. One only one side has is
 	/// reported without details; a changed type is the property's to report.
 	/// </summary>
-	public static IMetadataDiffItem? Accessor(string name, MethodModel? oldAccessor, MethodModel? newAccessor)
+	public static IMetadataDiffItem? Accessor(string name, ApiMethod? oldAccessor, ApiMethod? newAccessor)
 	{
 		if (oldAccessor is null && newAccessor is null)
 			return null;
@@ -290,21 +294,21 @@ internal sealed class MethodComparer : Comparer<MethodModel>
 	}
 }
 
-internal sealed class FieldComparer : Comparer<FieldModel>
+internal sealed class FieldComparer : Comparer<ApiField>
 {
 	public static readonly FieldComparer Instance = new();
 
-	protected override int Compare(FieldModel x, FieldModel y) => Order(x.Name, y.Name);
+	protected override int Compare(ApiField x, ApiField y) => Order(x.Name, y.Name);
 
-	protected override bool IsApi(FieldModel element) => element.IsApi;
+	protected override bool IsApi(ApiField element) => element.IsApi;
 
-	protected override IDiffItem Missing(FieldModel element) =>
+	protected override IDiffItem Missing(ApiField element) =>
 		new MemberDiffItem(MetadataType.Field, true, false, element.Display.Name, null, null) { Key = element.Name };
 
-	protected override IDiffItem Added(FieldModel element) =>
+	protected override IDiffItem Added(ApiField element) =>
 		new MemberDiffItem(MetadataType.Field, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
-	protected override IDiffItem? Changed(FieldModel oldElement, FieldModel newElement)
+	protected override IDiffItem? Changed(ApiField oldElement, ApiField newElement)
 	{
 		var declarationDiffs = Comparers
 			.Attributes(oldElement.Attributes, newElement.Attributes)
@@ -320,21 +324,21 @@ internal sealed class FieldComparer : Comparer<FieldModel>
 	}
 }
 
-internal sealed class PropertyComparer : Comparer<PropertyModel>
+internal sealed class PropertyComparer : Comparer<ApiProperty>
 {
 	public static readonly PropertyComparer Instance = new();
 
-	protected override int Compare(PropertyModel x, PropertyModel y) => Order(x.Name, y.Name);
+	protected override int Compare(ApiProperty x, ApiProperty y) => Order(x.Name, y.Name);
 
-	protected override bool IsApi(PropertyModel element) => element.Get is { IsApi: true } || element.Set is { IsApi: true };
+	protected override bool IsApi(ApiProperty element) => element.Get is { IsApi: true } || element.Set is { IsApi: true };
 
-	protected override IDiffItem Missing(PropertyModel element) =>
+	protected override IDiffItem Missing(ApiProperty element) =>
 		new MemberDiffItem(MetadataType.Property, true, false, element.Display.Name, null, null) { Key = element.Name };
 
-	protected override IDiffItem Added(PropertyModel element) =>
+	protected override IDiffItem Added(ApiProperty element) =>
 		new MemberDiffItem(MetadataType.Property, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
-	protected override IDiffItem? Changed(PropertyModel oldElement, PropertyModel newElement)
+	protected override IDiffItem? Changed(ApiProperty oldElement, ApiProperty newElement)
 	{
 		var declarationDiffs = Comparers.Attributes(oldElement.Attributes, newElement.Attributes);
 		if (oldElement.TypeFullName != newElement.TypeFullName)
@@ -350,21 +354,21 @@ internal sealed class PropertyComparer : Comparer<PropertyModel>
 	}
 }
 
-internal sealed class EventComparer : Comparer<EventModel>
+internal sealed class EventComparer : Comparer<ApiEvent>
 {
 	public static readonly EventComparer Instance = new();
 
-	protected override int Compare(EventModel x, EventModel y) => Order(x.Name, y.Name);
+	protected override int Compare(ApiEvent x, ApiEvent y) => Order(x.Name, y.Name);
 
-	protected override bool IsApi(EventModel element) => element.Add is { IsApi: true } || element.Remove is { IsApi: true };
+	protected override bool IsApi(ApiEvent element) => element.Add is { IsApi: true } || element.Remove is { IsApi: true };
 
-	protected override IDiffItem Missing(EventModel element) =>
+	protected override IDiffItem Missing(ApiEvent element) =>
 		new MemberDiffItem(MetadataType.Event, true, false, element.Display.Name, null, null) { Key = element.Name };
 
-	protected override IDiffItem Added(EventModel element) =>
+	protected override IDiffItem Added(ApiEvent element) =>
 		new MemberDiffItem(MetadataType.Event, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
-	protected override IDiffItem? Changed(EventModel oldElement, EventModel newElement)
+	protected override IDiffItem? Changed(ApiEvent oldElement, ApiEvent newElement)
 	{
 		var declarationDiffs = Comparers.Attributes(oldElement.Attributes, newElement.Attributes);
 		var childrenDiffs = new List<IMetadataDiffItem>(2);

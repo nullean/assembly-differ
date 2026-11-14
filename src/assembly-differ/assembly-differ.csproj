@@ -47,6 +47,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Nullean.PublicApi.Diff/Nullean.PublicApi.Diff.csproj" />
+    <Using Include="Nullean.PublicApi.Diff" />
+    <Using Include="Nullean.PublicApi" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Nullean.Argh" />
     <PackageReference Include="Proc" />
     <PackageReference Include="NuGet.Frameworks" />
