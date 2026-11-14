@@ -1,24 +1,170 @@
 name: 'assembly-differ'
-description: 'Diff assemblies or NuGet packages from different sources and report API changes'
+description: 'Report what a pull request changes in your libraries public API, label it for release-drafter, and fail on breaking changes until they are allowed'
 branding:
   icon: 'git-pull-request'
   color: 'blue'
+
 inputs:
-  first:
-    description: 'Old assembly provider, e.g. "nuget|NEST|6.1.0|net46" or "directory|C:\6.1.0"'
-    required: true
-  second:
-    description: 'New assembly provider, same format as "first"'
-    required: true
-  args:
-    description: 'Extra arguments passed through to assembly-differ verbatim, e.g. "--target NEST --format markdown"'
+  package:
+    description: 'A .nupkg to compare with the release before it. Leave empty to compare every library project of the solution in working-directory with its latest release; build it first.'
     required: false
     default: ''
-runs:
-  using: 'docker'
-  image: 'docker://ghcr.io/nullean/assembly-differ:edge'
+  projects:
+    description: 'Project files to compare instead of the libraries the solution holds, one per line.'
+    required: false
+    default: ''
+  target:
+    description: 'Only compare these assemblies, by file name without extension, one per line.'
+    required: false
+    default: ''
+  framework:
+    description: 'The target framework to compare, such as net8.0. Defaults to the newest each project or package ships.'
+    required: false
+    default: ''
+  fail-on:
+    description: 'Fail when the suggested version change is at least this, unless the pull request has the allow-label: none, patch, minor or major.'
+    required: false
+    default: 'major'
+  allow-label:
+    description: 'The pull request label that allows a change at fail-on, so the check passes.'
+    required: false
+    default: 'breaking-allowed'
+  major-label:
+    description: 'The label for a Major change, for release-drafter. Empty sets none.'
+    required: false
+    default: 'breaking'
+  minor-label:
+    description: 'The label for a Minor change. Empty sets none.'
+    required: false
+    default: 'feature'
+  patch-label:
+    description: 'The label for a Patch change. Empty sets none.'
+    required: false
+    default: ''
+  comment:
+    description: 'Keep a comment with the report on the pull request.'
+    required: false
+    default: 'true'
+  labels:
+    description: 'Set the release label on the pull request.'
+    required: false
+    default: 'true'
+  working-directory:
+    description: 'Where the solution is, and where relative paths start.'
+    required: false
+    default: '.'
+  token:
+    description: 'The token for comments and labels; it needs pull-requests: write.'
+    required: false
+    default: ${{ github.token }}
+  version:
+    description: 'The assembly-differ version to install. Defaults to the latest release.'
+    required: false
+    default: ''
+  first:
+    description: 'Deprecated: a provider spec, compared with second through diff. Use package or the solution instead.'
+    required: false
+    default: ''
+  second:
+    description: 'Deprecated: the second provider spec, with first.'
+    required: false
+    default: ''
   args:
-    - diff
-    - ${{ inputs.first }}
-    - ${{ inputs.second }}
-    - ${{ inputs.args }}
+    description: 'Deprecated: extra arguments for diff, with first and second.'
+    required: false
+    default: ''
+
+outputs:
+  suggested-change:
+    description: 'The suggested version change: None, Patch, Minor or Major.'
+    value: ${{ steps.report.outputs.suggested-change }}
+  breaking-changes:
+    description: 'How many breaking changes were found.'
+    value: ${{ steps.report.outputs.breaking-changes }}
+  report:
+    description: 'The path of api-changes.json.'
+    value: ${{ steps.report.outputs.report }}
+
+runs:
+  using: 'composite'
+  steps:
+    # Before inputs were typed, the action ran diff with two provider specs in the container image; it still does.
+    - name: Compare provider specs (deprecated inputs)
+      if: inputs.first != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        FIRST: ${{ inputs.first }}
+        SECOND: ${{ inputs.second }}
+        ARGS: ${{ inputs.args }}
+      run: |
+        echo "::warning title=assembly-differ::first, second and args are deprecated; compare the solution or a package instead (see the README)"
+        read -r -a extra <<< "$ARGS"
+        docker run --rm -v "$PWD:$PWD" -w "$PWD" ghcr.io/nullean/assembly-differ:edge diff "$FIRST" "$SECOND" "${extra[@]}"
+
+    - name: Install assembly-differ
+      if: inputs.first == ''
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        tools="$RUNNER_TEMP/assembly-differ-tool"
+        if [ -n "$VERSION" ]; then
+          dotnet tool install assembly-differ --tool-path "$tools" --version "$VERSION"
+        else
+          dotnet tool install assembly-differ --tool-path "$tools"
+        fi
+
+    - name: Compare
+      if: inputs.first == ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PACKAGE: ${{ inputs.package }}
+        PROJECTS: ${{ inputs.projects }}
+        TARGETS: ${{ inputs.target }}
+        FRAMEWORK: ${{ inputs.framework }}
+      run: |
+        output="$RUNNER_TEMP/assembly-differ"
+        mkdir -p "$output"
+        args=()
+        if [ -n "$PACKAGE" ]; then
+          args+=(release "$PACKAGE")
+        else
+          args+=(projects)
+          while IFS= read -r project; do [ -n "$project" ] && args+=(--project "$project"); done <<< "$PROJECTS"
+        fi
+        while IFS= read -r target; do [ -n "$target" ] && args+=(--target "$target"); done <<< "$TARGETS"
+        [ -n "$FRAMEWORK" ] && [ -n "$PACKAGE" ] && args+=(--framework "$FRAMEWORK")
+        "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}" --format json --output "$output"
+
+    - name: Report on the pull request
+      id: report
+      if: inputs.first == ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        ALLOW_LABEL: ${{ inputs.allow-label }}
+        MAJOR_LABEL: ${{ inputs.major-label }}
+        MINOR_LABEL: ${{ inputs.minor-label }}
+        PATCH_LABEL: ${{ inputs.patch-label }}
+        COMMENT: ${{ inputs.comment }}
+        LABELS: ${{ inputs.labels }}
+      run: |
+        report="$RUNNER_TEMP/assembly-differ/api-changes.json"
+        if [ ! -f "$report" ]; then
+          # nothing was compared, such as a solution whose libraries have no release yet
+          echo "suggested-change=None" >> "$GITHUB_OUTPUT"
+          echo "breaking-changes=0" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        echo "suggested-change=$(jq -r .suggestedVersionChange "$report")" >> "$GITHUB_OUTPUT"
+        echo "breaking-changes=$(jq -r .breakingChanges "$report")" >> "$GITHUB_OUTPUT"
+        args=(pull-request "$report" --fail-on "$FAIL_ON" --allow-label "$ALLOW_LABEL"
+          --major-label "$MAJOR_LABEL" --minor-label "$MINOR_LABEL" --patch-label "$PATCH_LABEL")
+        [ "$COMMENT" != "true" ] && args+=(--no-comment)
+        [ "$LABELS" != "true" ] && args+=(--no-labels)
+        "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}"

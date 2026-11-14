@@ -170,17 +170,57 @@ worktree` recipe above. Its options are `-t`, `-o`, `-f` (default
 
 ### GitHub Action
 
+On every pull request, report what it changes in your libraries' public API, label it for release-drafter, and fail
+on a breaking change until someone adds the `breaking-allowed` label:
+
 ```yaml
-- uses: nullean/assembly-differ@main
-  with:
-    first: "previous-nuget|MyLib|1.3.0|net8.0"
-    second: "directory|src/MyLib/bin/Release/net8.0"
-    args: --target MyLib --format markdown
+name: api-changes
+on:
+  pull_request:
+    # labeled and unlabeled run the check again when someone adds or removes breaking-allowed
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write # the comment and the labels
+
+jobs:
+  api-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build -c Release
+      - uses: nullean/assembly-differ@v1
 ```
 
-The action runs `assembly-differ diff <first> <second> <args>` in the prebuilt, distroless
-`ghcr.io/nullean/assembly-differ:edge` container, so the workflow needs no .NET SDK. `args` passes through verbatim.
-Container actions run on Linux runners only.
+Without `package`, the action compares every library project of the solution with the latest release of its package,
+the way running the tool without a command does. Give `package: build/output/MyLib.1.3.0.nupkg` to compare a packed
+package with the release before it instead. It installs the tool with `dotnet tool`, so it needs the .NET 10 SDK or
+later on the runner, the one your build uses.
+
+| Input | Default | What |
+|---|---|---|
+| `package` | | a `.nupkg` to compare with the release before it; empty compares the solution's libraries |
+| `projects` | | project files to compare instead, one per line |
+| `target` | | only these assemblies, one per line |
+| `framework` | | the target framework to compare |
+| `fail-on` | `major` | fail when the suggested change is at least this, unless the pull request has `allow-label`; `none` never fails |
+| `allow-label` | `breaking-allowed` | the label that lets a change at `fail-on` through |
+| `major-label`, `minor-label`, `patch-label` | `breaking`, `feature`, none | the release label for each suggested change |
+| `comment`, `labels` | `true` | keep the comment, set the labels |
+| `working-directory` | `.` | where the solution is |
+| `token` | `github.token` | needs `pull-requests: write` |
+| `version` | latest | the assembly-differ version to install |
+
+Outputs: `suggested-change` (`None`, `Patch`, `Minor` or `Major`), `breaking-changes`, and `report`, the path of
+`api-changes.json`.
+
+On a pull request from a fork the token cannot write, so the action writes the job summary and still applies
+`fail-on`, but leaves the comment and labels alone. The deprecated `first`, `second` and `args` inputs still run `diff`
+with two provider specs in the container image, as the action did before.
 
 ### Container
 
