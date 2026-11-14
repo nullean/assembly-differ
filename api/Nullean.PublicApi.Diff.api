@@ -50,7 +50,6 @@ namespace Nullean.PublicApi.Diff
     IReadOnlyList<string> NotExtensionPoints { get; init; }
 
   sealed class ApiComparisonResult
-    IEnumerable<ApiChange> Breaking { get; }
     IReadOnlyList<ApiChange> Changes { get; }
     SuggestedVersionChange Suggest(Version? baseline = null)
 
