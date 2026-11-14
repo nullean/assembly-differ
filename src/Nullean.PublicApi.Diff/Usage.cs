@@ -8,8 +8,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-using Nullean.PublicApi;
-
 namespace Nullean.PublicApi.Diff;
 
 /// <summary>

@@ -1,0 +1,23 @@
+assembly Lib
+using System.Collections.Generic: Dictionary<,>
+using System.IO: Stream
+
+namespace global
+  public class InGlobal
+    public InGlobal()
+
+namespace Lib.A
+  public class Range
+    public Range()
+
+  public class Task
+    public Task()
+
+namespace Lib.B
+  public class Uses
+    public Uses()
+    public System.Range Bcl()
+    public Dictionary<string, Stream> Map()
+    public Lib.A.Task Mine()
+    public Lib.A.Range Own()
+    public System.Threading.Tasks.Task Run()

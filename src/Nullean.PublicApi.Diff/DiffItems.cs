@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 
-using Nullean.PublicApi;
-
 namespace Nullean.PublicApi.Diff;
 
 /// <summary>Whether an element only exists in the old assembly, only in the new one, or in both but changed.</summary>

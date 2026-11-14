@@ -1,9 +1,8 @@
-// The comparison is a port of JustAssembly (https://github.com/telerik/JustAssembly), Copyright Telerik, licensed
-// under the Apache License 2.0, and reproduces its reports. Names follow JustDecompile's C# writer from the same project.
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,158 +12,60 @@ using System.Text;
 
 namespace Nullean.PublicApi;
 
-/// <summary>An attribute, named by its constructor: <c>System.ObsoleteAttribute::.ctor(System.String)</c>.</summary>
-/// <param name="Signature">The constructor's declaring type and parameter types.</param>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711", Justification = "It describes an attribute.")]
-public sealed record ApiAttribute(string Signature);
-
-/// <summary>An assembly's public API, as the metadata holds it.</summary>
-/// <param name="FullName">The assembly's display name: name, version, culture and public key token.</param>
-/// <param name="Attributes">The attributes on the assembly.</param>
-/// <param name="Modules">The assembly's module; a .NET assembly has one.</param>
-public sealed record ApiAssembly(string FullName, IReadOnlyList<ApiAttribute> Attributes, IReadOnlyList<ApiModule> Modules);
-
-/// <summary>A module and the types declared in it.</summary>
-/// <param name="Name">The module's file name.</param>
-/// <param name="Attributes">The attributes on the module.</param>
-/// <param name="AssemblyReferences">The display names of the assemblies the module references.</param>
-/// <param name="Types">The top-level types, of every visibility; nested types are under their declaring type.</param>
-public sealed record ApiModule(string Name, IReadOnlyList<ApiAttribute> Attributes, IReadOnlyList<string> AssemblyReferences, IReadOnlyList<ApiType> Types);
-
-/// <summary>A type and its members, of every visibility.</summary>
-/// <param name="FullName">The name in metadata: <c>Lib.Outer/Inner</c> or <c>Lib.Box`1</c>.</param>
-/// <param name="DisplayName">The name the reports show: <c>Lib.Box&lt;T&gt;</c>.</param>
-/// <param name="Flags">The type's metadata attributes.</param>
-/// <param name="Attributes">The attributes on the type.</param>
-/// <param name="Fields">The fields.</param>
-/// <param name="Properties">The properties.</param>
-/// <param name="Methods">The methods, without property and event accessors.</param>
-/// <param name="Events">The events.</param>
-/// <param name="NestedTypes">The types declared inside this one.</param>
-public sealed record ApiType(
-	string FullName,
-	string DisplayName,
-	TypeAttributes Flags,
-	IReadOnlyList<ApiAttribute> Attributes,
-	IReadOnlyList<ApiField> Fields,
-	IReadOnlyList<ApiProperty> Properties,
-	IReadOnlyList<ApiMethod> Methods,
-	IReadOnlyList<ApiEvent> Events,
-	IReadOnlyList<ApiType> NestedTypes
-)
-{
-	/// <summary>The visibility bits of <see cref="Flags"/>.</summary>
-	public TypeAttributes Visibility => Flags & TypeAttributes.VisibilityMask;
-}
-
-/// <summary>A member's name and type as the reports show them: <c>Draw()</c> and <c>Void</c>.</summary>
-/// <param name="Name">The member's name, with parameters for a method.</param>
-/// <param name="Type">The member's type, or a method's return type; null for a constructor.</param>
-public readonly record struct Display(string Name, string? Type);
-
-/// <summary>A method, constructor or accessor.</summary>
-/// <param name="Name">The name in metadata: <c>Draw</c> or <c>.ctor</c>.</param>
-/// <param name="Signature">The name with the parameter types, which tells overloads apart.</param>
-/// <param name="Flags">The method's metadata attributes.</param>
-/// <param name="ReturnTypeFullName">The return type's full name.</param>
-/// <param name="Display">The name and return type as the reports show them.</param>
-/// <param name="ParameterNames">The parameter names, in order.</param>
-/// <param name="Attributes">The attributes on the method.</param>
-public sealed record ApiMethod(
-	string Name,
-	string Signature,
-	MethodAttributes Flags,
-	string ReturnTypeFullName,
-	Display Display,
-	IReadOnlyList<string> ParameterNames,
-	IReadOnlyList<ApiAttribute> Attributes
-)
-{
-	/// <summary>Whether code outside the assembly can call it: public or protected.</summary>
-	public bool IsApi => Access is MethodAttributes.Public or MethodAttributes.FamORAssem or MethodAttributes.Family;
-
-	/// <summary>The access bits of <see cref="Flags"/>.</summary>
-	public MethodAttributes Access => Flags & MethodAttributes.MemberAccessMask;
-
-	/// <summary>Whether the method is virtual.</summary>
-	public bool IsVirtual => (Flags & MethodAttributes.Virtual) != 0;
-
-	/// <summary>Whether the method is static.</summary>
-	public bool IsStatic => (Flags & MethodAttributes.Static) != 0;
-
-	/// <summary>Whether the method is abstract, which includes an interface method without a default implementation.</summary>
-	public bool IsAbstract => (Flags & MethodAttributes.Abstract) != 0;
-}
-
-/// <summary>A field.</summary>
-/// <param name="Name">The field's name.</param>
-/// <param name="Flags">The field's metadata attributes.</param>
-/// <param name="TypeFullName">The field type's full name.</param>
-/// <param name="Display">The name and type as the reports show them.</param>
-/// <param name="Attributes">The attributes on the field.</param>
-public sealed record ApiField(string Name, FieldAttributes Flags, string TypeFullName, Display Display, IReadOnlyList<ApiAttribute> Attributes)
-{
-	/// <summary>The access bits of <see cref="Flags"/>.</summary>
-	public FieldAttributes Access => Flags & FieldAttributes.FieldAccessMask;
-
-	/// <summary>Whether code outside the assembly can use it: public or protected.</summary>
-	public bool IsApi => Access is FieldAttributes.Public or FieldAttributes.FamORAssem or FieldAttributes.Family;
-
-	/// <summary>Whether the field is static.</summary>
-	public bool IsStatic => (Flags & FieldAttributes.Static) != 0;
-
-	/// <summary>Whether the field is <c>required</c>, so every object initializer has to set it.</summary>
-	public bool AddsObligation => Attributes.Any(Obligations.IsRequired);
-}
-
-/// <summary>A property and its accessors.</summary>
-/// <param name="Name">The property's name.</param>
-/// <param name="TypeFullName">The property type's full name.</param>
-/// <param name="Display">The name and type as the reports show them.</param>
-/// <param name="Attributes">The attributes on the property.</param>
-/// <param name="Get">The getter, if it has one.</param>
-/// <param name="Set">The setter or init accessor, if it has one.</param>
-public sealed record ApiProperty(string Name, string TypeFullName, Display Display, IReadOnlyList<ApiAttribute> Attributes, ApiMethod? Get, ApiMethod? Set)
-{
-	/// <summary>Whether a new property of this shape asks something of existing code: it is abstract or <c>required</c>.</summary>
-	public bool AddsObligation => Get is { IsAbstract: true } || Set is { IsAbstract: true } || Attributes.Any(Obligations.IsRequired);
-}
-
-internal static class Obligations
-{
-	public static bool IsRequired(ApiAttribute attribute) => attribute.Signature == "System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()";
-}
-
-/// <summary>An event and its accessors.</summary>
-/// <param name="Name">The event's name.</param>
-/// <param name="Display">The name and handler type as the reports show them.</param>
-/// <param name="Attributes">The attributes on the event.</param>
-/// <param name="Add">The add accessor.</param>
-/// <param name="Remove">The remove accessor.</param>
-public sealed record ApiEvent(string Name, Display Display, IReadOnlyList<ApiAttribute> Attributes, ApiMethod? Add, ApiMethod? Remove)
-{
-	/// <summary>Whether the event is abstract, so every implementer has to add it.</summary>
-	public bool AddsObligation => Add is { IsAbstract: true } || Remove is { IsAbstract: true };
-}
-
-/// <summary>Reads the parts of an assembly the comparison looks at, in the order the metadata tables hold them.</summary>
+/// <summary>
+/// Reads the public API of an assembly from its metadata, without loading it: the types and members code outside it
+/// can see, with the base types, interfaces, constraints, nullability, tuple names, default values and attributes
+/// their declarations have.
+/// </summary>
 public sealed class ApiReader
 {
+	private const string CompilerServices = "System.Runtime.CompilerServices.";
+
+	/// <summary>Attributes the compiler writes to record what C# syntax says; the declarations show that syntax instead.</summary>
+	private static readonly HashSet<string> Bookkeeping =
+	[
+		CompilerServices + "NullableAttribute",
+		CompilerServices + "NullableContextAttribute",
+		CompilerServices + "NullablePublicOnlyAttribute",
+		CompilerServices + "CompilerGeneratedAttribute",
+		CompilerServices + "IsReadOnlyAttribute",
+		CompilerServices + "IsByRefLikeAttribute",
+		CompilerServices + "IsUnmanagedAttribute",
+		CompilerServices + "ExtensionAttribute",
+		CompilerServices + "TupleElementNamesAttribute",
+		CompilerServices + "DynamicAttribute",
+		CompilerServices + "NativeIntegerAttribute",
+		CompilerServices + "RequiredMemberAttribute",
+		CompilerServices + "CompilerFeatureRequiredAttribute",
+		CompilerServices + "ScopedRefAttribute",
+		CompilerServices + "RequiresLocationAttribute",
+		CompilerServices + "AsyncStateMachineAttribute",
+		CompilerServices + "IteratorStateMachineAttribute",
+		CompilerServices + "AsyncIteratorStateMachineAttribute",
+		CompilerServices + "RefSafetyRulesAttribute",
+		CompilerServices + "DecimalConstantAttribute",
+		CompilerServices + "DateTimeConstantAttribute",
+		CompilerServices + "ParamCollectionAttribute",
+		CompilerServices + "PreserveBaseOverridesAttribute",
+		CompilerServices + "SkipLocalsInitAttribute",
+		CompilerServices + "ExtensionMarkerAttribute",
+		"System.ParamArrayAttribute",
+		"System.Reflection.DefaultMemberAttribute",
+		"System.Diagnostics.DebuggerHiddenAttribute",
+		"System.Diagnostics.DebuggerStepThroughAttribute",
+		"System.Diagnostics.DebuggerNonUserCodeAttribute",
+		"System.Diagnostics.DebuggerBrowsableAttribute",
+		"System.Diagnostics.DebuggerDisplayAttribute",
+		"Microsoft.CodeAnalysis.EmbeddedAttribute",
+	];
+
 	private readonly MetadataReader _reader;
-	private readonly ShapeProvider _shapes;
-	private readonly HashSet<MethodDefinitionHandle> _overriding = [];
+	private readonly TypeReferenceProvider _types;
 
 	private ApiReader(MetadataReader reader)
 	{
 		_reader = reader;
-		_shapes = new ShapeProvider(reader);
-		foreach (var type in reader.TypeDefinitions)
-			foreach (var handle in reader.GetTypeDefinition(type).GetMethodImplementations())
-			{
-				var body = reader.GetMethodImplementation(handle).MethodBody;
-				if (body.Kind == HandleKind.MethodDefinition)
-					_overriding.Add((MethodDefinitionHandle)body);
-			}
+		_types = new TypeReferenceProvider(reader);
 	}
 
 	/// <summary>Reads the assembly at <paramref name="path"/>.</summary>
@@ -178,254 +79,922 @@ public sealed class ApiReader
 	public static ApiAssembly Read(Stream stream)
 	{
 		using var pe = new PEReader(stream, PEStreamOptions.LeaveOpen);
-		var reader = pe.GetMetadataReader();
-		return new ApiReader(reader).ReadAssembly();
+		return new ApiReader(pe.GetMetadataReader()).ReadAssembly();
 	}
 
 	private ApiAssembly ReadAssembly()
 	{
 		var assembly = _reader.GetAssemblyDefinition();
-		var name = assembly.GetAssemblyName();
-		var fullName = AssemblyFullName(
+		var token = assembly.GetAssemblyName().GetPublicKeyToken();
+		string? targetFramework = null;
+		foreach (var handle in assembly.GetCustomAttributes())
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (
+				AttributeTypeName(attribute) == "System.Runtime.Versioning.TargetFrameworkAttribute" &&
+				TryDecode(attribute) is { FixedArguments: [{ Value: string name }, ..] }
+			)
+				targetFramework = name;
+		}
+		var types = _reader
+			.TypeDefinitions
+			.Where(h => _reader.GetTypeDefinition(h).GetDeclaringType().IsNil)
+			.Select(h => ReadType(h, null))
+			.OfType<ApiType>()
+			.OrderBy(t => t.Namespace, StringComparer.Ordinal)
+			.ThenBy(t => t.Name, StringComparer.Ordinal)
+			.ToList();
+		return new ApiAssembly(
 			_reader.GetString(assembly.Name),
 			assembly.Version,
-			_reader.GetString(assembly.Culture),
-			name.GetPublicKeyToken(),
-			(assembly.Flags & AssemblyFlags.Retargetable) != 0
+			token is { Length: > 0 } ? string.Concat(token.Select(b => b.ToString("x2", CultureInfo.InvariantCulture))) : null,
+			targetFramework,
+			types
 		);
-		return new ApiAssembly(fullName, Attributes(assembly.GetCustomAttributes()), [ReadModule()]);
 	}
 
-	private ApiModule ReadModule()
-	{
-		var module = _reader.GetModuleDefinition();
-		var references = _reader.AssemblyReferences.Select(h => ReferenceFullName(_reader.GetAssemblyReference(h))).ToList();
-		var types = _reader.TypeDefinitions.Where(h => _reader.GetTypeDefinition(h).GetDeclaringType().IsNil).Select(ReadType).ToList();
-		return new ApiModule(_reader.GetString(module.Name), Attributes(_reader.GetCustomAttributes(EntityHandle.ModuleDefinition)), references, types);
-	}
-
-	private ApiType ReadType(TypeDefinitionHandle handle)
+	/// <summary>A type, or null when code outside the assembly cannot see it.</summary>
+	private ApiType? ReadType(TypeDefinitionHandle handle, ApiType? declaring)
 	{
 		var type = _reader.GetTypeDefinition(handle);
-		var shape = _shapes.Definition(handle);
-		var typeParameters = GenericParameterNames(type.GetGenericParameters());
-		var context = new GenericContext(typeParameters, []);
+		var name = _reader.GetString(type.Name);
+		// the compiler's own types, such as <PrivateImplementationDetails>, have names C# cannot spell
+		if (name.Length > 0 && name[0] == '<')
+			return null;
+		var accessibility = TypeAccessibility(type.Attributes, declaring);
+		if (accessibility is null)
+			return null;
 
-		var accessors = new HashSet<MethodDefinitionHandle>();
-		var properties = new List<ApiProperty>();
-		foreach (var propertyHandle in type.GetProperties())
+		var kind = Kind(type);
+		var allTypeParameters = TypeParameterNames(type.GetGenericParameters());
+		var context = new TypeContext(allTypeParameters, []);
+		var inherited = type.GetDeclaringType().IsNil ? 0 : _reader.GetTypeDefinition(type.GetDeclaringType()).GetGenericParameters().Count;
+		var typeContext = NullableContext(type.GetCustomAttributes()) ?? declaring?.NullableContext;
+
+		var modifiers = ApiTypeModifiers.None;
+		var flags = type.Attributes;
+		var isSealed = (flags & TypeAttributes.Sealed) != 0;
+		var isAbstract = (flags & TypeAttributes.Abstract) != 0;
+		if (kind == ApiTypeKind.Class)
 		{
-			var property = _reader.GetPropertyDefinition(propertyHandle);
+			if (isSealed && isAbstract)
+				modifiers |= ApiTypeModifiers.Static;
+			else if (isAbstract)
+				modifiers |= ApiTypeModifiers.Abstract;
+			else if (isSealed)
+				modifiers |= ApiTypeModifiers.Sealed;
+			if (type.GetMethods().Any(m => _reader.GetString(_reader.GetMethodDefinition(m).Name) == "<Clone>$"))
+				modifiers |= ApiTypeModifiers.Record;
+		}
+		if (kind == ApiTypeKind.Struct)
+		{
+			if (HasAttribute(type.GetCustomAttributes(), CompilerServices + "IsReadOnlyAttribute"))
+				modifiers |= ApiTypeModifiers.ReadOnly;
+			if (HasAttribute(type.GetCustomAttributes(), CompilerServices + "IsByRefLikeAttribute"))
+				modifiers |= ApiTypeModifiers.Ref;
+		}
+
+		var canBeExtended = kind == ApiTypeKind.Interface ||
+			(kind == ApiTypeKind.Class && !isSealed && type
+				.GetMethods()
+				.Select(_reader.GetMethodDefinition)
+				.Any(m => _reader.GetString(m.Name) == ".ctor" && MemberAccessibility(m.Attributes & MethodAttributes.MemberAccessMask) is not null));
+
+		ApiTypeReference? baseType = null;
+		if (kind == ApiTypeKind.Class && !type.BaseType.IsNil && _types.FullName(type.BaseType) != "System.Object")
+			baseType = Annotate(_types.FromHandle(type.BaseType, context), type.GetCustomAttributes(), typeContext);
+		if (kind == ApiTypeKind.Enum)
+			baseType = EnumUnderlyingType(type) is { FullName: not "System.Int32" } underlying ? underlying : null;
+
+		// an internal interface of this assembly is not part of its API
+		var interfaces = type
+			.GetInterfaceImplementations()
+			.Select(_reader.GetInterfaceImplementation)
+			.Where(i => IsVisibleDefinition(i.Interface))
+			.Select(i => Annotate(_types.FromHandle(i.Interface, context), i.GetCustomAttributes(), typeContext))
+			.ToList();
+
+		var shell = new ApiType(
+			declaring?.Namespace ?? _reader.GetString(type.Namespace),
+			name,
+			kind,
+			accessibility.Value,
+			modifiers,
+			ReadTypeParameters(type.GetGenericParameters().Skip(inherited), context, typeContext, kind is ApiTypeKind.Interface or ApiTypeKind.Delegate),
+			baseType,
+			interfaces,
+			Attributes(type.GetCustomAttributes()),
+			[],
+			[],
+			canBeExtended
+		)
+		{ NullableContext = typeContext };
+
+		var members = kind switch
+		{
+			ApiTypeKind.Enum => EnumValues(type),
+			ApiTypeKind.Delegate =>
+				type
+					.GetMethods()
+					.Select(_reader.GetMethodDefinition)
+					.Where(m => _reader.GetString(m.Name) == "Invoke")
+					.Select(m => ReadMethod(m, shell, allTypeParameters, typeContext, forceVisible: true))
+					.OfType<ApiMember>()
+					.ToList(),
+			_ => Members(type, shell, allTypeParameters, typeContext),
+		};
+		var nested = type.GetNestedTypes().Select(h => ReadType(h, shell)).OfType<ApiType>().OrderBy(t => t.Name, StringComparer.Ordinal).ToList();
+		return shell with { Members = members, NestedTypes = nested };
+	}
+
+	/// <summary>Whether a type this assembly defines is public all the way out; a type from elsewhere is assumed to be.</summary>
+	private bool IsVisibleDefinition(EntityHandle handle)
+	{
+		if (handle.Kind == HandleKind.TypeSpecification)
+		{
+			var blob = _reader.GetBlobReader(_reader.GetTypeSpecification((TypeSpecificationHandle)handle).Signature);
+			if (blob.ReadSignatureTypeCode() != SignatureTypeCode.GenericTypeInstance)
+				return true;
+			blob.ReadSignatureTypeCode();
+			handle = blob.ReadTypeHandle();
+		}
+		if (handle.Kind != HandleKind.TypeDefinition)
+			return true;
+		for (var definition = _reader.GetTypeDefinition((TypeDefinitionHandle)handle); ; definition = _reader.GetTypeDefinition(definition.GetDeclaringType()))
+		{
+			var visibility = definition.Attributes & TypeAttributes.VisibilityMask;
+			if (visibility is not (TypeAttributes.Public or TypeAttributes.NestedPublic))
+				return false;
+			if (definition.GetDeclaringType().IsNil)
+				return true;
+		}
+	}
+
+	private ApiTypeKind Kind(TypeDefinition type)
+	{
+		if ((type.Attributes & TypeAttributes.Interface) != 0)
+			return ApiTypeKind.Interface;
+		var baseName = type.BaseType.IsNil ? string.Empty : _types.FullName(type.BaseType);
+		var ownName = _reader.GetString(type.Namespace) + "." + _reader.GetString(type.Name);
+		return baseName switch
+		{
+			"System.Enum" => ApiTypeKind.Enum,
+			"System.ValueType" when ownName != "System.Enum" => ApiTypeKind.Struct,
+			"System.MulticastDelegate" => ApiTypeKind.Delegate,
+			_ => ApiTypeKind.Class,
+		};
+	}
+
+	private static ApiAccessibility? TypeAccessibility(TypeAttributes attributes, ApiType? declaring)
+	{
+		var visibility = attributes & TypeAttributes.VisibilityMask;
+		if (declaring is null)
+			return visibility == TypeAttributes.Public ? ApiAccessibility.Public : null;
+		return visibility switch
+		{
+			TypeAttributes.NestedPublic => ApiAccessibility.Public,
+			// a protected type is only reachable from a type that derives from its declaring type
+			TypeAttributes.NestedFamily when declaring.CanBeExtendedOutside => ApiAccessibility.Protected,
+			TypeAttributes.NestedFamORAssem when declaring.CanBeExtendedOutside => ApiAccessibility.ProtectedInternal,
+			_ => null,
+		};
+	}
+
+	private static ApiAccessibility? MemberAccessibility(MethodAttributes access) => access switch
+	{
+		MethodAttributes.Public => ApiAccessibility.Public,
+		MethodAttributes.Family => ApiAccessibility.Protected,
+		MethodAttributes.FamORAssem => ApiAccessibility.ProtectedInternal,
+		_ => null,
+	};
+
+	/// <summary>A member's accessibility, or null when it is not visible from outside: protected needs a type others can derive from.</summary>
+	private static ApiAccessibility? Visible(ApiAccessibility? accessibility, ApiType declaring) =>
+		accessibility is ApiAccessibility.Public || (accessibility is not null && declaring.CanBeExtendedOutside) ? accessibility : null;
+
+	private ApiNamedType? EnumUnderlyingType(TypeDefinition type)
+	{
+		foreach (var handle in type.GetFields())
+		{
+			var field = _reader.GetFieldDefinition(handle);
+			if ((field.Attributes & FieldAttributes.Static) == 0)
+				return field.DecodeSignature(_types, TypeContext.None) as ApiNamedType;
+		}
+		return null;
+	}
+
+	private List<ApiMember> EnumValues(TypeDefinition type)
+	{
+		var values = new List<ApiMember>();
+		var underlying = EnumUnderlyingType(type) ?? TypeReferenceProvider.Primitive(PrimitiveTypeCode.Int32);
+		foreach (var handle in type.GetFields())
+		{
+			var field = _reader.GetFieldDefinition(handle);
+			if ((field.Attributes & FieldAttributes.Literal) == 0 || (field.Attributes & FieldAttributes.Public) != FieldAttributes.Public)
+				continue;
+			values.Add(
+				new ApiField(
+					_reader.GetString(field.Name),
+					ApiAccessibility.Public,
+					Attributes(field.GetCustomAttributes()),
+					underlying,
+					true,
+					false,
+					false,
+					false,
+					Constant(field.GetDefaultValue())
+				)
+			);
+		}
+		return values;
+	}
+
+	private List<ApiMember> Members(TypeDefinition type, ApiType declaring, ImmutableArray<string> typeParameters, byte? typeContext)
+	{
+		var members = new List<ApiMember>();
+		var accessors = new HashSet<MethodDefinitionHandle>();
+		var context = new TypeContext(typeParameters, []);
+		var isStruct = declaring.Kind == ApiTypeKind.Struct;
+
+		foreach (var handle in type.GetFields())
+		{
+			var field = _reader.GetFieldDefinition(handle);
+			var accessibility = Visible(FieldAccessibility(field.Attributes), declaring);
+			if (accessibility is null)
+				continue;
+			var rawType = field.DecodeSignature(_types, context);
+			var isVolatile = false;
+			while (rawType is ApiModifiedType modified)
+			{
+				isVolatile |= modified.Modifier.FullName == CompilerServices + "IsVolatile";
+				if (modified.Modifier.FullName != CompilerServices + "IsVolatile")
+					break;
+				rawType = modified.Type;
+			}
+			var fieldType = Annotate(rawType, field.GetCustomAttributes(), typeContext);
+			var constant = (field.Attributes & FieldAttributes.Literal) != 0 ? Constant(field.GetDefaultValue()) : DecimalConstant(field.GetCustomAttributes());
+			members.Add(
+				new ApiField(
+					_reader.GetString(field.Name),
+					accessibility.Value,
+					Attributes(field.GetCustomAttributes()),
+					fieldType,
+					(field.Attributes & FieldAttributes.Static) != 0,
+					constant is null && (field.Attributes & FieldAttributes.InitOnly) != 0,
+					isVolatile,
+					HasAttribute(field.GetCustomAttributes(), CompilerServices + "RequiredMemberAttribute"),
+					constant
+				)
+			);
+		}
+
+		foreach (var handle in type.GetProperties())
+		{
+			var property = _reader.GetPropertyDefinition(handle);
 			var propertyAccessors = property.GetAccessors();
 			if (!propertyAccessors.Getter.IsNil)
 				accessors.Add(propertyAccessors.Getter);
 			if (!propertyAccessors.Setter.IsNil)
 				accessors.Add(propertyAccessors.Setter);
-			var propertyType = property.DecodeSignature(_shapes, context).ReturnType;
-			var name = _reader.GetString(property.Name);
-			var explicitImplementation = IsExplicit(propertyAccessors.Getter) || IsExplicit(propertyAccessors.Setter);
-			properties.Add(
-				new ApiProperty(
-					name,
-					propertyType.FullName,
-					new Display(MemberName(name, explicitImplementation), propertyType.DisplayName),
-					Attributes(property.GetCustomAttributes()),
-					propertyAccessors.Getter.IsNil ? null : ReadMethod(propertyAccessors.Getter, shape, typeParameters),
-					propertyAccessors.Setter.IsNil ? null : ReadMethod(propertyAccessors.Setter, shape, typeParameters)
-				)
-			);
+			if (ReadProperty(property, propertyAccessors, declaring, context, typeContext, isStruct) is { } read)
+				members.Add(read);
 		}
 
-		var events = new List<ApiEvent>();
-		foreach (var eventHandle in type.GetEvents())
+		foreach (var handle in type.GetEvents())
 		{
-			var @event = _reader.GetEventDefinition(eventHandle);
+			var @event = _reader.GetEventDefinition(handle);
 			var eventAccessors = @event.GetAccessors();
 			if (!eventAccessors.Adder.IsNil)
 				accessors.Add(eventAccessors.Adder);
 			if (!eventAccessors.Remover.IsNil)
 				accessors.Add(eventAccessors.Remover);
-			var name = _reader.GetString(@event.Name);
-			var eventType = _shapes.FromTypeHandle(@event.Type, context);
-			var explicitImplementation = IsExplicit(eventAccessors.Adder) || IsExplicit(eventAccessors.Remover);
-			events.Add(
+			if (eventAccessors.Adder.IsNil)
+				continue;
+			var adder = _reader.GetMethodDefinition(eventAccessors.Adder);
+			var accessibility = Visible(MemberAccessibility(adder.Attributes & MethodAttributes.MemberAccessMask), declaring);
+			if (accessibility is null)
+				continue;
+			members.Add(
 				new ApiEvent(
-					name,
-					new Display(MemberName(name, explicitImplementation), eventType.DisplayName),
+					_reader.GetString(@event.Name),
+					accessibility.Value,
 					Attributes(@event.GetCustomAttributes()),
-					eventAccessors.Adder.IsNil ? null : ReadMethod(eventAccessors.Adder, shape, typeParameters),
-					eventAccessors.Remover.IsNil ? null : ReadMethod(eventAccessors.Remover, shape, typeParameters)
+					Modifiers(adder, declaring),
+					Annotate(_types.FromHandle(@event.Type, context), @event.GetCustomAttributes(), typeContext)
 				)
 			);
 		}
 
-		var fields = new List<ApiField>();
-		foreach (var fieldHandle in type.GetFields())
+		foreach (var handle in type.GetMethods())
 		{
-			var field = _reader.GetFieldDefinition(fieldHandle);
-			var fieldType = field.DecodeSignature(_shapes, context);
-			var name = _reader.GetString(field.Name);
-			fields.Add(
-				new ApiField(
-					name,
-					field.Attributes,
-					fieldType.FullName,
-					new Display(MemberName(name, false), fieldType.DisplayName),
-					Attributes(field.GetCustomAttributes())
-				)
-			);
+			if (accessors.Contains(handle))
+				continue;
+			if (ReadMethod(_reader.GetMethodDefinition(handle), declaring, typeParameters, typeContext, forceVisible: false) is { } method)
+				members.Add(method);
 		}
 
-		var methods = type.GetMethods().Where(m => !accessors.Contains(m)).Select(m => ReadMethod(m, shape, typeParameters)).ToList();
-		var nested = type.GetNestedTypes().Select(ReadType).ToList();
+		return members.OrderBy(Order).ThenBy(m => m.Name, StringComparer.Ordinal).ThenBy(ParameterKey, StringComparer.Ordinal).ToList();
+	}
 
-		return new ApiType(
-			shape.FullName,
-			_reader.GetString(type.Namespace) + "." + TypeDisplayName(type, typeParameters),
-			type.Attributes,
-			Attributes(type.GetCustomAttributes()),
-			fields,
-			properties,
-			methods,
-			events,
-			nested
+	private static int Order(ApiMember member) => member switch
+	{
+		ApiMethod { Kind: ApiMethodKind.Constructor } => 0,
+		ApiField => 1,
+		ApiProperty => 2,
+		ApiEvent => 3,
+		ApiMethod { Kind: ApiMethodKind.Method } => 4,
+		ApiMethod { Kind: ApiMethodKind.Operator } => 5,
+		_ => 6,
+	};
+
+	/// <summary>Tells overloads apart in the order: their parameter types.</summary>
+	private static string ParameterKey(ApiMember member) => member switch
+	{
+		ApiMethod method => string.Join(",", method.Parameters.Select(p => p.RefKind + " " + TypeKey(p.Type))) + ";" + method.TypeParameters.Count,
+		ApiProperty property => string.Join(",", property.Parameters.Select(p => TypeKey(p.Type))),
+		_ => string.Empty,
+	};
+
+	internal static string TypeKey(ApiTypeReference type) => type switch
+	{
+		ApiNamedType named =>
+			(named.DeclaringType is null ? named.Namespace + "." + named.Name : TypeKey(named.DeclaringType) + "/" + named.Name) +
+				(named.TypeArguments.Count == 0 ? string.Empty : "<" + string.Join(",", named.TypeArguments.Select(TypeKey)) + ">"),
+		ApiTupleType tuple => "(" + string.Join(",", tuple.Elements.Select(e => TypeKey(e.Type))) + ")",
+		ApiArrayType array => TypeKey(array.ElementType) + "[" + new string(',', array.Rank - 1) + "]",
+		ApiPointerType pointer => TypeKey(pointer.ElementType) + "*",
+		ApiByReferenceType reference => TypeKey(reference.ElementType) + "&",
+		ApiFunctionPointerType function => "delegate*<" + string.Join(",", function.ParameterTypes.Append(function.ReturnType).Select(TypeKey)) + ">",
+		ApiTypeParameterReference parameter => (parameter.IsMethodParameter ? "!!" : "!") + parameter.Name,
+		ApiDynamicType => "System.Object",
+		ApiNativeIntegerType native => native.IsUnsigned ? "System.UIntPtr" : "System.IntPtr",
+		ApiModifiedType modified => TypeKey(modified.Type),
+		_ => type.ToString(),
+	};
+
+	private static ApiAccessibility? FieldAccessibility(FieldAttributes attributes) => (attributes & FieldAttributes.FieldAccessMask) switch
+	{
+		FieldAttributes.Public => ApiAccessibility.Public,
+		FieldAttributes.Family => ApiAccessibility.Protected,
+		FieldAttributes.FamORAssem => ApiAccessibility.ProtectedInternal,
+		_ => null,
+	};
+
+	private ApiProperty? ReadProperty(
+		PropertyDefinition property,
+		PropertyAccessors propertyAccessors,
+		ApiType declaring,
+		TypeContext context,
+		byte? typeContext,
+		bool isStruct
+	)
+	{
+		MethodDefinition? getter = propertyAccessors.Getter.IsNil ? null : _reader.GetMethodDefinition(propertyAccessors.Getter);
+		MethodDefinition? setter = propertyAccessors.Setter.IsNil ? null : _reader.GetMethodDefinition(propertyAccessors.Setter);
+		var getAccess = getter is { } g ? Visible(MemberAccessibility(g.Attributes & MethodAttributes.MemberAccessMask), declaring) : null;
+		var setAccess = setter is { } s ? Visible(MemberAccessibility(s.Attributes & MethodAttributes.MemberAccessMask), declaring) : null;
+		if (getAccess is null && setAccess is null)
+			return null;
+		var accessibility = Most(getAccess, setAccess);
+		var primary = getAccess is not null ? getter!.Value : setter!.Value;
+
+		var signature = property.DecodeSignature(_types, context);
+		var rawType = signature.ReturnType;
+		var refKind = ApiRefKind.None;
+		var hasInModifier = false;
+		while (rawType is ApiModifiedType { Modifier.FullName: "System.Runtime.InteropServices.InAttribute" } readOnlyReturn)
+		{
+			hasInModifier = true;
+			rawType = readOnlyReturn.Type;
+		}
+		var isByReference = rawType is ApiByReferenceType;
+		if (rawType is ApiByReferenceType reference)
+		{
+			rawType = reference.ElementType;
+			refKind = hasInModifier ||
+				(getter is { } byRefGetter && HasAttribute(ReturnParameterAttributes(byRefGetter), CompilerServices + "IsReadOnlyAttribute"))
+				? ApiRefKind.RefReadOnly
+				: ApiRefKind.Ref;
+		}
+		var memberContext = (getter is { } ng ? NullableContext(ng.GetCustomAttributes()) : null) ?? typeContext;
+		var propertyType = Annotate(rawType, property.GetCustomAttributes(), memberContext, isByReference ? 1 : 0);
+
+		// an indexer's parameters are the getter's, or all but the setter's last
+		var parameters = new List<ApiParameter>();
+		if (signature.ParameterTypes.Length > 0)
+		{
+			var source = getter ?? setter!.Value;
+			var sourceSignature = source.DecodeSignature(_types, context);
+			parameters = ReadParameters(source, sourceSignature.ParameterTypes.Take(signature.ParameterTypes.Length).ToImmutableArray(), memberContext);
+		}
+
+		ApiAccessor? Accessor(MethodDefinition? method, ApiAccessibility? access, bool isSetter)
+		{
+			if (method is not { } m || access is null)
+				return null;
+			var isInit = isSetter &&
+				m.DecodeSignature(_types, context).ReturnType is ApiModifiedType { Modifier.FullName: CompilerServices + "IsExternalInit" };
+			var isReadOnly = isStruct && !isSetter && HasAttribute(m.GetCustomAttributes(), CompilerServices + "IsReadOnlyAttribute");
+			return new ApiAccessor(access.Value, isInit, isReadOnly);
+		}
+
+		return new ApiProperty(
+			_reader.GetString(property.Name),
+			accessibility,
+			Attributes(property.GetCustomAttributes()),
+			Modifiers(primary, declaring),
+			propertyType,
+			refKind,
+			parameters,
+			Accessor(getter, getAccess, false),
+			Accessor(setter, setAccess, true),
+			HasAttribute(property.GetCustomAttributes(), CompilerServices + "RequiredMemberAttribute")
 		);
 	}
 
-	private ApiMethod ReadMethod(MethodDefinitionHandle handle, NamedShape declaringType, ImmutableArray<string> typeParameters)
+	private static ApiAccessibility Most(ApiAccessibility? first, ApiAccessibility? second)
 	{
-		var method = _reader.GetMethodDefinition(handle);
-		var methodParameters = GenericParameterNames(method.GetGenericParameters());
-		var signature = method.DecodeSignature(_shapes, new GenericContext(typeParameters, methodParameters));
+		if (first == ApiAccessibility.Public || second == ApiAccessibility.Public)
+			return ApiAccessibility.Public;
+		if (first == ApiAccessibility.ProtectedInternal || second == ApiAccessibility.ProtectedInternal)
+			return ApiAccessibility.ProtectedInternal;
+		return ApiAccessibility.Protected;
+	}
+
+	private ApiMethod? ReadMethod(MethodDefinition method, ApiType declaring, ImmutableArray<string> typeParameters, byte? typeContext, bool forceVisible)
+	{
 		var name = _reader.GetString(method.Name);
+		if (name == ".cctor")
+			return null;
+		var accessibility = forceVisible
+			? ApiAccessibility.Public
+			: Visible(MemberAccessibility(method.Attributes & MethodAttributes.MemberAccessMask), declaring);
+		if (accessibility is null)
+			return null;
 
-		var parameterNames = Enumerable.Repeat(string.Empty, signature.ParameterTypes.Length).ToArray();
-		foreach (var parameterHandle in method.GetParameters())
+		var methodTypeParameters = TypeParameterNames(method.GetGenericParameters());
+		var context = new TypeContext(typeParameters, methodTypeParameters);
+		var signature = method.DecodeSignature(_types, context);
+		var methodContext = NullableContext(method.GetCustomAttributes()) ?? typeContext;
+
+		var special = (method.Attributes & MethodAttributes.SpecialName) != 0;
+		var kind = name == ".ctor"
+			? ApiMethodKind.Constructor
+			: special && name is "op_Implicit" or "op_Explicit"
+				? ApiMethodKind.Conversion
+				: special && name.StartsWith("op_", StringComparison.Ordinal) ? ApiMethodKind.Operator : ApiMethodKind.Method;
+
+		var returnAttributes = ReturnParameterAttributes(method);
+		var rawReturn = signature.ReturnType;
+		var returnRefKind = ApiRefKind.None;
+		var returnOffset = 0;
+		var returnHasInModifier = false;
+		while (rawReturn is ApiModifiedType { Modifier.FullName: "System.Runtime.InteropServices.InAttribute" } readOnlyReturn)
 		{
-			var parameter = _reader.GetParameter(parameterHandle);
-			if (parameter.SequenceNumber > 0 && parameter.SequenceNumber <= parameterNames.Length)
-				parameterNames[parameter.SequenceNumber - 1] = _reader.GetString(parameter.Name);
+			returnHasInModifier = true;
+			rawReturn = readOnlyReturn.Type;
 		}
-
-		var isConstructor = (method.Attributes & MethodAttributes.RTSpecialName) != 0 && (method.Attributes & MethodAttributes.SpecialName) != 0 &&
-			name is ".ctor" or ".cctor";
-		var display = new StringBuilder(Names.DottedIdentifier(Names.NonGeneric(isConstructor ? declaringType.Name : name)));
-		if (methodParameters.Length > 0)
-			display.Append('<').Append(string.Join(", ", methodParameters.Select(Names.Identifier))).Append('>');
-		display.Append('(').Append(string.Join(", ", signature.ParameterTypes.Select(p => p.DisplayName))).Append(')');
+		if (rawReturn is ApiByReferenceType reference)
+		{
+			rawReturn = reference.ElementType;
+			returnOffset = 1;
+			returnRefKind = returnHasInModifier || HasAttribute(returnAttributes, CompilerServices + "IsReadOnlyAttribute")
+				? ApiRefKind.RefReadOnly
+				: ApiRefKind.Ref;
+		}
 
 		return new ApiMethod(
 			name,
-			declaringType.FullName + "::" + name + "(" + string.Join(",", signature.ParameterTypes.Select(p => p.FullName)) + ")",
-			method.Attributes,
-			signature.ReturnType.FullName,
-			new Display(display.ToString(), isConstructor ? null : signature.ReturnType.DisplayName),
-			parameterNames,
-			Attributes(method.GetCustomAttributes())
+			accessibility.Value,
+			Attributes(method.GetCustomAttributes()),
+			kind,
+			Modifiers(method, declaring),
+			Annotate(rawReturn, returnAttributes, methodContext, returnOffset),
+			returnRefKind,
+			Attributes(returnAttributes),
+			ReadTypeParameters(method.GetGenericParameters(), context, methodContext, false),
+			ReadParameters(method, signature.ParameterTypes, methodContext),
+			HasAttribute(method.GetCustomAttributes(), CompilerServices + "ExtensionAttribute")
 		);
 	}
 
-	private string TypeDisplayName(TypeDefinition type, ImmutableArray<string> typeParameters)
+	private IEnumerable<CustomAttributeHandle> ReturnParameterAttributes(MethodDefinition method)
 	{
-		var display = new StringBuilder(Names.Identifier(Names.NonGeneric(_reader.GetString(type.Name))));
-		// a nested type repeats its declaring type's parameters first; only its own are written
-		var declaring = type.GetDeclaringType();
-		var inherited = declaring.IsNil ? 0 : _reader.GetTypeDefinition(declaring).GetGenericParameters().Count;
-		var parameters = type.GetGenericParameters();
-		if (inherited < parameters.Count)
+		foreach (var handle in method.GetParameters())
 		{
-			display.Append('<');
-			for (var i = inherited; i < parameters.Count; i++)
+			var parameter = _reader.GetParameter(handle);
+			if (parameter.SequenceNumber == 0)
+				return parameter.GetCustomAttributes();
+		}
+		return [];
+	}
+
+	private ApiMemberModifiers Modifiers(MethodDefinition method, ApiType declaring)
+	{
+		var flags = method.Attributes;
+		var modifiers = ApiMemberModifiers.None;
+		if ((flags & MethodAttributes.Static) != 0)
+			modifiers |= ApiMemberModifiers.Static;
+		var isVirtual = (flags & MethodAttributes.Virtual) != 0;
+		var isAbstract = (flags & MethodAttributes.Abstract) != 0;
+		var isNewSlot = (flags & MethodAttributes.NewSlot) != 0;
+		var isFinal = (flags & MethodAttributes.Final) != 0;
+		if (declaring.Kind == ApiTypeKind.Interface)
+		{
+			if (isAbstract)
+				modifiers |= ApiMemberModifiers.Abstract;
+			else if (isVirtual)
+				modifiers |= ApiMemberModifiers.Virtual;
+		}
+		else if (isVirtual)
+		{
+			if (!isNewSlot)
+				modifiers |= ApiMemberModifiers.Override | (isFinal ? ApiMemberModifiers.Sealed : 0) | (isAbstract ? ApiMemberModifiers.Abstract : 0);
+			else if (isAbstract)
+				modifiers |= ApiMemberModifiers.Abstract;
+			// a final new slot is how C# implements an interface member without making it virtual
+			else if (!isFinal)
+				modifiers |= ApiMemberModifiers.Virtual;
+		}
+		if (
+			declaring.Kind == ApiTypeKind.Struct && (declaring.Modifiers & ApiTypeModifiers.ReadOnly) == 0 && HasAttribute(
+				method.GetCustomAttributes(),
+				CompilerServices + "IsReadOnlyAttribute"
+			)
+		)
+			modifiers |= ApiMemberModifiers.ReadOnly;
+		return modifiers;
+	}
+
+	private List<ApiParameter> ReadParameters(MethodDefinition method, ImmutableArray<ApiTypeReference> types, byte? methodContext)
+	{
+		var rows = new Parameter?[types.Length];
+		foreach (var handle in method.GetParameters())
+		{
+			var parameter = _reader.GetParameter(handle);
+			if (parameter.SequenceNumber > 0 && parameter.SequenceNumber <= rows.Length)
+				rows[parameter.SequenceNumber - 1] = parameter;
+		}
+
+		var parameters = new List<ApiParameter>(types.Length);
+		for (var i = 0; i < types.Length; i++)
+		{
+			var row = rows[i];
+			IEnumerable<CustomAttributeHandle> attributes = row is { } withAttributes ? withAttributes.GetCustomAttributes() : [];
+			var rawType = types[i];
+			var refKind = ApiRefKind.None;
+			var offset = 0;
+			var hasInModifier = false;
+			while (rawType is ApiModifiedType { Modifier.FullName: "System.Runtime.InteropServices.InAttribute" } readOnlyParameter)
 			{
-				var parameter = _reader.GetGenericParameter(parameters[i]);
-				var variance = parameter.Attributes & GenericParameterAttributes.VarianceMask;
-				if (variance == GenericParameterAttributes.Covariant)
-					display.Append("out ");
-				if (variance == GenericParameterAttributes.Contravariant)
-					display.Append("in ");
-				display.Append(Names.Identifier(typeParameters[i]));
-				if (i != parameters.Count - 1)
-					display.Append(", ");
+				hasInModifier = true;
+				rawType = readOnlyParameter.Type;
 			}
-			display.Append('>');
+			if (rawType is ApiByReferenceType reference)
+			{
+				rawType = reference.ElementType;
+				offset = 1;
+				var flags = row?.Attributes ?? ParameterAttributes.None;
+				refKind = HasAttribute(attributes, CompilerServices + "RequiresLocationAttribute")
+					? ApiRefKind.RefReadOnly
+					: hasInModifier || HasAttribute(attributes, CompilerServices + "IsReadOnlyAttribute")
+						? ApiRefKind.In
+						: (flags & ParameterAttributes.Out) != 0 && (flags & ParameterAttributes.In) == 0 ? ApiRefKind.Out : ApiRefKind.Ref;
+			}
+			parameters.Add(
+				new ApiParameter(
+					row is { } named ? _reader.GetString(named.Name) : "arg" + i,
+					Annotate(rawType, attributes, methodContext, offset),
+					refKind,
+					HasAttribute(attributes, "System.ParamArrayAttribute") || HasAttribute(attributes, CompilerServices + "ParamCollectionAttribute"),
+					HasAttribute(attributes, CompilerServices + "ScopedRefAttribute"),
+					row is { } optional ? DefaultValue(optional, rawType) : null,
+					Attributes(attributes)
+				)
+			);
 		}
-		return display.ToString();
+		return parameters;
 	}
 
-	/// <summary>A property, event or field name; an explicit implementation's dots separate identifiers.</summary>
-	private static string MemberName(string name, bool explicitImplementation)
+	private string? DefaultValue(Parameter parameter, ApiTypeReference type)
 	{
-		name = Names.NonGeneric(name);
-		return explicitImplementation ? Names.DottedIdentifier(name) : Names.Identifier(name);
+		if ((parameter.Attributes & ParameterAttributes.HasDefault) != 0)
+		{
+			var constant = Constant(parameter.GetDefaultValue());
+			if (type is ApiNamedType { IsValueType: true } valueType && !IsBuiltIn(valueType) && valueType.FullName != "System.Decimal")
+				// a struct's default is written as null; an enum's value is its number
+				return constant is null or "null"
+					? "default"
+					: valueType.IsNullableValueType ? constant : "(" + ApiWriter.NonGeneric(valueType.Name) + ")" + constant;
+			return constant ?? "default";
+		}
+		if ((parameter.Attributes & ParameterAttributes.Optional) == 0)
+			return null;
+		return DecimalConstant(parameter.GetCustomAttributes()) ?? "default";
 	}
 
-	private bool IsExplicit(MethodDefinitionHandle accessor) =>
-		!accessor.IsNil && _overriding.Contains(accessor) && (_reader.GetMethodDefinition(
-			accessor
-		).Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.Private;
-
-	private ImmutableArray<string> GenericParameterNames(GenericParameterHandleCollection parameters) =>
-		[.. parameters.Select(p => _reader.GetString(_reader.GetGenericParameter(p).Name))];
-
-	private List<ApiAttribute> Attributes(CustomAttributeHandleCollection attributes) =>
-		attributes.Select(h => new ApiAttribute(ConstructorSignature(_reader.GetCustomAttribute(h).Constructor))).ToList();
-
-	private string ConstructorSignature(EntityHandle constructor)
+	private List<ApiTypeParameter> ReadTypeParameters(IEnumerable<GenericParameterHandle> handles, TypeContext context, byte? nullableContext, bool hasVariance)
 	{
-		if (constructor.Kind == HandleKind.MethodDefinition)
+		var parameters = new List<ApiTypeParameter>();
+		foreach (var handle in handles)
 		{
-			var method = _reader.GetMethodDefinition((MethodDefinitionHandle)constructor);
-			var declaring = method.GetDeclaringType();
-			var typeParameters = GenericParameterNames(_reader.GetTypeDefinition(declaring).GetGenericParameters());
-			var signature = method.DecodeSignature(_shapes, new GenericContext(typeParameters, GenericParameterNames(method.GetGenericParameters())));
-			return _shapes.Definition(declaring).FullName + "::" + _reader.GetString(method.Name) + Parameters(signature);
-		}
+			var parameter = _reader.GetGenericParameter(handle);
+			var flags = parameter.Attributes;
+			var variance = (flags & GenericParameterAttributes.VarianceMask) switch
+			{
+				GenericParameterAttributes.Covariant when hasVariance => ApiVariance.Out,
+				GenericParameterAttributes.Contravariant when hasVariance => ApiVariance.In,
+				_ => ApiVariance.None,
+			};
+			var constraints = ApiConstraints.None;
+			var nullable = Nullable(parameter.GetCustomAttributes()) is [var single] ? single : nullableContext;
+			var isUnmanaged = HasAttribute(parameter.GetCustomAttributes(), CompilerServices + "IsUnmanagedAttribute");
+			var isStruct = (flags & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
+			if ((flags & GenericParameterAttributes.ReferenceTypeConstraint) != 0)
+				constraints |= nullable == 2 ? ApiConstraints.NullableClass : ApiConstraints.Class;
+			if (isStruct)
+				constraints |= isUnmanaged ? ApiConstraints.Unmanaged : ApiConstraints.Struct;
+			if ((flags & GenericParameterAttributes.DefaultConstructorConstraint) != 0 && !isStruct)
+				constraints |= ApiConstraints.New;
+			// AllowByRefLike, which netstandard2.0's enum does not name
+			if (((int)flags & 0x20) != 0)
+				constraints |= ApiConstraints.AllowsRefStruct;
 
-		var reference = _reader.GetMemberReference((MemberReferenceHandle)constructor);
-		var parent = reference.Parent.Kind switch
+			var constraintTypes = new List<ApiTypeReference>();
+			foreach (var constraintHandle in parameter.GetConstraints())
+			{
+				var constraint = _reader.GetGenericParameterConstraint(constraintHandle);
+				var constraintType = _types.FromHandle(constraint.Type, context);
+				while (constraintType is ApiModifiedType modified)
+					constraintType = modified.Type;
+				// struct and unmanaged write System.ValueType as a constraint too
+				if (isStruct && constraintType is ApiNamedType { FullName: "System.ValueType" })
+					continue;
+				constraintTypes.Add(Annotate(constraintType, constraint.GetCustomAttributes(), nullableContext));
+			}
+			if (
+				nullable == 1 && (constraints & (ApiConstraints.Class | ApiConstraints.NullableClass | ApiConstraints.Struct | ApiConstraints.Unmanaged)) ==
+					0 && constraintTypes.Count == 0
+			)
+				constraints |= ApiConstraints.NotNull;
+			parameters.Add(new ApiTypeParameter(_reader.GetString(parameter.Name), variance, constraints, constraintTypes));
+		}
+		return parameters;
+	}
+
+	private ImmutableArray<string> TypeParameterNames(GenericParameterHandleCollection handles) =>
+		[.. handles.Select(h => _reader.GetString(_reader.GetGenericParameter(h).Name))];
+
+	// annotations
+
+	private ApiTypeReference Annotate(ApiTypeReference type, IEnumerable<CustomAttributeHandle> attributes, byte? nullableContext, int dynamicOffset = 0)
+	{
+		IReadOnlyList<bool>? dynamic = null;
+		IReadOnlyList<bool>? nativeIntegers = null;
+		IReadOnlyList<byte>? nullable = null;
+		IReadOnlyList<string?>? tupleNames = null;
+		foreach (var handle in attributes)
 		{
-			HandleKind.TypeDefinition or HandleKind.TypeReference or HandleKind.TypeSpecification =>
-				_shapes.FromTypeHandle(reference.Parent, GenericContext.None).FullName,
-			_ => string.Empty,
+			var attribute = _reader.GetCustomAttribute(handle);
+			switch (AttributeTypeName(attribute))
+			{
+				case CompilerServices + "DynamicAttribute":
+					dynamic = Flags(attribute) ?? [true];
+					break;
+				case CompilerServices + "NativeIntegerAttribute":
+					nativeIntegers = Flags(attribute) ?? [];
+					break;
+				case CompilerServices + "NullableAttribute":
+					nullable = NullableFlags(attribute);
+					break;
+				case CompilerServices + "TupleElementNamesAttribute":
+					tupleNames = TryDecode(attribute) is { FixedArguments: [{ Value: ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> names }] }
+						? names.Select(n => n.Value as string).ToList()
+						: null;
+					break;
+			}
+		}
+		if (nullable is null && nullableContext is { } contextFlag)
+			nullable = [contextFlag];
+		return new Annotations(dynamic, nativeIntegers, nullable, tupleNames).Apply(type, dynamicOffset);
+	}
+
+	private List<bool>? Flags(CustomAttribute attribute) =>
+		TryDecode(attribute) is { FixedArguments: [{ Value: ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> flags }] }
+			? flags.Select(f => f.Value is true).ToList()
+			: null;
+
+	private byte? NullableContext(IEnumerable<CustomAttributeHandle> attributes)
+	{
+		foreach (var handle in attributes)
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (
+				AttributeTypeName(attribute) == CompilerServices + "NullableContextAttribute" &&
+				TryDecode(attribute) is { FixedArguments: [{ Value: byte flag }] }
+			)
+				return flag;
+		}
+		return null;
+	}
+
+	private List<byte>? Nullable(IEnumerable<CustomAttributeHandle> attributes)
+	{
+		foreach (var handle in attributes)
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (AttributeTypeName(attribute) == CompilerServices + "NullableAttribute")
+				return NullableFlags(attribute);
+		}
+		return null;
+	}
+
+	private List<byte>? NullableFlags(CustomAttribute attribute) => TryDecode(attribute) switch
+	{
+		{ FixedArguments: [{ Value: byte flag }] } => [flag],
+		{ FixedArguments: [{ Value: ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> flags }] } => flags.Select(f => (byte)f.Value!).ToList(),
+		_ => null,
+	};
+
+	// attributes
+
+	private bool HasAttribute(IEnumerable<CustomAttributeHandle> attributes, string fullName)
+	{
+		foreach (var handle in attributes)
+			if (AttributeTypeName(_reader.GetCustomAttribute(handle)) == fullName)
+				return true;
+		return false;
+	}
+
+	private string AttributeTypeName(CustomAttribute attribute) => AttributeType(attribute)?.FullName ?? string.Empty;
+
+	private ApiNamedType? AttributeType(CustomAttribute attribute)
+	{
+		var constructor = attribute.Constructor;
+		EntityHandle parent = constructor.Kind switch
+		{
+			HandleKind.MethodDefinition => _reader.GetMethodDefinition((MethodDefinitionHandle)constructor).GetDeclaringType(),
+			HandleKind.MemberReference => _reader.GetMemberReference((MemberReferenceHandle)constructor).Parent,
+			_ => default,
 		};
-		return parent + "::" + _reader.GetString(reference.Name) + Parameters(reference.DecodeMethodSignature(_shapes, GenericContext.None));
-	}
-
-	private static string Parameters(MethodSignature<Shape> signature) => "(" + string.Join(",", signature.ParameterTypes.Select(p => p.FullName)) + ")";
-
-	private string ReferenceFullName(AssemblyReference reference)
-	{
-		var publicKeyOrToken = _reader.GetBlobBytes(reference.PublicKeyOrToken);
-		byte[]? token = publicKeyOrToken;
-		if ((reference.Flags & AssemblyFlags.PublicKey) != 0 && publicKeyOrToken.Length > 0)
+		return parent.Kind switch
 		{
-			var name = new AssemblyName();
-			name.SetPublicKey(publicKeyOrToken);
-			token = name.GetPublicKeyToken();
-		}
-		return AssemblyFullName(
-			_reader.GetString(reference.Name),
-			reference.Version,
-			_reader.GetString(reference.Culture),
-			token,
-			(reference.Flags & AssemblyFlags.Retargetable) != 0
-		);
+			HandleKind.TypeDefinition => _types.Definition((TypeDefinitionHandle)parent),
+			HandleKind.TypeReference => _types.Reference((TypeReferenceHandle)parent, false),
+			HandleKind.TypeSpecification => _types.FromHandle(parent, TypeContext.None) as ApiNamedType,
+			_ => null,
+		};
 	}
 
-	/// <summary>An assembly's display name the way Mono.Cecil writes it.</summary>
-	private static string AssemblyFullName(string name, Version version, string culture, byte[]? publicKeyToken, bool retargetable)
+	private CustomAttributeValue<ApiTypeReference>? TryDecode(CustomAttribute attribute)
 	{
-		var builder = new StringBuilder(name);
-		builder.Append(", Version=").Append(version.ToString(4));
-		builder.Append(", Culture=").Append(culture.Length == 0 ? "neutral" : culture);
-		builder.Append(", PublicKeyToken=");
-		if (publicKeyToken is { Length: > 0 })
-			foreach (var b in publicKeyToken)
-				builder.Append(b.ToString("x2", System.Globalization.CultureInfo.InvariantCulture));
-		else
-			builder.Append("null");
-		if (retargetable)
-			builder.Append(", Retargetable=Yes");
-		return builder.ToString();
+		try
+		{
+			return attribute.DecodeValue(_types);
+		}
+		catch (Exception e) when (e is BadImageFormatException or ArgumentOutOfRangeException or InvalidCastException)
+		{
+			return null;
+		}
+	}
+
+	private List<ApiAttribute> Attributes(IEnumerable<CustomAttributeHandle> attributes)
+	{
+		var result = new List<ApiAttribute>();
+		foreach (var handle in attributes)
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (AttributeType(attribute) is not { } type || Bookkeeping.Contains(type.FullName))
+				continue;
+			var value = TryDecode(attribute);
+			// the compiler marks what older compilers must not use, such as a ref struct, with an error
+			if (
+				type.FullName == "System.ObsoleteAttribute" && value is { FixedArguments: [{ Value: string message }, { Value: true }] } && message.EndsWith(
+					"not supported in this version of your compiler.",
+					StringComparison.Ordinal
+				)
+			)
+				continue;
+			var arguments = new List<string>();
+			if (value is { } decoded)
+			{
+				arguments.AddRange(decoded.FixedArguments.Select(Literal));
+				arguments.AddRange(
+					decoded.NamedArguments.Select(a => a.Name + " = " + Literal(new CustomAttributeTypedArgument<ApiTypeReference>(a.Type, a.Value)))
+				);
+			}
+			result.Add(new ApiAttribute(type, arguments));
+		}
+		return result.OrderBy(a => a.Type.FullName, StringComparer.Ordinal).ThenBy(a => string.Join(",", a.Arguments), StringComparer.Ordinal).ToList();
+	}
+
+	private static string Literal(CustomAttributeTypedArgument<ApiTypeReference> argument) => argument.Value switch
+	{
+		null => "null",
+		ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> items => "new[] { " + string.Join(", ", items.Select(Literal)) + " }",
+		ApiTypeReference type => "typeof(" + TypeKey(type) + ")",
+		// an enum's value is written as a cast of its number
+		var value when argument.Type is ApiNamedType named && !IsBuiltIn(named) => "(" + named.Name + ")" + Constant(value),
+		var value => Constant(value) ?? "null",
+	};
+
+	private static bool IsBuiltIn(ApiNamedType type) =>
+		type is
+		{
+			Namespace: "System",
+			DeclaringType: null,
+			Name: "Boolean" or "Byte" or "SByte" or "Char" or "Int16" or "UInt16" or "Int32" or "UInt32" or "Int64" or "UInt64" or "Single" or "Double" or "String" or "Object" or "Type",
+		};
+
+	// constants
+
+	private string? Constant(ConstantHandle handle)
+	{
+		if (handle.IsNil)
+			return null;
+		var constant = _reader.GetConstant(handle);
+		var blob = _reader.GetBlobReader(constant.Value);
+		object? value = constant.TypeCode switch
+		{
+			ConstantTypeCode.Boolean => blob.ReadBoolean(),
+			ConstantTypeCode.Char => blob.ReadChar(),
+			ConstantTypeCode.SByte => blob.ReadSByte(),
+			ConstantTypeCode.Byte => blob.ReadByte(),
+			ConstantTypeCode.Int16 => blob.ReadInt16(),
+			ConstantTypeCode.UInt16 => blob.ReadUInt16(),
+			ConstantTypeCode.Int32 => blob.ReadInt32(),
+			ConstantTypeCode.UInt32 => blob.ReadUInt32(),
+			ConstantTypeCode.Int64 => blob.ReadInt64(),
+			ConstantTypeCode.UInt64 => blob.ReadUInt64(),
+			ConstantTypeCode.Single => blob.ReadSingle(),
+			ConstantTypeCode.Double => blob.ReadDouble(),
+			ConstantTypeCode.String => blob.ReadUTF16(blob.Length),
+			_ => null,
+		};
+		return Constant(value);
+	}
+
+	private string? DecimalConstant(IEnumerable<CustomAttributeHandle> attributes)
+	{
+		foreach (var handle in attributes)
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (AttributeTypeName(attribute) != CompilerServices + "DecimalConstantAttribute" || TryDecode(attribute) is not { FixedArguments.Length: 5 } value)
+				continue;
+			var scale = Convert.ToByte(value.FixedArguments[0].Value, CultureInfo.InvariantCulture);
+			var negative = Convert.ToByte(value.FixedArguments[1].Value, CultureInfo.InvariantCulture) != 0;
+			// the attribute takes its three parts as int or as uint
+			static int Part(object? part) => part is uint unsigned ? unchecked((int)unsigned) : Convert.ToInt32(part, CultureInfo.InvariantCulture);
+
+			var hi = Part(value.FixedArguments[2].Value);
+			var mid = Part(value.FixedArguments[3].Value);
+			var lo = Part(value.FixedArguments[4].Value);
+			return new decimal(lo, mid, hi, negative, scale).ToString(CultureInfo.InvariantCulture) + "m";
+		}
+		return null;
+	}
+
+	/// <summary>A constant as a C# literal.</summary>
+	internal static string? Constant(object? value) => value switch
+	{
+		null => "null",
+		bool b => b ? "true" : "false",
+		string s => Quote(s, '"'),
+		char c => Quote(c.ToString(), '\''),
+		float f =>
+			float.IsNaN(f)
+				? "float.NaN"
+				: float.IsPositiveInfinity(f)
+					? "float.PositiveInfinity"
+					: float.IsNegativeInfinity(f) ? "float.NegativeInfinity" : f.ToString("R", CultureInfo.InvariantCulture) + "f",
+		double d =>
+			double.IsNaN(d)
+				? "double.NaN"
+				: double.IsPositiveInfinity(d)
+					? "double.PositiveInfinity"
+					: double.IsNegativeInfinity(d) ? "double.NegativeInfinity" : d.ToString("R", CultureInfo.InvariantCulture) + "d",
+		long l => l.ToString(CultureInfo.InvariantCulture) + "L",
+		ulong ul => ul.ToString(CultureInfo.InvariantCulture) + "UL",
+		uint ui => ui.ToString(CultureInfo.InvariantCulture) + "U",
+		IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+		_ => value.ToString(),
+	};
+
+	private static string Quote(string text, char quote)
+	{
+		var builder = new StringBuilder().Append(quote);
+		foreach (var c in text)
+			builder.Append(c switch
+			{
+				'\\' => "\\\\",
+				'\n' => "\\n",
+				'\r' => "\\r",
+				'\t' => "\\t",
+				'\0' => "\\0",
+				_ when c == quote => "\\" + quote,
+				_ when char.IsControl(c) => "\\u" + ((int)c).ToString("x4", CultureInfo.InvariantCulture),
+				_ => c.ToString(),
+			});
+		return builder.Append(quote).ToString();
 	}
 }
