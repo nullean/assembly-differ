@@ -28,6 +28,9 @@ public static class Report
 		var root = fixture.Root;
 		// macOS hands out /var/... temporary paths that resolve to /private/var/...; the tool prints either
 		text = text.Replace("/private" + root, "{fixture}").Replace(root, "{fixture}");
+		// packages unpack under the temporary directory, which differs per machine
+		var temp = Path.GetTempPath().TrimEnd('/', '\\');
+		text = text.Replace("/private" + temp, "{temp}").Replace(temp, "{temp}");
 		return text.Replace('\\', '/');
 	}
 }

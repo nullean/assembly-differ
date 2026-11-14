@@ -1,0 +1,7 @@
+exit code: 0
+--- stdout
+[diff] Comparing AssemblyDiffer.Tests.Dependency 1.0.0, which App resolves for net11.0, with 1.1.0
+[diff] No diff between {temp}/differ/nuget/AssemblyDiffer.Tests.Dependency/1.0.0/AssemblyDiffer.Tests.Dependency.1.0.0/lib/net11.0/Lib.dll and {temp}/differ/nuget/AssemblyDiffer.Tests.Dependency/1.1.0/AssemblyDiffer.Tests.Dependency.1.1.0/lib/net11.0/Lib.dll
+[diff] Suggested version change: None
+[diff] Worker already resolves AssemblyDiffer.Tests.Dependency 1.1.0
+--- stderr

@@ -46,7 +46,7 @@ overloads, ends with:
 |---|---|
 | `release <path>` | a `.nupkg`, `.dll` or directory with the release before it on your NuGet.config feeds; a first release succeeds |
 | `files <old> <new>` | two local builds: `.dll`s, directories or `.nupkg`s |
-| `nuget <id> <old-version> <new-version>` | two published versions |
+| `nuget <id> [<version>] [<new-version>]` | in a solution, what updating a package would change; anywhere, two published versions |
 | `projects` | every library project in the directory against its latest release; what runs without a command |
 
 | Option | What |

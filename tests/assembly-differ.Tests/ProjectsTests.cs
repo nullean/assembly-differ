@@ -97,10 +97,7 @@ public class ProjectsTests
 		public async Task<string> Run(params string[] args)
 		{
 			var environment = Environment;
-			var result = await Cli.RunInAsync(Directory, environment, args);
-			// the release unpacks under the temporary directory, which differs per machine
-			var text = Report.Of(result, Fixture).Replace(Path.GetTempPath().Replace('\\', '/').TrimEnd('/'), "{temp}");
-			return text.Replace("/private{temp}", "{temp}");
+			return Report.Of(await Cli.RunInAsync(Directory, environment, args), Fixture);
 		}
 
 		public void Dispose() => Fixture.Dispose();

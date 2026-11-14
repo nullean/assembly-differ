@@ -1,21 +1,32 @@
-Usage: assembly-differ nuget <package> <old-version> <new-version> [options]
+Usage: assembly-differ nuget <package> [<version>] [<new-version>] [options]
 
-   Compares two published versions of a package.
+   Compares two versions of a package; in a solution, the version your projects use with another.
 
 Arguments:
-  <package>      The package id.
-  <old-version>  The old version.
-  <new-version>  The new version.
+  <package>        The package id.
+  [<version>]      With one version, the version to update to; with two, the old one. [default: null]
+  [<new-version>]  The new version, when the old one is given too. [default: null]
 
 Global options:
   -h, --help             Show help.
 
 Options:
-  --framework <string>   The target framework to compare, such as net8.0. Defaults to the first the package ships. [default: null]
+  --framework <string>   The target framework to compare, such as net8.0. In a solution, defaults to the one each project compiles against. [default: null]
   -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
   -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
   -o, --output <string>  A directory or file to write the report to, besides the console.
   --fail-on <string>     Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major. [default: none] [allowed: none|patch|minor|major]
 
+Notes:
+
+  In a directory with a solution or project files, nuget X compares the version of X your projects resolve with
+  its latest stable release, and nuget X 2.0.0 with 2.0.0: what updating would change. It reads the resolved version,
+  and the target framework each project compiles X for, from obj/project.assets.json, so restore first. When projects
+  resolve different versions, each is compared. Give two versions to compare them anywhere.
+
 Examples:
+  assembly-differ nuget Polly
+
+  assembly-differ nuget Polly 8.5.0
+
   assembly-differ nuget Proc 0.13.0 0.14.0
