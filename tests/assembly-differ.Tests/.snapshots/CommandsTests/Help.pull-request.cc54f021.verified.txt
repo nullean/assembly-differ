@@ -1,0 +1,30 @@
+Usage: assembly-differ pull-request <report> [options]
+
+   Puts a report on the pull request a GitHub Actions run is for: the job summary, one comment kept up to date, and the release label for the suggested version change.
+
+Arguments:
+  <report>  The api-changes.json a command wrote with --format json.
+
+Global options:
+  -h, --help              Show help.
+
+Options:
+  --repository <string>   The repository as owner/name; defaults to GITHUB_REPOSITORY. [default: null]
+  --pull-request <value>  The pull request number; defaults to the one in GITHUB_EVENT_PATH. [default: default]
+  --major-label <string>  The label for a Major change, matching release-drafter's; empty sets none. [default: breaking]
+  --minor-label <string>  The label for a Minor change; empty sets none. [default: feature]
+  --patch-label <string>  The label for a Patch change; empty sets none. [default: ]
+  --no-comment            Leave the comment alone.
+  --no-labels             Leave the labels alone.
+
+Notes:
+
+  Run a command with --format json first; this reads the api-changes.json it writes. The comment is found again by a
+  hidden marker and updated, and the labels this tool set are recorded in it: a later run swaps only those, never a
+  label a person added. It needs GITHUB_TOKEN with pull-requests: write. Without write access, as on a pull request
+  from a fork, it writes the job summary, warns and succeeds; outside a pull request it writes the job summary only.
+
+Examples:
+  assembly-differ release build/output/MyLib.1.3.0.nupkg -f json -o build/output
+
+  assembly-differ pull-request build/output/api-changes.json

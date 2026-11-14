@@ -4,10 +4,10 @@ using Nullean.Snapshots;
 
 namespace Differ.Tests;
 
-/// <summary>The command for each source: <c>files</c>, <c>nuget</c>, <c>release</c> and <c>github</c>.</summary>
+/// <summary>The command for each source: <c>files</c>, <c>nuget</c> and <c>release</c>, and the help of every command.</summary>
 public class CommandsTests
 {
-	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "github"];
+	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "projects", "pull-request"];
 
 	[Test]
 	[MethodDataSource(nameof(Helps))]

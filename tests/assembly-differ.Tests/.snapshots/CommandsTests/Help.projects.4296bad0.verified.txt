@@ -1,0 +1,28 @@
+Usage: assembly-differ projects [options]
+
+   Compares every library project in the current directory with the latest release of its package. Runs when no command is given.
+
+Global options:
+  -h, --help             Show help.
+
+Options:
+  --project <values>     [repeatable] Compare this project file, whatever kind it is. Repeat it for more than one. [default: null]
+  --include-tests        Compare test projects too.
+  --include-unpackable   Compare projects with IsPackable set to false too.
+  -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
+  -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
+  -o, --output <string>  A directory or file to write the report to, besides the console.
+  --fail-on <string>     Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major. [default: none] [allowed: none|patch|minor|major]
+
+Notes:
+
+  It reads the one solution in the directory, or else the project files in it, and skips test projects and projects
+  with IsPackable set to false. It compares each project's Release build, for its newest target framework, with the
+  latest stable release of its package on the feeds your NuGet.config lists. It does not build: run
+  dotnet build -c Release first, and a project without build output is skipped with a warning. A project whose
+  package has no release yet is reported and skipped. It needs the .NET SDK, to read the projects.
+
+Examples:
+  dotnet build -c Release && assembly-differ
+
+  assembly-differ --project src/MyLib/MyLib.csproj --fail-on major

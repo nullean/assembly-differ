@@ -58,7 +58,13 @@ public class NuGetAssemblyProvider : IAssemblyProvider
 			return Enumerable.Empty<FileInfo>();
 		var packageFrameworks = new HashSet<string>(package.FrameworkVersions.Select(f => f.GetShortFolderName()), StringComparer.InvariantCultureIgnoreCase);
 
-		var frameworkVersion = packageFrameworks.First();
+		var frameworkVersion = packageFrameworks.FirstOrDefault();
+		if (frameworkVersion is null)
+		{
+			// a package of analyzers or build files only, for one
+			Console.WriteLine($"{package.Id} {_command.Version} ships no assemblies under lib/");
+			return [];
+		}
 
 		if (_command.FrameworkVersion != null)
 		{

@@ -1,0 +1,5 @@
+exit code: 0
+--- stdout
+[diff] Internal has no release yet: nothing to compare
+[diff] Suggested version change: None
+--- stderr
