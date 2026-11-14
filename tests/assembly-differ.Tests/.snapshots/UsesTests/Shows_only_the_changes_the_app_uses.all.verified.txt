@@ -1,0 +1,14 @@
+exit code: 0
+--- stdout
+[diff] Comparing AssemblyDiffer.Tests.Used 1.0.0, which App resolves for net11.0, with 2.0.0
+[diff] Difference found: NuGetAssemblyProvider:Lib.dll and NuGetAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Gadget` is new
+## `Lib.Widget`
+### `Size`
+Member type changed from `Int32` to `Int64`.
+### `Draw()` is deleted
+### `Erase()` is added
+[diff] Suggested version change: Major
+--- stderr

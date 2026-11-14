@@ -33,21 +33,41 @@ public sealed class Fixture : IDisposable
 	public string OldAssembly => Path.Combine(OldDirectory, AssemblyName + ".dll");
 	public string NewAssembly => Path.Combine(NewDirectory, AssemblyName + ".dll");
 
-	public static Fixture Create(string oldSource, string newSource)
+	public static Fixture Create(string oldSource, string newSource, bool referenceAssemblies = false)
 	{
 		var root = Path.Combine(Path.GetTempPath(), "assembly-differ-tests", Guid.NewGuid().ToString("N"));
 		var fixture = new Fixture(root);
-		Compile(oldSource, fixture.OldAssembly);
-		Compile(newSource, fixture.NewAssembly);
+		Compile(oldSource, fixture.OldAssembly, referenceAssemblies);
+		Compile(newSource, fixture.NewAssembly, referenceAssemblies);
 		return fixture;
 	}
 
-	public static void Compile(string source, string path)
+	/// <summary>
+	/// The SDK's reference assemblies for the running framework, which a project that compiles against a fixture needs
+	/// the fixture to reference; the runtime's own assemblies, the default, only suit loading it.
+	/// </summary>
+	private static readonly Lazy<ImmutableArray<MetadataReference>> ReferencePack = new(() =>
+	{
+		var runtime = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+		var dotnetRoot = Path.GetFullPath(Path.Combine(runtime, "..", "..", ".."));
+		var pack = new DirectoryInfo(Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref"))
+			.EnumerateDirectories()
+			.OrderByDescending(d => Version.TryParse(d.Name.Split('-')[0], out var v) ? v : new Version())
+			.First();
+		var framework = $"net{Environment.Version.Major}.{Environment.Version.Minor}";
+		return [
+			.. Directory.EnumerateFiles(Path.Combine(pack.FullName, "ref", framework), "*.dll").Select(
+				p => (MetadataReference)MetadataReference.CreateFromFile(p)
+			)
+		];
+	});
+
+	public static void Compile(string source, string path, bool referenceAssemblies = false)
 	{
 		var compilation = CSharpCompilation.Create(
 			AssemblyName,
 			[CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest))],
-			References,
+			referenceAssemblies ? ReferencePack.Value : References,
 			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true, nullableContextOptions: NullableContextOptions.Enable)
 		);
 		using var stream = File.Create(path);

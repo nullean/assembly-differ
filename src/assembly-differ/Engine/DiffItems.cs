@@ -164,6 +164,12 @@ public abstract class MetadataDiffItem : DiffItem, IMetadataDiffItem
 	/// <summary>The name the reports show for the element.</summary>
 	public string Name { get; }
 
+	/// <summary>
+	/// The element's name in metadata: a type's full name, such as <c>Lib.Outer/Inner</c> or <c>Lib.Box`1</c>, or a
+	/// member's name, such as <c>Draw</c> or <c>.ctor</c>. Matches the names in a referencing assembly's metadata.
+	/// </summary>
+	public string? Key { get; init; }
+
 	public ICollection<IDiffItem> DeclarationDiffs { get; }
 
 	public ICollection<IMetadataDiffItem> ChildrenDiffs { get; }

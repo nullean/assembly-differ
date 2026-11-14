@@ -107,6 +107,11 @@ git worktree add ../old v1.2.0 && dotnet build ../old -c Release
 assembly-differ files ../old/src/MyLib/bin/Release/net8.0 src/MyLib/bin/Release/net8.0
 ```
 
+In a solution, `nuget` shows only the changes to the types and members your built projects reference: a removed
+method you call, not the hundred you don't. It reads that from your build output, so build first; without a build it
+shows every change, with a warning, and `--all` always does. Members match by name, and a constant you use does not show,
+because the compiler copies its value into your code.
+
 A single assembly on each side is compared whatever its file name. With more, assemblies pair by file name, and one
 only a side has is printed; it counts as removed or added API when `--target` names it.
 
@@ -122,8 +127,8 @@ More examples:
 # two local builds, every dll matched by name
 assembly-differ files build/1.2.0 build/1.3.0
 
-# what updating Polly from the version this solution resolves to 8.5.0 would change
-assembly-differ nuget Polly 8.5.0
+# what updating Polly from the version this solution resolves to 8.5.0 would change for this code
+dotnet build && assembly-differ nuget Polly 8.5.0
 
 # two published packages, as Markdown
 assembly-differ nuget Proc 0.13.0 0.14.0 -t proc

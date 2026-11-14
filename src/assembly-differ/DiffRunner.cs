@@ -15,6 +15,9 @@ internal sealed record DiffSettings(HashSet<string> Targets, string Format, stri
 {
 	/// <summary>The release the old side is, when a command resolved one.</summary>
 	public string? Baseline { get; init; }
+
+	/// <summary>Narrows each assembly's differences, such as to what a solution uses; null drops them all.</summary>
+	public Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? Filter { get; init; }
 }
 
 /// <summary>Compares the assemblies two sides provide, writes the report and returns the exit code.</summary>
@@ -103,6 +106,15 @@ internal static class DiffRunner
 			foreach (var assemblyPair in pairs)
 			{
 				assemblyPair.Diff = ApiDiff.Compare(assemblyPair.First.FullName, assemblyPair.Second.FullName);
+				if (assemblyPair.Diff is not null && settings.Filter is { } filter)
+				{
+					assemblyPair.Diff = filter(assemblyPair, assemblyPair.Diff);
+					if (assemblyPair.Diff is null)
+					{
+						Console.WriteLine($"[diff] {assemblyPair.First.Name} changed, but not in API your code uses");
+						continue;
+					}
+				}
 
 				if (assemblyPair.Diff == null)
 				{
