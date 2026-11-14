@@ -930,9 +930,29 @@ public static class ApiComparison
 		private static string TypeSegment(ApiType type) =>
 			NonGeneric(type.Name) + (type.TypeParameters.Count == 0 ? "" : "<" + string.Join(", ", type.TypeParameters.Select(p => p.Name)) + ">");
 
+		/// <summary>A type without nullable annotations on reference types; a nullable value type is a type of its own and stays.</summary>
+		private static ApiTypeReference WithoutAnnotations(ApiTypeReference type) => type switch
+		{
+			ApiNamedType named =>
+				named with
+				{
+					IsNullable = false,
+					DeclaringType = named.DeclaringType is null ? null : (ApiNamedType)WithoutAnnotations(named.DeclaringType),
+					TypeArguments = named.TypeArguments.Select(WithoutAnnotations).ToList(),
+				},
+			ApiTupleType tuple =>
+				tuple with { IsNullable = false, Elements = tuple.Elements.Select(e => e with { Type = WithoutAnnotations(e.Type) }).ToList() },
+			ApiArrayType array => array with { IsNullable = false, ElementType = WithoutAnnotations(array.ElementType) },
+			ApiPointerType pointer => pointer with { ElementType = WithoutAnnotations(pointer.ElementType) },
+			ApiModifiedType modified => modified with { Type = WithoutAnnotations(modified.Type) },
+			_ => type with { IsNullable = false },
+		};
+
 		private static string MemberSegment(ApiMember member, ApiType declaring)
 		{
-			string Types(IEnumerable<ApiParameter> parameters) => string.Join(", ", parameters.Select(p => ApiWriter.Reference(p.Type, declaring)));
+			// a path names a member by its identity, which nullability is not part of: either version gives the same one
+			string Types(IEnumerable<ApiParameter> parameters) =>
+				string.Join(", ", parameters.Select(p => ApiWriter.Reference(WithoutAnnotations(p.Type), declaring)));
 
 			return member switch
 			{
