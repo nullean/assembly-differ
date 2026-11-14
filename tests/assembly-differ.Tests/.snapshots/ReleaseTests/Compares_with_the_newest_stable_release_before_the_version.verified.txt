@@ -1,0 +1,37 @@
+exit code: 0
+--- stdout
+[diff] Comparing with AssemblyDiffer.Tests.Lib 1.1.0, the release before 1.2.0
+[diff] Difference found: NuGetAssemblyProvider:Lib.dll and NupkgAssemblyProvider:Lib.dll
+{
+  "firstRelease": false,
+  "baseline": "1.1.0",
+  "suggestedVersionChange": "Major",
+  "breakingChanges": 1,
+  "assemblies": [
+    {
+      "name": "Lib.dll",
+      "suggestedVersionChange": "Major",
+      "breakingChanges": 1,
+      "changes": [
+        {
+          "kind": "Type",
+          "name": "Lib.Widget",
+          "change": "modified",
+          "suggestedVersionChange": "Major",
+          "changes": [
+            {
+              "kind": "Method",
+              "name": "Draw()",
+              "change": "removed",
+              "suggestedVersionChange": "Major"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}
+[diff] Suggested version change: Major
+--- stderr

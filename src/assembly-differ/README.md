@@ -37,7 +37,7 @@ overloads, ends with:
 
 | Command | Compares |
 |---|---|
-| `release <path>` | a `.nupkg`, `.dll` or directory with the release before it on nuget.org |
+| `release <path>` | a `.nupkg`, `.dll` or directory with the release before it on your NuGet.config feeds; a first release succeeds |
 | `files <old> <new>` | two local builds: `.dll`s, directories or `.nupkg`s |
 | `nuget <id> <old-version> <new-version>` | two published versions |
 | `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a build with an older commit, built with your command |

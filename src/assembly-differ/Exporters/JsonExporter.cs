@@ -22,6 +22,9 @@ public class JsonExporter : IAllComparisonResultsExporter
 		using (var json = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
 		{
 			json.WriteStartObject();
+			json.WriteBoolean("firstRelease", false);
+			if (results.Baseline is not null)
+				json.WriteString("baseline", results.Baseline);
 			json.WriteString("suggestedVersionChange", results.SuggestedVersionChange.ToString());
 			json.WriteNumber("breakingChanges", results.Comparisons.Sum(c => c.Diff is null ? 0 : CountBreaking(c.Diff)));
 			json.WriteStartArray("assemblies");
@@ -35,6 +38,27 @@ public class JsonExporter : IAllComparisonResultsExporter
 
 		using var writer = factory.Create("api-changes.json");
 		writer.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
+	}
+
+	/// <summary>The document for a first release, which has nothing to compare with.</summary>
+	public static string FirstRelease()
+	{
+		using var stream = new MemoryStream();
+		using (var json = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+		{
+			json.WriteStartObject();
+			json.WriteBoolean("firstRelease", true);
+			json.WriteString("suggestedVersionChange", SuggestedVersionChange.None.ToString());
+			json.WriteNumber("breakingChanges", 0);
+			json.WriteStartArray("assemblies");
+			json.WriteEndArray();
+			json.WriteStartArray("removedAssemblies");
+			json.WriteEndArray();
+			json.WriteStartArray("addedAssemblies");
+			json.WriteEndArray();
+			json.WriteEndObject();
+		}
+		return Encoding.UTF8.GetString(stream.ToArray());
 	}
 
 	private static void WriteAssembly(Utf8JsonWriter json, AssemblyComparison comparison)

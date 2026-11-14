@@ -1,6 +1,6 @@
 Usage: assembly-differ release <path> [options]
 
-   Compares a new build with the release before it on nuget.org.
+   Compares a new build with the release before it.
 
 Arguments:
   <path>  The new build: a .nupkg, a .dll or a directory.
@@ -12,6 +12,7 @@ Options:
   --package <string>     The package id; read from a .nupkg when not given. [default: null]
   --version <string>     The version being released; read from a .nupkg when not given. [default: null]
   --framework <string>   The target framework to compare, such as net8.0. Defaults to the newest the .nupkg ships. [default: null]
+  --require-baseline     Fail when there is no earlier release to compare with.
   -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
   -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
   -o, --output <string>  A directory or file to write the report to, besides the console.
@@ -20,7 +21,9 @@ Options:
 Notes:
 
   Give a .nupkg and the package id and version come from it; for a .dll or a directory, pass --package and --version.
-  The release compared with is the newest one before that version.
+  The release compared with is the newest stable one before that version, on the feeds your NuGet.config lists.
+  Without one, this is a first release: there is nothing to compare, and the command succeeds unless
+  --require-baseline is set.
 
 Examples:
   assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major

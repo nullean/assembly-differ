@@ -1,0 +1,8 @@
+exit code: 0
+--- stdout
+[diff] No release of AssemblyDiffer.Tests.Lib before 1.0.0 on local: this is its first release, so there is nothing to compare
+### API Changes: `AssemblyDiffer.Tests.Lib`
+
+This is the first release of `AssemblyDiffer.Tests.Lib`: there is no earlier release to compare with.
+[diff] Suggested version change: None
+--- stderr
