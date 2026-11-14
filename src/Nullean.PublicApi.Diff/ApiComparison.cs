@@ -30,21 +30,82 @@ public static class ApiComparison
 	}
 
 	/// <summary>Pairs two lists by key, in the new list's order with the removed ones after.</summary>
-	private static void Pair<T>(IReadOnlyList<T> oldItems, IReadOnlyList<T> newItems, Func<T, string> key, Action<T?, T?> visit) where T : class
+	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ApiType, ApiDeclarationWriter> Writers = new();
+
+	/// <summary>The writer for a type, built once: it looks at the whole type to decide which names to write in full.</summary>
+	private static ApiDeclarationWriter Writer(ApiType type) => Writers.GetValue(type, t => new ApiDeclarationWriter(t));
+
+	private static void Pair<T>(IReadOnlyList<T> oldItems, IReadOnlyList<T> newItems, Func<T, string> key, Action<T?, T?> visit) where T : class =>
+		Pair(oldItems, newItems, new KeyComparer<T>(key), visit);
+
+	/// <summary>Pairs two lists by identity, in the new list's order with the removed ones after.</summary>
+	private static void Pair<T>(IReadOnlyList<T> oldItems, IReadOnlyList<T> newItems, IEqualityComparer<T> identity, Action<T?, T?> visit) where T : class
 	{
-		var old = new Dictionary<string, T>(StringComparer.Ordinal);
+		var old = new Dictionary<T, T>(oldItems.Count, identity);
 		foreach (var item in oldItems)
-			old[key(item)] = item;
-		var seen = new HashSet<string>(StringComparer.Ordinal);
+			old[item] = item;
+		var paired = new HashSet<T>(identity);
 		foreach (var item in newItems)
 		{
-			var k = key(item);
-			seen.Add(k);
-			visit(old.TryGetValue(k, out var match) ? match : null, item);
+			paired.Add(item);
+			visit(old.TryGetValue(item, out var match) ? match : null, item);
 		}
 		foreach (var item in oldItems)
-			if (!seen.Contains(key(item)))
+			if (!paired.Contains(item))
 				visit(item, null);
+	}
+
+	private sealed class KeyComparer<T>(Func<T, string> key) : IEqualityComparer<T>
+	{
+		public bool Equals(T? x, T? y) => x is not null && y is not null && key(x) == key(y);
+
+		public int GetHashCode(T obj) => StringComparer.Ordinal.GetHashCode(key(obj));
+	}
+
+	/// <summary>
+	/// A member's identity, compared on the models: its kind, name, number of type parameters and parameter types as the
+	/// runtime sees them, the same as <see cref="Context"/>'s string key without writing one per member.
+	/// </summary>
+	private sealed class MemberIdentity : IEqualityComparer<ApiMember>
+	{
+		public static readonly MemberIdentity Instance = new();
+
+		public bool Equals(ApiMember? x, ApiMember? y)
+		{
+			if (x is null || y is null || x.GetType() != y.GetType() || x.Name != y.Name)
+				return false;
+			switch (x, y)
+			{
+				case (ApiProperty a, ApiProperty b):
+					return SameParameters(a.Parameters, b.Parameters);
+				case (ApiMethod a, ApiMethod b):
+					return a.TypeParameters.Count == b.TypeParameters.Count && SameParameters(a.Parameters, b.Parameters) &&
+						(a.Kind != ApiMethodKind.Conversion || Context.SameRuntime(a.ReturnType, b.ReturnType));
+				default:
+					return true;
+			}
+		}
+
+		private static bool SameParameters(IReadOnlyList<ApiParameter> a, IReadOnlyList<ApiParameter> b)
+		{
+			if (a.Count != b.Count)
+				return false;
+			for (var i = 0; i < a.Count; i++)
+				if ((a[i].RefKind == ApiRefKind.None) != (b[i].RefKind == ApiRefKind.None) || !Context.SameRuntime(a[i].Type, b[i].Type))
+					return false;
+			return true;
+		}
+
+		public int GetHashCode(ApiMember obj)
+		{
+			var count = obj switch
+			{
+				ApiMethod m => m.Parameters.Count * 31 + m.TypeParameters.Count,
+				ApiProperty p => p.Parameters.Count,
+				_ => 0,
+			};
+			return (StringComparer.Ordinal.GetHashCode(obj.Name) * 397) ^ (count * 17) ^ obj.GetType().GetHashCode();
+		}
 	}
 
 	private sealed class Context(ApiComparisonOptions options, ApiAssembly newApi)
@@ -80,7 +141,7 @@ public static class ApiComparison
 			var here = path.Append(TypeSegment(type)).ToList();
 			if (oldType is null)
 			{
-				Add(here, ApiChangeKind.Added, "", null, ApiWriter.Declaration(newType!), ApiAudience.None, ApiCompatibility.None, null, newType, newType);
+				Add(here, ApiChangeKind.Added, "", null, Writer(newType!).Declaration(), ApiAudience.None, ApiCompatibility.None, null, newType, newType);
 				return;
 			}
 			if (newType is null)
@@ -89,7 +150,7 @@ public static class ApiComparison
 					here,
 					ApiChangeKind.Removed,
 					"",
-					ApiWriter.Declaration(oldType),
+					Writer(oldType).Declaration(),
 					null,
 					ApiAudience.Callers,
 					Both,
@@ -149,10 +210,8 @@ public static class ApiComparison
 
 			if (oldType.Kind == ApiTypeKind.Delegate && newType.Kind == ApiTypeKind.Delegate)
 			{
-				var oldSignature = ApiWriter.Declaration(oldType);
-				var newSignature = ApiWriter.Declaration(newType);
 				if (Key(oldType.Members.OfType<ApiMethod>().First(), oldType) != Key(newType.Members.OfType<ApiMethod>().First(), newType))
-					Changed("signature", oldSignature, newSignature, ApiAudience.Callers, Both);
+					Changed("signature", Writer(oldType).Declaration(), Writer(newType).Declaration(), ApiAudience.Callers, Both);
 				else
 					Member(
 						oldType.Members.OfType<ApiMethod>().First(),
@@ -164,12 +223,7 @@ public static class ApiComparison
 					);
 			}
 			else
-				Pair(
-					oldType.Members,
-					newType.Members,
-					m => Key(m, oldType.Members.Contains(m) ? oldType : newType),
-					(o, n) => Member(o, n, oldType, newType, here)
-				);
+				Pair(oldType.Members, newType.Members, MemberIdentity.Instance, (o, n) => Member(o, n, oldType, newType, here));
 
 			Pair(oldType.NestedTypes, newType.NestedTypes, t => t.Name, (o, n) => Type(o, n, here));
 		}
@@ -181,8 +235,8 @@ public static class ApiComparison
 				return;
 			if (oldType.Kind == ApiTypeKind.Enum)
 			{
-				var oldUnderlying = oldType.BaseType is null ? "int" : ApiWriter.Reference(oldType.BaseType, oldType);
-				var newUnderlying = newType.BaseType is null ? "int" : ApiWriter.Reference(newType.BaseType, newType);
+				var oldUnderlying = oldType.BaseType is null ? "int" : Writer(oldType).Reference(oldType.BaseType);
+				var newUnderlying = newType.BaseType is null ? "int" : Writer(newType).Reference(newType.BaseType);
 				if (oldUnderlying != newUnderlying)
 					changed("underlying type", oldUnderlying, newUnderlying, ApiAudience.Callers, Both, null);
 				return;
@@ -192,8 +246,8 @@ public static class ApiComparison
 			var newBase = newType.BaseType is null ? null : Erase(newType.BaseType);
 			if (oldBase != newBase)
 			{
-				var old = oldType.BaseType is null ? "object" : ApiWriter.Reference(oldType.BaseType, oldType);
-				var @new = newType.BaseType is null ? "object" : ApiWriter.Reference(newType.BaseType, newType);
+				var old = oldType.BaseType is null ? "object" : Writer(oldType).Reference(oldType.BaseType);
+				var @new = newType.BaseType is null ? "object" : Writer(newType).Reference(newType.BaseType);
 				// a class put between a type and its base keeps everything the base gave callers
 				if (oldBase is null || Ancestors(newType).Contains(oldBase))
 					changed("base type", old, @new, ApiAudience.None, ApiCompatibility.None, oldBase is null ? null : $"{old} is still a base");
@@ -204,12 +258,12 @@ public static class ApiComparison
 			var oldInterfaces = oldType.Interfaces.ToDictionary(Erase, i => i, StringComparer.Ordinal);
 			var newInterfaces = newType.Interfaces.ToDictionary(Erase, i => i, StringComparer.Ordinal);
 			foreach (var removed in oldInterfaces.Where(i => !newInterfaces.ContainsKey(i.Key)))
-				changed("interfaces", ApiWriter.Reference(removed.Value, oldType), null, ApiAudience.Callers, Both, null);
+				changed("interfaces", Writer(oldType).Reference(removed.Value), null, ApiAudience.Callers, Both, null);
 			foreach (var added in newInterfaces.Where(i => !oldInterfaces.ContainsKey(i.Key)))
 			{
 				// an interface that extends another now asks its implementers for that one's members too
 				var breaks = newType.Kind == ApiTypeKind.Interface && AsksSomething(added.Value) ? ApiAudience.Implementers : ApiAudience.None;
-				changed("interfaces", null, ApiWriter.Reference(added.Value, newType), breaks, breaks == ApiAudience.None ? ApiCompatibility.None : Both, null);
+				changed("interfaces", null, Writer(newType).Reference(added.Value), breaks, breaks == ApiAudience.None ? ApiCompatibility.None : Both, null);
 			}
 		}
 
@@ -258,6 +312,8 @@ public static class ApiComparison
 						ApiCompatibility.Source,
 						null
 					);
+				if (SameConstraints(o, n))
+					continue;
 				var oldConstraints = Constraints(o, oldType);
 				var newConstraints = Constraints(n, newType);
 				foreach (var added in newConstraints.Except(oldConstraints))
@@ -265,6 +321,17 @@ public static class ApiComparison
 				foreach (var removed in oldConstraints.Except(newConstraints))
 					changed($"type parameter {n.Name} constraint", removed, null, ApiAudience.None, ApiCompatibility.None, null);
 			}
+		}
+
+		/// <summary>Whether two type parameters have the same constraints, checked on the models before anything is written out.</summary>
+		private static bool SameConstraints(ApiTypeParameter a, ApiTypeParameter b)
+		{
+			if (a.Constraints != b.Constraints || a.ConstraintTypes.Count != b.ConstraintTypes.Count)
+				return false;
+			for (var i = 0; i < a.ConstraintTypes.Count; i++)
+				if (!Same(a.ConstraintTypes[i], b.ConstraintTypes[i], Sameness.Exact))
+					return false;
+			return true;
 		}
 
 		private static string Variance(ApiVariance variance) => variance switch
@@ -294,7 +361,7 @@ public static class ApiComparison
 						ApiConstraints.New => "new()",
 						_ => flag.ToString().ToLowerInvariant(),
 					});
-			constraints.AddRange(parameter.ConstraintTypes.Select(t => ApiWriter.Reference(t, context)));
+			constraints.AddRange(parameter.ConstraintTypes.Select(t => Writer(context).Reference(t)));
 			// allows ref struct loosens a constraint; taking it away is the break
 			if ((parameter.Constraints & ApiConstraints.AllowsRefStruct) == 0)
 				constraints.Add("not ref struct");
@@ -307,33 +374,24 @@ public static class ApiComparison
 		{
 			var member = newMember ?? oldMember!;
 			var declaring = newMember is null ? oldType : newType;
-			var here = delegateInvoke ? path : path.Append(MemberSegment(member, declaring)).ToList();
+			// the path is only written out for a change: most members have none
+			List<string>? here = null;
+
+			List<string> Here() => here ??= delegateInvoke ? path : path.Append(MemberSegment(member, declaring)).ToList();
 
 			if (oldMember is null)
 			{
 				var (breaks, compatibility, note) = Obligation(newMember!, newType);
-				Add(
-					here,
-					ApiChangeKind.Added,
-					"",
-					null,
-					ApiWriter.Declaration(newMember!, newType),
-					breaks,
-					compatibility,
-					newType,
-					newMember,
-					newMember,
-					note
-				);
+				Add(Here(), ApiChangeKind.Added, "", null, Writer(newType).Declaration(newMember!), breaks, compatibility, newType, newMember, newMember, note);
 				return;
 			}
 			if (newMember is null)
 			{
-				var removed = ApiWriter.Declaration(oldMember, oldType);
+				var removed = Writer(oldType).Declaration(oldMember);
 				// an override, or a member that moved to a base class here, is still found through the base
 				if (MovedToBase(oldMember, oldType, newType) is { } baseName)
 					Add(
-						here,
+						Here(),
 						ApiChangeKind.Removed,
 						"",
 						removed,
@@ -354,7 +412,7 @@ public static class ApiComparison
 						? "an overload with more optional parameters replaces it; callers compile, but compiled callers fail"
 						: null;
 					Add(
-						here,
+						Here(),
 						ApiChangeKind.Removed,
 						"",
 						removed,
@@ -371,7 +429,7 @@ public static class ApiComparison
 			}
 
 			void Changed(string part, string? old, string? @new, ApiAudience breaks, ApiCompatibility compatibility, string? note = null) =>
-				Add(here, ApiChangeKind.Changed, part, old, @new, breaks, compatibility, oldType, oldMember, newMember, note);
+				Add(Here(), ApiChangeKind.Changed, part, old, @new, breaks, compatibility, oldType, oldMember, newMember, note);
 
 			Accessibility(
 				oldMember.Accessibility,
@@ -434,6 +492,8 @@ public static class ApiComparison
 						);
 					for (var i = 0; i < Math.Min(o.TypeParameters.Count, n.TypeParameters.Count); i++)
 					{
+						if (SameConstraints(o.TypeParameters[i], n.TypeParameters[i]))
+							continue;
 						var oldConstraints = Constraints(o.TypeParameters[i], oldType);
 						var newConstraints = Constraints(n.TypeParameters[i], newType);
 						foreach (var added in newConstraints.Except(oldConstraints))
@@ -720,23 +780,107 @@ public static class ApiComparison
 			Action<string, string?, string?, ApiAudience, ApiCompatibility, string?> changed
 		)
 		{
-			var oldText = ApiWriter.Reference(old, oldType);
-			var newText = ApiWriter.Reference(@new, newType);
-			if (Erase(old) != Erase(@new))
+			// nearly every type is unchanged: compare the models, and write the C# only for a change
+			if (Same(old, @new, Sameness.Exact))
+				return;
+			var oldText = Writer(oldType).Reference(old);
+			var newText = Writer(newType).Reference(@new);
+			if (!Same(old, @new, Sameness.Runtime))
 				changed(part, oldText, newText, ApiAudience.Callers, Both, null);
-			else if (TupleNames(old) != TupleNames(@new))
+			else if (!Same(old, @new, Sameness.TupleNames))
 				changed(part, oldText, newText, ApiAudience.Callers, ApiCompatibility.Source, "callers that use the element names");
 			else if (oldText != newText)
 				changed(part, oldText, newText, ApiAudience.None, ApiCompatibility.None, "nullability");
 		}
 
-		private static string TupleNames(ApiTypeReference type) => type switch
+		internal static bool SameRuntime(ApiTypeReference a, ApiTypeReference b) => Same(a, b, Sameness.Runtime);
+
+		private enum Sameness
 		{
-			ApiTupleType tuple => "(" + string.Join(",", tuple.Elements.Select(e => e.Name + ":" + TupleNames(e.Type))) + ")",
-			ApiNamedType named =>
-				string.Join(",", named.TypeArguments.Select(TupleNames)) + (named.DeclaringType is null ? "" : "/" + TupleNames(named.DeclaringType)),
-			ApiArrayType array => TupleNames(array.ElementType),
-			_ => "",
+			/// <summary>The same type to the runtime: nullability, tuple names, dynamic and native integers aside.</summary>
+			Runtime,
+
+			/// <summary>The same to the runtime, with the same tuple element names.</summary>
+			TupleNames,
+
+			/// <summary>The same in every part, nullability included.</summary>
+			Exact,
+		}
+
+		/// <summary>Whether two types are the same, as far as <paramref name="sameness"/> looks, without writing either out.</summary>
+		private static bool Same(ApiTypeReference a, ApiTypeReference b, Sameness sameness)
+		{
+			while (a is ApiModifiedType modifiedA && sameness != Sameness.Exact)
+				a = modifiedA.Type;
+			while (b is ApiModifiedType modifiedB && sameness != Sameness.Exact)
+				b = modifiedB.Type;
+			if (sameness == Sameness.Exact && a.IsNullable != b.IsNullable)
+				return false;
+			if (sameness != Sameness.Exact)
+			{
+				// dynamic is object, and nint IntPtr, to the runtime
+				a = Runtime(a);
+				b = Runtime(b);
+			}
+			switch (a, b)
+			{
+				case (ApiNamedType x, ApiNamedType y):
+					if (x.Name != y.Name || x.Namespace != y.Namespace || x.TypeArguments.Count != y.TypeArguments.Count)
+						return false;
+					if (
+						(x.DeclaringType is null) != (y.DeclaringType is null) ||
+						(x.DeclaringType is not null && !Same(x.DeclaringType, y.DeclaringType!, sameness))
+					)
+						return false;
+					for (var i = 0; i < x.TypeArguments.Count; i++)
+						if (!Same(x.TypeArguments[i], y.TypeArguments[i], sameness))
+							return false;
+					return true;
+				case (ApiTupleType x, ApiTupleType y):
+					if (x.Elements.Count != y.Elements.Count)
+						return false;
+					for (var i = 0; i < x.Elements.Count; i++)
+						if (
+							(sameness != Sameness.Runtime && x.Elements[i].Name != y.Elements[i].Name) ||
+							!Same(x.Elements[i].Type, y.Elements[i].Type, sameness)
+						)
+							return false;
+					return true;
+				case (ApiArrayType x, ApiArrayType y):
+					return x.Rank == y.Rank && Same(x.ElementType, y.ElementType, sameness);
+				case (ApiPointerType x, ApiPointerType y):
+					return Same(x.ElementType, y.ElementType, sameness);
+				case (ApiFunctionPointerType x, ApiFunctionPointerType y):
+					if (x.IsUnmanaged != y.IsUnmanaged || x.ParameterTypes.Count != y.ParameterTypes.Count || !Same(x.ReturnType, y.ReturnType, sameness))
+						return false;
+					for (var i = 0; i < x.ParameterTypes.Count; i++)
+						if (!Same(x.ParameterTypes[i], y.ParameterTypes[i], sameness))
+							return false;
+					return true;
+				case (ApiTypeParameterReference x, ApiTypeParameterReference y):
+					return x.Name == y.Name && x.IsMethodParameter == y.IsMethodParameter;
+				case (ApiDynamicType, ApiDynamicType):
+					return true;
+				case (ApiNativeIntegerType x, ApiNativeIntegerType y):
+					return x.IsUnsigned == y.IsUnsigned;
+				case (ApiModifiedType x, ApiModifiedType y):
+					return x.IsRequired == y.IsRequired && Same(x.Modifier, y.Modifier, sameness) && Same(x.Type, y.Type, sameness);
+				default:
+					return false;
+			}
+		}
+
+		private static readonly ApiNamedType RuntimeObject = new("System", "Object", null, [], false);
+		private static readonly ApiNamedType RuntimeIntPtr = new("System", "IntPtr", null, [], true);
+		private static readonly ApiNamedType RuntimeUIntPtr = new("System", "UIntPtr", null, [], true);
+
+		private static ApiTypeReference Runtime(ApiTypeReference type) => type switch
+		{
+			ApiDynamicType => RuntimeObject,
+			ApiNativeIntegerType { IsUnsigned: true } => RuntimeUIntPtr,
+			ApiNativeIntegerType => RuntimeIntPtr,
+			// a tuple is its ValueTuple; Same compares tuples element by element, which is the same thing
+			_ => type,
 		};
 
 		private static void Accessibility(ApiAccessibility old, ApiAccessibility @new, Action<string, string, ApiAudience> changed)
@@ -798,6 +942,9 @@ public static class ApiComparison
 			Action<string, string?, string?, ApiAudience, ApiCompatibility> changed
 		)
 		{
+			// the reader and the parser both order attributes, so unchanged ones are equal in order
+			if (old.Count == @new.Count && SameAttributes(old, @new))
+				return;
 			var oldByName = old.GroupBy(a => a.Type.FullName).ToDictionary(g => g.Key, g => g.Select(Text).OrderBy(t => t, StringComparer.Ordinal).ToList());
 			var newByName = @new.GroupBy(a => a.Type.FullName).ToDictionary(g => g.Key, g => g.Select(Text).OrderBy(t => t, StringComparer.Ordinal).ToList());
 			foreach (var name in oldByName.Keys.Union(newByName.Keys).OrderBy(n => n, StringComparer.Ordinal))
@@ -809,6 +956,20 @@ public static class ApiComparison
 				var isError = name == Obsolete && IsError(@new) && !IsError(old);
 				changed("attribute", o, n, isError ? ApiAudience.Callers : ApiAudience.None, isError ? ApiCompatibility.Source : ApiCompatibility.None);
 			}
+		}
+
+		private static bool SameAttributes(IReadOnlyList<ApiAttribute> old, IReadOnlyList<ApiAttribute> @new)
+		{
+			for (var i = 0; i < old.Count; i++)
+			{
+				var (a, b) = (old[i], @new[i]);
+				if (!Same(a.Type, b.Type, Sameness.Exact) || a.Arguments.Count != b.Arguments.Count)
+					return false;
+				for (var j = 0; j < a.Arguments.Count; j++)
+					if (a.Arguments[j] != b.Arguments[j])
+						return false;
+			}
+			return true;
 		}
 
 		private static bool IsError(IReadOnlyList<ApiAttribute> attributes) =>
@@ -953,15 +1114,14 @@ public static class ApiComparison
 		{
 			// a path names a member by its identity, which nullability is not part of: either version gives the same one
 			string Types(IEnumerable<ApiParameter> parameters) =>
-				string.Join(", ", parameters.Select(p => ApiWriter.Reference(WithoutAnnotations(p.Type), declaring)));
+				string.Join(", ", parameters.Select(p => Writer(declaring).Reference(WithoutAnnotations(p.Type))));
 
 			return member switch
 			{
 				ApiMethod { Kind: ApiMethodKind.Constructor } m => NonGeneric(declaring.Name) + "(" + Types(m.Parameters) + ")",
 				ApiMethod { Kind: ApiMethodKind.Conversion } m =>
-					(m.Name == "op_Implicit" ? "implicit" : "explicit") + " operator " + ApiWriter.Reference(m.ReturnType, declaring) + "(" + Types(
-						m.Parameters
-					) + ")",
+					(m.Name == "op_Implicit" ? "implicit" : "explicit") + " operator " + Writer(declaring).Reference(m.ReturnType) + "(" + Types(m.Parameters) +
+						")",
 				ApiMethod m =>
 					m.Name + (m.TypeParameters.Count == 0 ? "" : "<" + string.Join(", ", m.TypeParameters.Select(p => p.Name)) + ">") + "(" + Types(
 						m.Parameters

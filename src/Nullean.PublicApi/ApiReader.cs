@@ -143,7 +143,7 @@ public sealed class ApiReader
 				modifiers |= ApiTypeModifiers.Abstract;
 			else if (isSealed)
 				modifiers |= ApiTypeModifiers.Sealed;
-			if (type.GetMethods().Any(m => _reader.GetString(_reader.GetMethodDefinition(m).Name) == "<Clone>$"))
+			if (type.GetMethods().Any(m => _reader.StringComparer.Equals(_reader.GetMethodDefinition(m).Name, "<Clone>$")))
 				modifiers |= ApiTypeModifiers.Record;
 		}
 		if (kind == ApiTypeKind.Struct)
@@ -158,7 +158,7 @@ public sealed class ApiReader
 			(kind == ApiTypeKind.Class && !isSealed && type
 				.GetMethods()
 				.Select(_reader.GetMethodDefinition)
-				.Any(m => _reader.GetString(m.Name) == ".ctor" && MemberAccessibility(m.Attributes & MethodAttributes.MemberAccessMask) is not null));
+				.Any(m => _reader.StringComparer.Equals(m.Name, ".ctor") && MemberAccessibility(m.Attributes & MethodAttributes.MemberAccessMask) is not null));
 
 		ApiTypeReference? baseType = null;
 		if (kind == ApiTypeKind.Class && !type.BaseType.IsNil && _types.FullName(type.BaseType) != "System.Object")
@@ -483,7 +483,7 @@ public sealed class ApiReader
 		var propertyType = Annotate(rawType, property.GetCustomAttributes(), typeContext, propertyOffset + (isByReference ? 1 : 0));
 
 		// an indexer's parameters are the getter's, or all but the setter's last
-		var parameters = new List<ApiParameter>();
+		IReadOnlyList<ApiParameter> parameters = [];
 		if (signature.ParameterTypes.Length > 0)
 		{
 			var source = getter ?? setter!.Value;
@@ -634,7 +634,8 @@ public sealed class ApiReader
 		return modifiers;
 	}
 
-	private List<ApiParameter> ReadParameters(MethodDefinition method, ImmutableArray<ApiTypeReference> types, byte? methodContext)
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "a method without parameters shares one empty list")]
+	private IReadOnlyList<ApiParameter> ReadParameters(MethodDefinition method, ImmutableArray<ApiTypeReference> types, byte? methodContext)
 	{
 		var rows = new Parameter?[types.Length];
 		foreach (var handle in method.GetParameters())
@@ -644,6 +645,8 @@ public sealed class ApiReader
 				rows[parameter.SequenceNumber - 1] = parameter;
 		}
 
+		if (types.Length == 0)
+			return [];
 		var parameters = new List<ApiParameter>(types.Length);
 		for (var i = 0; i < types.Length; i++)
 		{
@@ -796,16 +799,16 @@ public sealed class ApiReader
 		foreach (var handle in attributes)
 		{
 			var attribute = _reader.GetCustomAttribute(handle);
-			if (
-				AttributeTypeName(attribute) == CompilerServices + "NullableContextAttribute" &&
-				TryDecode(attribute) is { FixedArguments: [{ Value: byte flag }] }
-			)
-				return flag;
+			if (AttributeTypeName(attribute) == CompilerServices + "NullableContextAttribute")
+			{
+				var blob = _reader.GetBlobReader(attribute.Value);
+				return blob.Length == 5 && blob.ReadUInt16() == 1 ? blob.ReadByte() : null;
+			}
 		}
 		return null;
 	}
 
-	private List<byte>? Nullable(IEnumerable<CustomAttributeHandle> attributes)
+	private byte[]? Nullable(IEnumerable<CustomAttributeHandle> attributes)
 	{
 		foreach (var handle in attributes)
 		{
@@ -816,12 +819,21 @@ public sealed class ApiReader
 		return null;
 	}
 
-	private List<byte>? NullableFlags(CustomAttribute attribute) => TryDecode(attribute) switch
+	/// <summary>
+	/// A NullableAttribute's flags, read from its blob: the prolog, then a byte or an array of them. Nearly every member has
+	/// one, so it is not decoded the general way.
+	/// </summary>
+	private byte[]? NullableFlags(CustomAttribute attribute)
 	{
-		{ FixedArguments: [{ Value: byte flag }] } => [flag],
-		{ FixedArguments: [{ Value: ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> flags }] } => flags.Select(f => (byte)f.Value!).ToList(),
-		_ => null,
-	};
+		var blob = _reader.GetBlobReader(attribute.Value);
+		if (blob.Length < 5 || blob.ReadUInt16() != 1)
+			return null;
+		// prolog, one byte, the named argument count
+		if (blob.Length == 5)
+			return [blob.ReadByte()];
+		var count = blob.ReadInt32();
+		return count < 0 || count > blob.RemainingBytes ? null : blob.ReadBytes(count);
+	}
 
 	// attributes
 
@@ -833,9 +845,25 @@ public sealed class ApiReader
 		return false;
 	}
 
-	private string AttributeTypeName(CustomAttribute attribute) => AttributeType(attribute)?.FullName ?? string.Empty;
+	// an assembly applies the same few attributes many times: name each constructor's type once
+	private readonly Dictionary<EntityHandle, ApiNamedType?> _attributeTypes = [];
+	private readonly Dictionary<EntityHandle, string> _attributeTypeNames = [];
+
+	private string AttributeTypeName(CustomAttribute attribute)
+	{
+		if (!_attributeTypeNames.TryGetValue(attribute.Constructor, out var name))
+			_attributeTypeNames[attribute.Constructor] = name = AttributeType(attribute)?.FullName ?? string.Empty;
+		return name;
+	}
 
 	private ApiNamedType? AttributeType(CustomAttribute attribute)
+	{
+		if (!_attributeTypes.TryGetValue(attribute.Constructor, out var type))
+			_attributeTypes[attribute.Constructor] = type = ResolveAttributeType(attribute);
+		return type;
+	}
+
+	private ApiNamedType? ResolveAttributeType(CustomAttribute attribute)
 	{
 		var constructor = attribute.Constructor;
 		EntityHandle parent = constructor.Kind switch
@@ -865,7 +893,8 @@ public sealed class ApiReader
 		}
 	}
 
-	private List<ApiAttribute> Attributes(IEnumerable<CustomAttributeHandle> attributes)
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "a declaration without attributes shares one empty list")]
+	private IReadOnlyList<ApiAttribute> Attributes(IEnumerable<CustomAttributeHandle> attributes)
 	{
 		var result = new List<ApiAttribute>();
 		foreach (var handle in attributes)
@@ -892,7 +921,13 @@ public sealed class ApiReader
 			}
 			result.Add(new ApiAttribute(type, arguments));
 		}
-		return result.OrderBy(a => a.Type.FullName, StringComparer.Ordinal).ThenBy(a => string.Join(",", a.Arguments), StringComparer.Ordinal).ToList();
+		// most declarations have none, and share one empty list
+		return result.Count switch
+		{
+			0 => [],
+			1 => result,
+			_ => result.OrderBy(a => a.Type.FullName, StringComparer.Ordinal).ThenBy(a => string.Join(",", a.Arguments), StringComparer.Ordinal).ToList(),
+		};
 	}
 
 	private static string Literal(CustomAttributeTypedArgument<ApiTypeReference> argument) => argument.Value switch

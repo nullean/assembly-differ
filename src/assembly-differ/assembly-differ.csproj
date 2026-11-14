@@ -6,6 +6,8 @@
     <AssemblyName>assembly-differ</AssemblyName>
     <RootNamespace>AssemblyDiffer</RootNamespace>
     <PackAsTool>true</PackAsTool>
+    <!-- reading and parsing an API allocate a model that survives; background GC made that twice as slow -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <ToolCommandName>assembly-differ</ToolCommandName>
     <RollForward>Major</RollForward>
     <SignAssembly>true</SignAssembly>

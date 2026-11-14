@@ -104,30 +104,20 @@ public static class ApiWriter
 	}
 
 	/// <summary>A type's declaration line, as in a <c>.api</c> file: <c>public sealed class Widget : Shape</c>.</summary>
-	public static string Declaration(ApiType type)
-	{
-		var builder = new StringBuilder();
-		new Writer(builder, new Names(Alone(type))).Type(type with { Members = type.Kind == ApiTypeKind.Delegate ? type.Members : [], NestedTypes = [] }, 0);
-		return LastLine(builder);
-	}
+	public static string Declaration(ApiType type) => new ApiDeclarationWriter(type).Declaration();
 
 	/// <summary>A member's declaration line, as in a <c>.api</c> file: <c>public void Draw(Canvas canvas)</c>.</summary>
-	public static string Declaration(ApiMember member, ApiType declaringType)
-	{
-		var builder = new StringBuilder();
-		new Writer(builder, new Names(Alone(declaringType))).Member(member, declaringType, 0);
-		return LastLine(builder);
-	}
+	public static string Declaration(ApiMember member, ApiType declaringType) => new ApiDeclarationWriter(declaringType).Declaration(member);
 
 	/// <summary>A type as a declaration spells it, with short names: <c>List&lt;string?&gt;</c>.</summary>
 	public static string Reference(ApiTypeReference type, ApiType? context = null) =>
-		new Writer(new StringBuilder(), new Names(context is null ? new ApiAssembly(string.Empty, new Version(), null, null, []) : Alone(context))).Reference(
-			type
-		);
+		context is null
+			? new Writer(new StringBuilder(), new Names(new ApiAssembly(string.Empty, new Version(), null, null, []))).Reference(type)
+			: new ApiDeclarationWriter(context).Reference(type);
 
-	private static ApiAssembly Alone(ApiType type) => new(string.Empty, new Version(), null, null, [type]);
+	internal static ApiAssembly Alone(ApiType type) => new(string.Empty, new Version(), null, null, [type]);
 
-	private static string LastLine(StringBuilder builder)
+	internal static string LastLine(StringBuilder builder)
 	{
 		var lines = builder.ToString().TrimEnd('\n').Split('\n');
 		return lines[lines.Length - 1].Trim();
@@ -147,7 +137,7 @@ public static class ApiWriter
 	}
 
 	/// <summary>Decides which top-level types are written by their short name, and which other assemblies' types the header lists.</summary>
-	private sealed class Names
+	internal sealed class Names
 	{
 		private readonly HashSet<(string Namespace, string Name)> _qualified = [];
 		private readonly HashSet<(string Namespace, string Path)> _values = [];
@@ -307,7 +297,7 @@ public static class ApiWriter
 			}
 			: null;
 
-	private sealed class Writer(StringBuilder builder, Names names)
+	internal sealed class Writer(StringBuilder builder, Names names)
 	{
 		public void Type(ApiType type, int depth)
 		{
@@ -745,3 +735,39 @@ public enum ApiSplit
 /// <param name="Name">The assembly's name for an API in one file; otherwise the namespace or namespaces the file holds, <c>global</c> for the global namespace.</param>
 /// <param name="Text">The file's text.</param>
 public sealed record ApiFile(string Name, string Text);
+
+/// <summary>
+/// Writes one type's declarations, its members' and the types they use, the way a <c>.api</c> file does. Deciding
+/// which names to write in full looks at the whole type, so build one per type and reuse it.
+/// </summary>
+public sealed class ApiDeclarationWriter
+{
+	private readonly ApiType _type;
+	private readonly ApiWriter.Names _names;
+
+	/// <summary>A writer in the context of <paramref name="type"/>.</summary>
+	public ApiDeclarationWriter(ApiType type)
+	{
+		_type = type;
+		_names = new ApiWriter.Names(ApiWriter.Alone(type));
+	}
+
+	/// <summary>The type's declaration line: <c>sealed class Widget : Shape</c>.</summary>
+	public string Declaration()
+	{
+		var builder = new StringBuilder();
+		new ApiWriter.Writer(builder, _names).Type(_type with { Members = _type.Kind == ApiTypeKind.Delegate ? _type.Members : [], NestedTypes = [] }, 0);
+		return ApiWriter.LastLine(builder);
+	}
+
+	/// <summary>A member's declaration line: <c>void Draw(Canvas canvas)</c>.</summary>
+	public string Declaration(ApiMember member)
+	{
+		var builder = new StringBuilder();
+		new ApiWriter.Writer(builder, _names).Member(member, _type, 0);
+		return ApiWriter.LastLine(builder);
+	}
+
+	/// <summary>A type as a declaration in this type spells it: <c>List&lt;string?&gt;</c>.</summary>
+	public string Reference(ApiTypeReference type) => new ApiWriter.Writer(new StringBuilder(), _names).Reference(type);
+}

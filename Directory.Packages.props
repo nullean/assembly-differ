@@ -37,6 +37,11 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
   </ItemGroup>
 
+  <!-- benchmarks/ -->
+  <ItemGroup>
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+
   <!-- build/scripts -->
   <ItemGroup>
     <!-- under CPM the F# SDK adds no implicit FSharp.Core; Runna.Fs needs 11.0.100 or later -->

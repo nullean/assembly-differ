@@ -26,7 +26,41 @@ internal sealed class TypeReferenceProvider(
 
 	public ApiTypeReference GetPrimitiveType(PrimitiveTypeCode typeCode) => Primitive(typeCode);
 
-	internal static ApiNamedType Primitive(PrimitiveTypeCode typeCode) => typeCode switch
+	// the records are immutable, so every reference to int or string shares one, made once
+	private static readonly ApiNamedType?[] Primitives = BuildPrimitives();
+
+	private static ApiNamedType?[] BuildPrimitives()
+	{
+		var primitives = new ApiNamedType?[64];
+		foreach (var code in new[]
+		{
+			PrimitiveTypeCode.Boolean,
+			PrimitiveTypeCode.Byte,
+			PrimitiveTypeCode.SByte,
+			PrimitiveTypeCode.Char,
+			PrimitiveTypeCode.Int16,
+			PrimitiveTypeCode.UInt16,
+			PrimitiveTypeCode.Int32,
+			PrimitiveTypeCode.UInt32,
+			PrimitiveTypeCode.Int64,
+			PrimitiveTypeCode.UInt64,
+			PrimitiveTypeCode.Single,
+			PrimitiveTypeCode.Double,
+			PrimitiveTypeCode.IntPtr,
+			PrimitiveTypeCode.UIntPtr,
+			PrimitiveTypeCode.Object,
+			PrimitiveTypeCode.String,
+			PrimitiveTypeCode.TypedReference,
+			PrimitiveTypeCode.Void,
+		})
+			primitives[(int)code] = NewPrimitive(code);
+		return primitives;
+	}
+
+	internal static ApiNamedType Primitive(PrimitiveTypeCode typeCode) =>
+		(int)typeCode < Primitives.Length && Primitives[(int)typeCode] is { } primitive ? primitive : NewPrimitive(typeCode);
+
+	private static ApiNamedType NewPrimitive(PrimitiveTypeCode typeCode) => typeCode switch
 	{
 		PrimitiveTypeCode.Boolean => InSystem("Boolean", true),
 		PrimitiveTypeCode.Byte => InSystem("Byte", true),
@@ -180,12 +214,16 @@ internal sealed class TypeReferenceProvider(
 		return named;
 	}
 
+	private Dictionary<string, PrimitiveTypeCode>? _enumTypes;
+
 	public PrimitiveTypeCode GetUnderlyingEnumType(ApiTypeReference type)
 	{
 		// an enum this assembly defines says; one from elsewhere is assumed to be an int, which nearly all are
-		if (type is ApiNamedType named)
+		if (_enumTypes is null)
+		{
+			_enumTypes = new Dictionary<string, PrimitiveTypeCode>(StringComparer.Ordinal);
 			foreach (var handle in reader.TypeDefinitions)
-				if (Definition(handle).FullName == named.FullName)
+				if (Definition(handle) is { IsValueType: true } definition)
 					foreach (var fieldHandle in reader.GetTypeDefinition(handle).GetFields())
 					{
 						var field = reader.GetFieldDefinition(fieldHandle);
@@ -193,7 +231,8 @@ internal sealed class TypeReferenceProvider(
 							(field.Attributes & System.Reflection.FieldAttributes.Static) == 0 &&
 							field.DecodeSignature(this, TypeContext.None) is ApiNamedType { Namespace: "System" } underlying
 						)
-							return underlying.Name switch
+						{
+							_enumTypes[definition.FullName] = underlying.Name switch
 							{
 								"Byte" => PrimitiveTypeCode.Byte,
 								"SByte" => PrimitiveTypeCode.SByte,
@@ -206,7 +245,10 @@ internal sealed class TypeReferenceProvider(
 								"Boolean" => PrimitiveTypeCode.Boolean,
 								_ => PrimitiveTypeCode.Int32,
 							};
+							break;
+						}
 					}
-		return PrimitiveTypeCode.Int32;
+		}
+		return type is ApiNamedType named && _enumTypes.TryGetValue(named.FullName, out var code) ? code : PrimitiveTypeCode.Int32;
 	}
 }
