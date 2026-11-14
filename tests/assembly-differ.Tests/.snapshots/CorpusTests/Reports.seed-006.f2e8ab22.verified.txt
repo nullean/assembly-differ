@@ -6,7 +6,7 @@ exit code: 0
   <Module Name="Lib.dll" DiffType="Modified">
     <Type Name="Lib.D1&lt;T&gt;" DiffType="New" />
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -17,7 +17,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.D1<T>` is new
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -32,7 +32,7 @@ exit code: 0
 
 [horizontal]
 type:: added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -43,7 +43,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 1 new additions
@@ -65,5 +65,5 @@ Lib.dll
 + 🌟 Lib.D1<T> 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr

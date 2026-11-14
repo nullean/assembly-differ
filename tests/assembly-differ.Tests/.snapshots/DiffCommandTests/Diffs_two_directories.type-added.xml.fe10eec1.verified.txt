@@ -5,7 +5,7 @@ exit code: 0
   <Module Name="Lib.dll" DiffType="Modified">
     <Type Name="Lib.Gadget" DiffType="New" />
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 --- files

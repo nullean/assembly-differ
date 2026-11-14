@@ -19,7 +19,7 @@ exit code: 0
       <Type Name=".N2" DiffType="New" />
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -32,7 +32,7 @@ exit code: 0
 ## `Lib.C1<T>`
 ### `op_Subtraction(C1<T>, C1<T>)` is added
 ## `.N2` is new
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -49,7 +49,7 @@ exit code: 0
 
 [horizontal]
 type:: added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -60,7 +60,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 2 new additions
@@ -92,5 +92,5 @@ Lib.C1<T>
 + 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr

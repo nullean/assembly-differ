@@ -17,7 +17,7 @@ exit code: 0
       </Method>
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -30,7 +30,7 @@ exit code: 0
 ## `Lib.C3<T>`
 ### `op_Modulus(C3<T>, C3<T>)` is added
 ### `op_Subtraction(C3<T>, C3<T>)` is added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -40,7 +40,7 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 == Breaking changes for Lib
 
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -51,7 +51,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Patch
 + 0 breaking change(s) detected.
 
 + 🌟 0 new additions
@@ -79,5 +79,5 @@ Lib.C3<T>
 - 🔴 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 💥 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr

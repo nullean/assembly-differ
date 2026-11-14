@@ -8,7 +8,7 @@ exit code: 0
 
 [horizontal]
 type:: added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 --- files

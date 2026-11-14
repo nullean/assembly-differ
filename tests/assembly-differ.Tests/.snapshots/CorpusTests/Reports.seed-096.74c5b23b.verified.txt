@@ -10,7 +10,7 @@ exit code: 0
       </DeclarationDiffs>
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -20,7 +20,7 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -30,7 +30,7 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 == Breaking changes for Lib
 
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -41,7 +41,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 0 new additions
@@ -66,5 +66,5 @@ Lib.C4
 - 🔴 System.Reflection.DefaultMemberAttribute::.ctor(System.String) 💥 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr

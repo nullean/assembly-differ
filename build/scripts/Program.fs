@@ -122,7 +122,7 @@ let main argv =
 
         // The framework-dependent build cannot catch what trimming breaks: #62 crashed only in the native-AOT
         // binary, when NuGet deserialised registration metadata by reflection. So this publishes that binary and
-        // diffs real, immutable package versions with it. Proc 0.18.0's previous release is 0.17.0.
+        // diffs real, immutable package versions with it. Proc 0.18.0's previous release is 0.17.0, and 0.20.0 only adds to it.
         | Smokeaot -> target [] {
               let rid = RuntimeInformation.RuntimeIdentifier
               let publishDirectory = Path.Combine(Paths.Output.FullName, "aot-smoke")
@@ -132,7 +132,7 @@ let main argv =
               let binary = Paths.RootRelative <| Path.Combine(publishDirectory, executable)
               let! result = text $"{binary} diff 'previous-nuget|Proc|0.18.0' 'nuget|Proc|0.20.0' --target Proc -f markdown"
               printfn "%s" result
-              for expected in [ "Found previous nuget package found for Proc 0.18.0: 0.17.0"; "Suggested version change: Major" ] do
+              for expected in [ "Found previous nuget package found for Proc 0.18.0: 0.17.0"; "Suggested version change: Minor" ] do
                   if not (result.Contains expected) then failwithf "the native-AOT binary did not print '%s'" expected }
 
     app.RunAsync(argv).GetAwaiter().GetResult()

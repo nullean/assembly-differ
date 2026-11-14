@@ -76,8 +76,7 @@ public partial class Properties
 				var result = await Diff(api, api);
 				result.ExitCode.Should().Be(0);
 				result.Out.Should().Contain("[diff] No diff between");
-				// today an unchanged API suggests Patch; the plan is None
-				SuggestedChange(result).Should().Be("Patch");
+				SuggestedChange(result).Should().Be("None");
 			},
 			iter: Iterations
 		);
@@ -114,7 +113,6 @@ public partial class Properties
 			);
 
 	[Test]
-	[Skip("Pure additions are suggested as Major today: https://github.com/nullean/assembly-differ/issues/58")]
 	public async Task Only_adding_is_minor() =>
 		await Api
 			.Gen

@@ -2,7 +2,7 @@
 exit code: 0
 --- stdout
 [diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
-[diff] Suggested version change: Patch
+[diff] Suggested version change: None
 --- stderr
 
 
@@ -10,7 +10,7 @@ exit code: 0
 exit code: 0
 --- stdout
 [diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
-[diff] Suggested version change: Patch
+[diff] Suggested version change: None
 --- stderr
 
 
@@ -18,7 +18,7 @@ exit code: 0
 exit code: 0
 --- stdout
 [diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
-[diff] Suggested version change: Patch
+[diff] Suggested version change: None
 --- stderr
 
 
@@ -29,10 +29,10 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Patch
+Scanned: 📑 1 assemblies(s), Suggested change in version: None
 + 0 breaking change(s) detected.
 
 🌟 0 new additions, 🔴 0 removals, 🔷 0 modifications
 ```
-[diff] Suggested version change: Patch
+[diff] Suggested version change: None
 --- stderr

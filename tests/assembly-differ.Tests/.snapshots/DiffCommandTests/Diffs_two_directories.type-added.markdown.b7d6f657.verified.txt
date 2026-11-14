@@ -4,7 +4,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.Gadget` is new
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 --- files

@@ -7,7 +7,7 @@ exit code: 0
       <Method Name="Erase()" DiffType="New" />
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 --- files

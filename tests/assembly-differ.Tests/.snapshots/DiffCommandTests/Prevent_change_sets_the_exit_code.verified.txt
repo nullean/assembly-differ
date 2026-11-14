@@ -1,8 +1,8 @@
 scenario: none patch minor major
-unchanged: 0 4 0 0
-method-added: 0 4 4 4
+unchanged: 0 0 0 0
+method-added: 0 4 4 0
 method-removed: 0 4 4 4
-type-added: 0 4 4 4
+type-added: 0 4 4 0
 type-removed: 0 4 4 4
 property-type-changed: 0 4 4 4
 parameter-added: 0 4 4 4

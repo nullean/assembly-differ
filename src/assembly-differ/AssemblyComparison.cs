@@ -18,27 +18,45 @@ public class AssemblyComparison
 	public FileInfo Second { get; }
 	public IMetadataDiffItem Diff { get; set; }
 
-	public SuggestedVersionChange SuggestedVersionChange
+	/// <summary>
+	/// The version change the differences call for, by semantic versioning: <c>Major</c> when anything breaks, including
+	/// a new abstract or required member, <c>Minor</c>
+	/// when API is only added or changed compatibly, <c>Patch</c> when only assembly references changed, and <c>None</c>
+	/// when nothing changed.
+	/// </summary>
+	public SuggestedVersionChange SuggestedVersionChange => Diff == null ? SuggestedVersionChange.None : Classify(Diff);
+
+	private static SuggestedVersionChange Classify(IDiffItem item)
 	{
-		get
+		switch (item)
 		{
-			if (Diff == null)
+			// a reference the new assembly dropped is not part of its API
+			case AssemblyReferenceDiffItem:
 				return SuggestedVersionChange.Patch;
-
-			if (Diff.IsBreakingChange)
-				return SuggestedVersionChange.Major;
-
-			var differences = Diff.ChildrenDiffs.Concat(Diff.DeclarationDiffs).ToList();
-			if (differences.Count == 0)
+			// the compiler moves its own attributes, such as NullableContextAttribute, whenever members change
+			case CustomAttributeDiffItem attribute when attribute.HumanReadable.StartsWith("System.Runtime.CompilerServices.", StringComparison.Ordinal):
 				return SuggestedVersionChange.Patch;
-
-			var anyDeleted = differences.Any(diff => diff.DiffType == DiffType.Deleted);
-			var anyModified = differences.Any(diff => diff.DiffType == DiffType.Modified);
-			if (anyDeleted || anyModified)
+			// adding or removing an attribute, such as [Obsolete], does not break a caller
+			case CustomAttributeDiffItem:
+				return SuggestedVersionChange.Minor;
+			case IMetadataDiffItem metadata when metadata.DiffType == DiffType.Deleted:
 				return SuggestedVersionChange.Major;
-
-			var anyNew = differences.Any(diff => diff.DiffType == DiffType.New);
-			return anyNew ? SuggestedVersionChange.Minor : SuggestedVersionChange.Patch;
+			// an abstract or required member is new work for every implementer or caller
+			case MemberDiffItem { DiffType: DiffType.New, AddsObligation: true }:
+				return SuggestedVersionChange.Major;
+			case IMetadataDiffItem metadata when metadata.DiffType == DiffType.New:
+				return SuggestedVersionChange.Minor;
+			case IMetadataDiffItem metadata:
+				var change = SuggestedVersionChange.Patch;
+				foreach (var child in metadata.DeclarationDiffs.Concat(metadata.ChildrenDiffs))
+				{
+					var childChange = Classify(child);
+					if (childChange > change)
+						change = childChange;
+				}
+				return change;
+			default:
+				return item.IsBreakingChange ? SuggestedVersionChange.Major : SuggestedVersionChange.Minor;
 		}
 	}
 }
@@ -60,5 +78,5 @@ public class AllComparisonResults
 		(Comparisons, PreventVersionChange) = (results, preventChange);
 
 	public SuggestedVersionChange SuggestedVersionChange =>
-		Comparisons.Count == 0 ? SuggestedVersionChange.Patch : Comparisons.Select(c => c.SuggestedVersionChange).OrderByDescending(c => c).First();
+		Comparisons.Count == 0 ? SuggestedVersionChange.None : Comparisons.Select(c => c.SuggestedVersionChange).OrderByDescending(c => c).First();
 }
