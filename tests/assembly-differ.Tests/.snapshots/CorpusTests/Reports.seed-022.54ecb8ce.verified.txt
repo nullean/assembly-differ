@@ -32,8 +32,12 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `C0(SByte)` is added
-### `G0<U>(U, Boolean)` is added
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `C0(SByte)`
+Attribute `System.ObsoleteAttribute::.ctor()` is added.
+### `G0<U>(U, Boolean)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 [diff] Suggested version change: Minor
 --- stderr
 

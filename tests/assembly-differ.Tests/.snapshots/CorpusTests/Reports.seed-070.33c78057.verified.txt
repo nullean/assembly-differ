@@ -30,9 +30,11 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0<T>`
-### `op_Addition(C0<T>, C0<T>)` is added
 ### `P3`
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is added.
 Member type changed from `CancellationToken` to `String`.
+`get`: Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
+### `op_Addition(C0<T>, C0<T>)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

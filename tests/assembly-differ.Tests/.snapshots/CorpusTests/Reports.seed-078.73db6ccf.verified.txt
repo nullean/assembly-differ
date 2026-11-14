@@ -25,7 +25,8 @@ exit code: 0
 
 ## `Lib.I0<T>` is deleted
 ## `Lib.I1<in T>`
-### `G3<U>(U, Nullable<Int32>)` is added
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is added.
+### `G3<U>(U, Nullable<Int32>)` is deleted
 ### `G3<U>(U)` is added
 [diff] Suggested version change: Major
 --- stderr

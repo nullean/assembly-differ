@@ -19,7 +19,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C1`
-### `op_Subtraction(C1, C1)` is added
+### `op_Subtraction(C1, C1)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

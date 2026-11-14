@@ -36,7 +36,9 @@ exit code: 0
 ## `Lib.C1`
 ### `Item`
 Member type changed from `DateTime` to `IntPtr`.
-### `Item` is added
+`get`: Parameter name changed from `at6` to `at7`.
+`set`: Parameter name changed from `at6` to `at7`.
+### `Item` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

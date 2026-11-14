@@ -42,10 +42,15 @@ exit code: 0
 
 ## `Lib.C0<T>`
 ### `M5(String&, String)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 Member changed to static.
-### `op_Division(C0<T>, C0<T>)` is added
-### `op_Modulus(C0<T>, C0<T>)` is added
-### `op_Subtraction(C0<T>, C0<T>)` is added
+### `op_Division(C0<T>, C0<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `op_Modulus(C0<T>, C0<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `op_Subtraction(C0<T>, C0<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `Ev2` is deleted
 ## `Lib.S1` is deleted
 [diff] Suggested version change: Major
 --- stderr

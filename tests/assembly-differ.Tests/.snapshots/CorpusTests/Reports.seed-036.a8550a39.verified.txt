@@ -33,8 +33,13 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C2`
-### `G1<U>(U, Object)` is added
-### `G2<U>(U)` is added
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is added.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
+### `F6` is deleted
+### `G1<U>(U, Object)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `G2<U>(U)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 [diff] Suggested version change: Major
 --- stderr
 

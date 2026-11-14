@@ -21,7 +21,7 @@ exit code: 0
 
 ## `Lib.C2<T>` is deleted
 ## `Lib.C3<T>`
-### `G5<U>(U, Boolean)` is added
+### `G5<U>(U, Boolean)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

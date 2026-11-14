@@ -25,7 +25,10 @@ exit code: 0
 
 ## `Lib.C2`
 ### `M2(DateTime)` is added
-### `M2(DateTime&)` is added
+### `M2(DateTime&)` is deleted
+## `Lib.E4`
+### `V0` is deleted
+### `V1` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

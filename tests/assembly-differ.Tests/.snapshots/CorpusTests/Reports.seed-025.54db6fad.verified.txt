@@ -48,9 +48,16 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `C0(Dictionary<String, List<Int32>>, ValueTuple<Int32, String>, Char)` is added
-### `M5(ValueTuple<Int32, String>&, Func<Int32, String>)` is added
-### `op_Modulus(C0, C0)` is added
+### `C0(Dictionary<String, List<Int32>>, ValueTuple<Int32, String>, Char)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `M5(ValueTuple<Int32, String>&, Func<Int32, String>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `op_Modulus(C0, C0)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `Ev2`
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is added.
+`add`: Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
+`remove`: Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 [diff] Suggested version change: Patch
 --- stderr
 

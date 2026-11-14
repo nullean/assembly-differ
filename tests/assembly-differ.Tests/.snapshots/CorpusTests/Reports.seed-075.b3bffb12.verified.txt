@@ -25,7 +25,9 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C1`
-### `op_BitwiseAnd(C1, C1)` is added
+### `op_BitwiseAnd(C1, C1)` is deleted
+## `Lib.E0`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is added.
 ## `Lib.S3` is deleted
 [diff] Suggested version change: Major
 --- stderr

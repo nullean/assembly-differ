@@ -1,86 +1,93 @@
-using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using Differ.Engine;
 
 namespace Differ.Exporters;
 
-public class MarkdownExporter : IAssemblyComparisonExporter
+/// <summary>
+/// Writes each changed type as a heading, with a line or a sub-heading for every change to it or to one of its members.
+/// </summary>
+public partial class MarkdownExporter : IAssemblyComparisonExporter
 {
 	public string Format { get; } = "markdown";
 
 	public void Export(AssemblyComparison assemblyComparison, OutputWriterFactory factory)
 	{
-		// IDiffItem implementations are internal so parse from XML for now
-		var xml = assemblyComparison.Diff.ToXml();
-		var doc = XDocument.Parse(xml);
 		var name = assemblyComparison.First.Name;
 		using var writer = factory.Create(Path.ChangeExtension(name, "md"));
 
 		writer.WriteLine($"## API Changes: `{Path.GetFileNameWithoutExtension(name)}`");
 		writer.WriteLine();
 
-		foreach (var typeElement in doc.Descendants("Type"))
-			WriteTypeElement(writer, typeElement);
+		foreach (var module in assemblyComparison.Diff.ChildrenDiffs)
+			foreach (var type in module.ChildrenDiffs.OfType<TypeDiffItem>())
+				WriteType(writer, type);
 	}
 
-	private void WriteTypeElement(OutputWriter writer, XElement typeElement)
+	private static void WriteType(OutputWriter writer, TypeDiffItem type)
 	{
-		var typeName = typeElement.Attribute("Name")?.Value;
-		var diffType = (DiffType)Enum.Parse(typeof(DiffType), typeElement.Attribute("DiffType").Value);
-
-		switch (diffType)
+		switch (type.DiffType)
 		{
-			case DiffType.Deleted:
-				writer.WriteLine($"## `{typeName}` is deleted");
-				break;
-			case DiffType.Modified:
-				WriteMemberElements(writer, typeName, typeElement);
-				break;
 			case DiffType.New:
-				writer.WriteLine($"## `{typeName}` is new");
-				break;
-			default:
-				throw new ArgumentOutOfRangeException();
+				writer.WriteLine($"## `{type.Name}` is new");
+				return;
+			case DiffType.Deleted:
+				writer.WriteLine($"## `{type.Name}` is deleted");
+				return;
 		}
-	}
 
-	private void WriteMemberElements(OutputWriter writer, string typeName, XElement typeElement)
-	{
-		var memberElements = typeElement.Elements("Method").Concat(typeElement.Elements("Property"));
-
-		if (memberElements.Any())
-			writer.WriteLine($"## `{typeName}`");
-
-		foreach (var memberElement in memberElements)
+		var declarations = type.DeclarationDiffs.Select(Describe).ToList();
+		var members = type.ChildrenDiffs.Where(c => c is not TypeDiffItem).ToList();
+		if (declarations.Count > 0 || members.Count > 0)
 		{
-			var memberName = memberElement.Attribute("Name")?.Value;
-			if (!string.IsNullOrEmpty(memberName) && Enum.TryParse(typeElement.Attribute("DiffType")?.Value, out DiffType diffType))
+			writer.WriteLine($"## `{type.Name}`");
+			foreach (var declaration in declarations)
+				writer.WriteLine(declaration);
+			foreach (var member in members)
+				WriteMember(writer, member);
+		}
+
+		foreach (var nested in type.ChildrenDiffs.OfType<TypeDiffItem>())
+			WriteType(writer, nested);
+	}
+
+	private static void WriteMember(OutputWriter writer, IMetadataDiffItem member)
+	{
+		var name = ((MetadataDiffItem)member).Name;
+		switch (member.DiffType)
+		{
+			case DiffType.New:
+				writer.WriteLine($"### `{name}` is added");
+				return;
+			case DiffType.Deleted:
+				writer.WriteLine($"### `{name}` is deleted");
+				return;
+		}
+
+		writer.WriteLine($"### `{name}`");
+		foreach (var declaration in member.DeclarationDiffs)
+			writer.WriteLine(Describe(declaration));
+		// a property's or event's accessors: get, set, add and remove
+		foreach (var accessor in member.ChildrenDiffs.Cast<MetadataDiffItem>())
+		{
+			if (accessor.DiffType != DiffType.Modified)
 			{
-				switch (diffType)
-				{
-					case DiffType.Deleted:
-						writer.WriteLine($"### `{memberName}` is deleted");
-						break;
-					case DiffType.Modified:
-						var diffItem = memberElement.Descendants("DiffItem").FirstOrDefault();
-						if (diffItem != null)
-						{
-							writer.WriteLine($"### `{memberName}`");
-							writer.WriteLine(Regex.Replace(diffItem.Value, "changed from (.*?) to (.*).", "changed from `$1` to `$2`."));
-						}
-						else
-							writer.WriteLine($"### `{memberName}` is added");
-						break;
-					case DiffType.New:
-						writer.WriteLine($"### `{memberName}` is added");
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
+				writer.WriteLine($"`{accessor.Name}` is {(accessor.DiffType == DiffType.New ? "added" : "deleted")}.");
+				continue;
 			}
+			foreach (var declaration in accessor.DeclarationDiffs)
+				writer.WriteLine($"`{accessor.Name}`: {Describe(declaration)}");
 		}
 	}
+
+	private static string Describe(IDiffItem item) => item switch
+	{
+		CustomAttributeDiffItem attribute => $"Attribute `{attribute.HumanReadable}` is {(attribute.DiffType == DiffType.New ? "added" : "deleted")}.",
+		_ => ChangedFrom().Replace(item.HumanReadable, "changed from `$1` to `$2`."),
+	};
+
+	[GeneratedRegex("changed from (.*?) to (.*).")]
+	private static partial Regex ChangedFrom();
 }

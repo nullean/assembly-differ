@@ -28,8 +28,13 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C1`
+Member is more visible.
 ## `Lib.S0`
-### `Item` is added
+Attribute `System.Reflection.DefaultMemberAttribute::.ctor(System.String)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `Item` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

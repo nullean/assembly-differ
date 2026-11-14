@@ -22,6 +22,8 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C1` is deleted
+## `Lib.E0`
+Member is more visible.
 [diff] Suggested version change: Major
 --- stderr
 

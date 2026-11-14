@@ -37,8 +37,15 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C0`
+### `F0`
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is deleted.
+Member type changed from `List<Int32>` to `Boolean`.
+### `Ev1`
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is added.
+### `Ev6` is added
 ## `.N5`
-### `N5()` is added
+### `N5()` is deleted
 ### `X5()`
 Member changed to static.
 [diff] Suggested version change: Major

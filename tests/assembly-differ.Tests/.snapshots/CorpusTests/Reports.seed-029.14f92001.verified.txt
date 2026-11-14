@@ -38,10 +38,13 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `C0()` is added
-### `M1(Int32&)` is added
 ### `Item`
-Member is more visible.
+`get`: Member is more visible.
+`set`: Member is more visible.
+### `C0()` is added
+### `M1(Int32&)`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is deleted.
+Attribute `System.ObsoleteAttribute::.ctor()` is added.
 ## `Lib.C4` is deleted
 [diff] Suggested version change: Major
 --- stderr

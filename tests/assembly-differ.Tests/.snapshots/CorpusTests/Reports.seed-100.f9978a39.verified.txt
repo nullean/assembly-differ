@@ -27,9 +27,10 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C4`
-### `G1<U>(U, Int32)` is added
+### `G1<U>(U, Int32)` is deleted
 ## `.N5`
 ### `X5()`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 Member type changed from `Int32` to `Int32[,]`.
 [diff] Suggested version change: Major
 --- stderr

@@ -21,6 +21,8 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C2<T>`
+Member is more visible.
 ## `.N3` is new
 [diff] Suggested version change: Minor
 --- stderr

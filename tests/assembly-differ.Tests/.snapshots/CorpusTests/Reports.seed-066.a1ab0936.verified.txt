@@ -27,9 +27,10 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0<T>`
-### `M0()` is added
+### `M0()`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is added.
 ## `Lib.C1`
-### `C1()` is added
+### `C1()` is deleted
 ### `C1(Boolean, Double, TimeSpan)` is added
 [diff] Suggested version change: Major
 --- stderr

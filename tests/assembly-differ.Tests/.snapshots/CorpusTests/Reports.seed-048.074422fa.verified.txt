@@ -20,7 +20,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.I1`
-### `M6()` is added
+### `M6()` is deleted
 ## `Lib.S4` is deleted
 [diff] Suggested version change: Major
 --- stderr

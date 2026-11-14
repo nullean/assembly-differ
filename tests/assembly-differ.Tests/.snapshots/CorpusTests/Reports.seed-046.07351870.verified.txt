@@ -40,12 +40,16 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0<T>`
-### `P2` is added
+### `P2` is deleted
 ## `Lib.C3` is new
 ## `Lib.C4<T>`
-### `Item` is added
+### `F3`
+Member is less visible.
+### `Item`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is added.
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is deleted.
 ### `P0`
-Member is more visible.
+`get`: Member is more visible.
 [diff] Suggested version change: Major
 --- stderr
 

@@ -22,7 +22,7 @@ exit code: 0
 
 ## `Lib.C4`
 ### `op_ExclusiveOr(C4, C4)` is added
-### `op_Subtraction(C4, C4)` is added
+### `op_Subtraction(C4, C4)` is deleted
 ### `op_Subtraction(C4, Int32)` is added
 [diff] Suggested version change: Major
 --- stderr

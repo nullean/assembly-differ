@@ -28,8 +28,10 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C3<T>`
-### `op_Modulus(C3<T>, C3<T>)` is added
-### `op_Subtraction(C3<T>, C3<T>)` is added
+### `op_Modulus(C3<T>, C3<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `op_Subtraction(C3<T>, C3<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 [diff] Suggested version change: Patch
 --- stderr
 

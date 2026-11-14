@@ -37,14 +37,16 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C3<T>`
-### `M0(List<Int32>&)` is added
-### `M3(ValueTuple<Int32, String>)` is added
-### `M3(ValueTuple<Int32, String>&)` is added
 ### `P8` is added
+### `M0(List<Int32>&)` is deleted
+### `M3(ValueTuple<Int32, String>)` is deleted
+### `M3(ValueTuple<Int32, String>&)` is added
 ## `Lib.S0`
+Attribute `System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()` is added.
+### `P2`
+Attribute `System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()` is added.
 ### `M5()`
 Member type changed from `Dictionary<String, List<Int32>>` to `List<Int32>`.
-### `P2` is added
 [diff] Suggested version change: Major
 --- stderr
 

@@ -5,7 +5,7 @@ exit code: 0
 
 ## `Lib.Widget`
 ### `Name(Int32, Boolean)` is added
-### `Name(Int32)` is added
+### `Name(Int32)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

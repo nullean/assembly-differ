@@ -36,6 +36,9 @@ exit code: 0
 ### `N4()` is added
 ### `X4()`
 Member changed to instance.
+## `Lib.C1`
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 ## `.N2` is new
 [diff] Suggested version change: Major
 --- stderr
