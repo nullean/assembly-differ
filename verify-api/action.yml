@@ -117,7 +117,7 @@ runs:
         SUGGESTED: ${{ steps.verify.outputs.suggested-change }}
       run: |
         marker='<!-- assembly-differ:verify-api -->'
-        existing=$(gh api "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+        existing=$(gh api "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1 || true)
         body="$RUNNER_TEMP/assembly-differ-verify.md"
         if [ "$CODE" = "0" ]; then
           # only an earlier comment is updated: a pull request whose files always matched gets none
@@ -133,10 +133,13 @@ runs:
         else
           exit 0
         fi
+        # a pull request from a fork gets a token that cannot write: say so, and leave failing to the check below
         if [ -n "$existing" ]; then
-          gh api -X PATCH "repos/$REPOSITORY/issues/comments/$existing" -F "body=@$body" > /dev/null
+          gh api -X PATCH "repos/$REPOSITORY/issues/comments/$existing" -F "body=@$body" > /dev/null ||
+            echo "::warning title=assembly-differ::could not update the comment; the token needs pull-requests: write"
         else
-          gh api -X POST "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" -F "body=@$body" > /dev/null
+          gh api -X POST "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" -F "body=@$body" > /dev/null ||
+            echo "::warning title=assembly-differ::could not comment; the token needs pull-requests: write"
         fi
 
     - name: Fail when the files do not match
