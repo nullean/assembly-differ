@@ -11,7 +11,7 @@ namespace Differ.Tests;
 public class DiffCommandTests
 {
 	public static IEnumerable<(string, string)> ScenariosAndFormats() => from scenario in Scenarios.Names()
-																		 from format in new[] { "xml", "markdown", "asciidoc", "github-comment" }
+																		 from format in new[] { "xml", "markdown", "asciidoc", "github-comment", "json" }
 																		 select (scenario, format);
 
 	[Test]

@@ -1,0 +1,90 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+{
+  "suggestedVersionChange": "Major",
+  "breakingChanges": 1,
+  "assemblies": [
+    {
+      "name": "Lib.dll",
+      "suggestedVersionChange": "Major",
+      "breakingChanges": 1,
+      "changes": [
+        {
+          "kind": "Type",
+          "name": "Lib.Widget",
+          "change": "modified",
+          "suggestedVersionChange": "Major",
+          "changes": [
+            {
+              "kind": "Attribute",
+              "name": "System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)",
+              "change": "added",
+              "suggestedVersionChange": "Patch"
+            },
+            {
+              "kind": "Attribute",
+              "name": "System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)",
+              "change": "added",
+              "suggestedVersionChange": "Patch"
+            },
+            {
+              "kind": "Attribute",
+              "name": "System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()",
+              "change": "added",
+              "suggestedVersionChange": "Patch"
+            },
+            {
+              "kind": "Property",
+              "name": "Label",
+              "change": "added",
+              "suggestedVersionChange": "Major",
+              "addsObligation": true
+            },
+            {
+              "kind": "Method",
+              "name": "Widget()",
+              "change": "modified",
+              "suggestedVersionChange": "Minor",
+              "changes": [
+                {
+                  "kind": "Attribute",
+                  "name": "System.ObsoleteAttribute::.ctor(System.String,System.Boolean)",
+                  "change": "added",
+                  "suggestedVersionChange": "Minor"
+                },
+                {
+                  "kind": "Attribute",
+                  "name": "System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute::.ctor(System.String)",
+                  "change": "added",
+                  "suggestedVersionChange": "Patch"
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "name": "Name(Int32)",
+              "change": "modified",
+              "suggestedVersionChange": "Patch",
+              "changes": [
+                {
+                  "kind": "Attribute",
+                  "name": "System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)",
+                  "change": "removed",
+                  "suggestedVersionChange": "Patch"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+api-changes.json
