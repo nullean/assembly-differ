@@ -31,19 +31,42 @@ public sealed record ApiLocation(string? File, int Line);
 /// <summary>Parsed <c>.api</c> files: the API they describe, and where each type and member is declared.</summary>
 public sealed class ApiDocument
 {
-	private readonly ConditionalWeakTable<object, ApiLocation> _locations;
+	// declarations in parse order; looked up by reference only when a location is asked for, which reports do for the
+	// few that changed: hashing every declaration up front cost more than the rest of parsing
+	private readonly List<(object Node, ApiLocation Location)> _declarations;
+	private Dictionary<object, ApiLocation>? _locations;
 
-	internal ApiDocument(ApiAssembly assembly, ConditionalWeakTable<object, ApiLocation> locations)
+	internal ApiDocument(ApiAssembly assembly, List<(object Node, ApiLocation Location)> declarations)
 	{
 		Assembly = assembly;
-		_locations = locations;
+		_declarations = declarations;
 	}
 
 	/// <summary>The API the files describe. Its version, public key token and target framework are not in them and are left empty.</summary>
 	public ApiAssembly Assembly { get; }
 
 	/// <summary>Where a type or member was declared; null for anything else.</summary>
-	public ApiLocation? LocationOf(object node) => _locations.TryGetValue(node, out var location) ? location : null;
+	public ApiLocation? LocationOf(object node)
+	{
+		if (_locations is null)
+		{
+			var locations = new Dictionary<object, ApiLocation>(_declarations.Count, ByReference.Instance);
+			foreach (var (declaration, location) in _declarations)
+				locations[declaration] = location;
+			_locations = locations;
+		}
+		return _locations.TryGetValue(node, out var found) ? found : null;
+	}
+
+	/// <summary>Types and members are records, equal by value: two declarations alike are still at two places.</summary>
+	internal sealed class ByReference : IEqualityComparer<object>
+	{
+		public static readonly ByReference Instance = new();
+
+		public new bool Equals(object? x, object? y) => ReferenceEquals(x, y);
+
+		public int GetHashCode(object obj) => RuntimeHelpers.GetHashCode(obj);
+	}
 
 	/// <summary>The line a type or member was declared on, counted from one; null for anything else.</summary>
 	public int? LineOf(object node) => LocationOf(node)?.Line;
@@ -63,7 +86,7 @@ public static class ApiParser
 	/// <exception cref="ApiParseException">A file is not a <c>.api</c> file, or the files are of different assemblies.</exception>
 	public static ApiDocument Parse(IEnumerable<(string? File, string Text)> files)
 	{
-		var locations = new ConditionalWeakTable<object, ApiLocation>();
+		var locations = new List<(object Node, ApiLocation Location)>();
 		string? name = null;
 		var types = new List<ApiType>();
 		foreach (var (file, text) in files)
@@ -99,7 +122,7 @@ public static class ApiParser
 	{
 		private readonly List<Line> _lines = [];
 		private readonly string? _file;
-		private readonly ConditionalWeakTable<object, ApiLocation> _locations;
+		private readonly List<(object Node, ApiLocation Location)> _locations;
 
 		// (namespace, metadata name) of every top-level type the file declares or its header names
 		private readonly Dictionary<(string, string), Declared> _own = [];
@@ -108,7 +131,10 @@ public static class ApiParser
 		private readonly HashSet<(string Namespace, string Path)> _externalInterfaces = [];
 		private readonly Dictionary<string, List<string>> _byShortName = new(StringComparer.Ordinal);
 
-		public Parser(string text, string? file, ConditionalWeakTable<object, ApiLocation> locations)
+		// the lines that declare a type, which the first pass finds
+		private readonly HashSet<int> _typeLines = [];
+
+		public Parser(string text, string? file, List<(object Node, ApiLocation Location)> locations)
 		{
 			_file = file;
 			_locations = locations;
@@ -208,8 +234,9 @@ public static class ApiParser
 		{
 			string? ns = null;
 			var stack = new List<Declared>();
-			foreach (var line in _lines.Skip(start))
+			for (var index = start; index < _lines.Count; index++)
 			{
+				var line = _lines[index];
 				if (line.Depth == 0)
 				{
 					ns = line.Text.StartsWith("namespace ", StringComparison.Ordinal) ? Namespace(line.Text.Substring("namespace ".Length).Trim()) : ns;
@@ -218,6 +245,7 @@ public static class ApiParser
 				}
 				if (ns is null || !IsTypeLine(line.Text, out var kind, out var typeName, out var typeParameters))
 					continue;
+				_typeLines.Add(index);
 				while (stack.Count >= line.Depth)
 					stack.RemoveAt(stack.Count - 1);
 				var parent = stack.Count > 0 ? stack[stack.Count - 1] : null;
@@ -242,7 +270,7 @@ public static class ApiParser
 			kind = ApiTypeKind.Class;
 			name = string.Empty;
 			typeParameters = [];
-			if (text.StartsWithChar('['))
+			if (text.StartsWithChar('[') || !MayDeclareType(text))
 				return false;
 			var cursor = new Cursor(text, 0);
 			while (true)
@@ -296,6 +324,12 @@ public static class ApiParser
 			}
 			return true;
 		}
+
+		/// <summary>Whether a line holds a type keyword at all, which most member lines do not; checked before reading it word by word.</summary>
+		private static bool MayDeclareType(string text) =>
+			text.Contains("class ") || text.Contains("struct ") || text.Contains("interface ") || text.Contains("enum ") || text.Contains(
+				"record "
+			) || text.Contains("delegate ");
 
 		private static string LastWord(string text) => text.Substring(text.LastIndexOf(' ') + 1);
 
@@ -438,7 +472,7 @@ public static class ApiParser
 					m => m is ApiMethod { Kind: ApiMethodKind.Constructor }
 				));
 			var type = shell with { Members = members, NestedTypes = nested, CanBeExtendedOutside = canBeExtended };
-			_locations.Add(type, new ApiLocation(_file, line.Number));
+			_locations.Add((type, new ApiLocation(_file, line.Number)));
 			return type;
 		}
 
@@ -462,7 +496,7 @@ public static class ApiParser
 			var depth = _lines[i].Depth;
 			while (i < _lines.Count && _lines[i].Depth == depth && _lines[i].Text.StartsWithChar('['))
 				i++;
-			return i < _lines.Count && _lines[i].Depth == depth && IsTypeLine(_lines[i].Text, out _, out _, out _);
+			return i < _lines.Count && _lines[i].Depth == depth && _typeLines.Contains(i);
 		}
 
 		private static ApiAccessibility? Accessibility(Cursor cursor)
@@ -580,7 +614,7 @@ public static class ApiParser
 			var member = type.Kind == ApiTypeKind.Enum
 				? EnumValue(cursor, attributes, enumType!)
 				: Declaration(cursor, type, scope, attributes, returnAttributes, indexerName);
-			_locations.Add(member, new ApiLocation(_file, line.Number));
+			_locations.Add((member, new ApiLocation(_file, line.Number)));
 			return member;
 		}
 
@@ -805,9 +839,13 @@ public static class ApiParser
 			var paren = ParameterList(text, cursor.Position);
 			if (paren < 0)
 				return [];
-			var head = text.Substring(0, paren).TrimEnd();
-			if (!head.EndsWithChar('>'))
+			// most methods have none: look at the character before the parenthesis before taking anything apart
+			var last = paren - 1;
+			while (last >= 0 && text[last] == ' ')
+				last--;
+			if (last < 0 || text[last] != '>')
 				return [];
+			var head = text.Substring(0, last + 1);
 			var open = MatchingOpen(head, head.Length - 1);
 			// the list must follow a name, not be a generic return type's arguments
 			if (open <= 0 || !IsNameCharacter(head[open - 1]) || head.LastIndexOf(' ', open) < cursor.Position)
@@ -1059,7 +1097,9 @@ public static class ApiParser
 		/// <summary>The names a declaration can use: the types in the file and its header, and the type parameters in scope.</summary>
 		private sealed class Scope(Parser parser, Declared? declaring, IReadOnlyList<ApiTypeParameter> methodTypeParameters)
 		{
-			public Scope With(IReadOnlyList<ApiTypeParameter> parameters) => new(parser, declaring, [.. methodTypeParameters, .. parameters]);
+			[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "callers pass both lists and arrays")]
+			public Scope With(IReadOnlyList<ApiTypeParameter> parameters) =>
+				parameters.Count == 0 ? this : new(parser, declaring, [.. methodTypeParameters, .. parameters]);
 
 			private ApiTypeParameter? MethodParameter(string name) => methodTypeParameters.LastOrDefault(p => p.Name == name);
 
@@ -1306,7 +1346,12 @@ public static class ApiParser
 
 				for (var top = segments.Count - 1; top >= 0; top--)
 				{
-					var ns = string.Join(".", segments.Take(top).Select(s => s.Name));
+					var ns = top switch
+					{
+						0 => string.Empty,
+						1 => segments[0].Name,
+						_ => string.Join(".", segments.Take(top).Select(s => s.Name)),
+					};
 					if (top == 1 && segments[0].Name == "global::")
 						ns = string.Empty;
 					var name = Metadata(segments[top]);
@@ -1328,6 +1373,14 @@ public static class ApiParser
 						continue;
 
 					var own = parser._own.TryGetValue((resolved, name), out var declared) ? declared : null;
+					if (top == segments.Count - 1)
+						return new ApiNamedType(
+							resolved,
+							name,
+							null,
+							segments[top].Arguments ?? [],
+							own?.IsValueType ?? parser._externalValueTypes.Contains((resolved, name))
+						);
 					var path = name;
 					var named = new ApiNamedType(resolved, name, null, segments[top].Arguments ?? [], false);
 					for (var n = top + 1; n < segments.Count; n++)
@@ -1335,10 +1388,11 @@ public static class ApiParser
 						var nestedName = Metadata(segments[n]);
 						path += "/" + nestedName;
 						own = own is not null && own.Nested.TryGetValue(nestedName, out var nested) ? nested : null;
-						named = new ApiNamedType(resolved, nestedName, named, segments[n].Arguments ?? [], false);
+						var isLast = n == segments.Count - 1;
+						var isValueType = isLast && (own?.IsValueType ?? parser._externalValueTypes.Contains((resolved, path)));
+						named = new ApiNamedType(resolved, nestedName, named, segments[n].Arguments ?? [], isValueType);
 					}
-					var isValueType = own?.IsValueType ?? parser._externalValueTypes.Contains((resolved, path));
-					return named with { IsValueType = isValueType };
+					return named;
 				}
 				if (allowMissing)
 					return null;
@@ -1509,13 +1563,20 @@ public static class ApiParser
 
 			private static bool IsWordCharacter(char c) => char.IsLetterOrDigit(c) || c is '_' or '@' or '$';
 
+			private int _peekedAt = -1;
+			private string _peeked = string.Empty;
+
+			/// <summary>The word at the cursor; the parser looks at a word before taking it, so the last one is kept.</summary>
 			public string PeekWord()
 			{
 				Skip();
+				if (_peekedAt == Position)
+					return _peeked;
 				var end = Position;
 				while (end < Text.Length && IsWordCharacter(Text[end]))
 					end++;
-				return Text.Substring(Position, end - Position);
+				_peekedAt = Position;
+				return _peeked = Text.Substring(Position, end - Position);
 			}
 
 			/// <summary>The character after the word at the cursor, past spaces.</summary>

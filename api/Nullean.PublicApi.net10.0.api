@@ -79,6 +79,12 @@ namespace Nullean.PublicApi
     New = 32
     AllowsRefStruct = 64
 
+  sealed class ApiDeclarationWriter
+    ApiDeclarationWriter(ApiType type)
+    string Declaration()
+    string Declaration(ApiMember member)
+    string Reference(ApiTypeReference type)
+
   sealed class ApiDocument
     ApiAssembly Assembly { get; }
     int? LineOf(object node)
