@@ -58,8 +58,8 @@ overloads, ends with:
 
 `diff` with provider specs, such as `"nuget|Proc|0.13.0"`, still works as before for the builds that call it.
 
-It also runs as a GitHub Action (`uses: nullean/assembly-differ@v1`), which comments on and labels pull requests, and as a container
-(`ghcr.io/nullean/assembly-differ`), both without a .NET SDK.
+It also runs as a GitHub Action (`uses: nullean/assembly-differ@v1`), which comments on and labels pull requests, and as a
+container (`ghcr.io/nullean/assembly-differ`) that needs no .NET SDK.
 
 ## Learn more
 
