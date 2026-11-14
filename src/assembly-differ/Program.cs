@@ -9,6 +9,7 @@ if (args.Length > 0 && args[0].Contains('|'))
 var app = new ArghApp();
 app.Map<ApiCommands>();
 app.Map<Differ.PullRequests.PullRequestCommand>();
+app.Map<Differ.Projects.UpgradesCommand>();
 app.Map<DiffCommands>();
 app.MapAndRootAlias<Differ.Projects.ProjectsCommand>();
 

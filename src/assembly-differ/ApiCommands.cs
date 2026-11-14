@@ -227,21 +227,26 @@ internal sealed class ApiCommands
 	/// <summary>
 	/// The filter to the API the projects use, read from their builds; null, with a warning, when none is built.
 	/// </summary>
-	private static Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? UsesFilter(IReadOnlyList<Projects.Resolution> resolutions)
+	internal static Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? UsesFilter(
+		IReadOnlyList<Projects.Resolution> resolutions,
+		bool quiet = false
+	)
 	{
 		var builds = resolutions.Select(r => (r.Project, Output: Projects.ResolvedPackages.BuildOutput(r))).ToList();
 		var unbuilt = builds.Where(b => b.Output is null).Select(b => b.Project).Distinct().ToList();
 		var outputs = builds.Where(b => b.Output is not null).Select(b => b.Output!).Distinct().ToList();
 		if (outputs.Count == 0)
 		{
-			Console.Error.WriteLine(
-				$"[diff] warning: {string.Join(", ", unbuilt)} not built, so every change is shown; build first to see only the changes your code uses"
-			);
+			if (!quiet)
+				Console.Error.WriteLine(
+					$"[diff] warning: {string.Join(", ", unbuilt)} not built, so every change is shown; build first to see only the changes your code uses"
+				);
 			return null;
 		}
-		if (unbuilt.Count > 0)
+		if (unbuilt.Count > 0 && !quiet)
 			Console.Error.WriteLine($"[diff] warning: {string.Join(", ", unbuilt)} not built, so what they use is left out");
-		Console.WriteLine("[diff] Showing the changes to API your projects use; --all shows every change");
+		if (!quiet)
+			Console.WriteLine("[diff] Showing the changes to API your projects use; --all shows every change");
 		return (pair, diff) => UsageFilter.Apply(diff, UsedApi.Read(outputs, [Path.GetFileNameWithoutExtension(pair.First.Name)]));
 	}
 

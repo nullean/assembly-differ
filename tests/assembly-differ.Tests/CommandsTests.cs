@@ -7,7 +7,7 @@ namespace Differ.Tests;
 /// <summary>The command for each source: <c>files</c>, <c>nuget</c> and <c>release</c>, and the help of every command.</summary>
 public class CommandsTests
 {
-	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "projects", "pull-request"];
+	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "projects", "pull-request", "upgrades"];
 
 	[Test]
 	[MethodDataSource(nameof(Helps))]
@@ -107,7 +107,14 @@ public class CommandsTests
 		Package(Path.Combine(fixture.Root, fileName), "Lib", version, assembly, frameworks);
 
 	/// <summary>Writes a .nupkg of package <paramref name="id"/> to <paramref name="path"/>, holding the assembly once for every framework given.</summary>
-	internal static string Package(string path, string id, string version, string assembly, params string[] frameworks)
+	internal static string Package(string path, string id, string version, string assembly, params string[] frameworks) =>
+		Package(path, id, version, assembly, frameworks, "Lib.dll");
+
+	/// <summary>Writes a .nupkg holding the assembly as <paramref name="fileName"/> once for every framework given.</summary>
+	internal static string Package(string path, string id, string version, string assembly, string framework, string fileName) =>
+		Package(path, id, version, assembly, [framework], fileName);
+
+	private static string Package(string path, string id, string version, string assembly, string[] frameworks, string fileName)
 	{
 		using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
 		var nuspec = zip.CreateEntry("Lib.nuspec");
@@ -121,7 +128,7 @@ public class CommandsTests
 				"""
 			);
 		foreach (var framework in frameworks)
-			zip.CreateEntryFromFile(assembly, $"lib/{framework}/Lib.dll");
+			zip.CreateEntryFromFile(assembly, $"lib/{framework}/{fileName}");
 		return path;
 	}
 }

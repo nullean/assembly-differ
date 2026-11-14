@@ -1,0 +1,12 @@
+exit code: 4
+--- stdout
+| Package | From | To | Change to what you use | Breaking changes | Projects |
+|---|---|---|---|---|---|
+| AssemblyDiffer.Tests.Breaking | 1.0.0 | 2.0.0 | Major | 1 in what you use | App |
+| AssemblyDiffer.Tests.Additive | 1.0.0 | 1.1.0 | None | 0 in what you use | App |
+
+1 more up to date. `assembly-differ nuget <package> <version>` shows one update in full.
+--- stderr
+[diff] Comparing AssemblyDiffer.Tests.Additive 1.0.0 with 1.1.0
+[diff] Comparing AssemblyDiffer.Tests.Breaking 1.0.0 with 2.0.0
+[diff] An update's change to the API your code uses is Major, at least --fail-on major

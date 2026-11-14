@@ -62,10 +62,10 @@ public sealed class Fixture : IDisposable
 		];
 	});
 
-	public static void Compile(string source, string path, bool referenceAssemblies = false)
+	public static void Compile(string source, string path, bool referenceAssemblies = false, string assemblyName = AssemblyName)
 	{
 		var compilation = CSharpCompilation.Create(
-			AssemblyName,
+			assemblyName,
 			[CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest))],
 			referenceAssemblies ? ReferencePack.Value : References,
 			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true, nullableContextOptions: NullableContextOptions.Enable)

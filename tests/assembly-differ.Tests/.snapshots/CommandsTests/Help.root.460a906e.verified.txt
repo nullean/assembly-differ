@@ -24,3 +24,5 @@ Commands:
                 the job summary, one comment kept up to date, and the release
                 label for the suggested version change.
   release       Compares a new build with the release before it.
+  upgrades      Lists the packages a solution references that have a newer
+                release, and what updating each would break.
