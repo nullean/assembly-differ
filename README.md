@@ -18,7 +18,7 @@ Proc 0.14.0 added a `CancellationToken` to its `Start*` methods. Diffing it agai
 each old overload deleted and its replacement added, which makes the release a major change:
 
 ```console
-$ assembly-differ diff "nuget|Proc|0.13.0|netstandard2.0" "nuget|Proc|0.14.0|netstandard2.0" -t proc
+$ assembly-differ nuget Proc 0.13.0 0.14.0 -t proc -f xml
 [diff] Difference found: NuGetAssemblyProvider:proc.dll and NuGetAssemblyProvider:proc.dll
 <Assembly Name="proc, Version=0.0.0.0, Culture=neutral, PublicKeyToken=96c599bbe3e70f5d" DiffType="Modified">
   <Module Name="proc.dll" DiffType="Modified">
@@ -61,50 +61,62 @@ runtime installed.
 
 ## Quick start
 
-Diff the last release on nuget.org against what you just built, as Markdown, and fail the build on a breaking change:
+Compare the package you just packed with its last release on nuget.org, and fail the build on a breaking change:
 
 ```sh
-assembly-differ diff "previous-nuget|MyLib|1.3.0|net8.0" "directory|src/MyLib/bin/Release/net8.0" -t MyLib -f markdown -p major
+assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major
 ```
 
-`previous-nuget` finds the latest release before `1.3.0`, so the same command keeps working as you release.
+The package id and version come from the `.nupkg`, and the release compared with is the newest one before `1.3.0`, so
+the same command keeps working as you release.
 
-Each side is a provider spec, and the two sides can mix:
-
-| Spec | Assemblies |
+| Command | Compares |
 |---|---|
-| `assembly\|<path>` | one dll |
-| `directory\|<path>` | every dll in a directory, matched by file name against the other side |
-| `nuget\|<id>\|<version>\|[tfm]` | a package from the NuGet sources your NuGet.config lists |
-| `previous-nuget\|<id>\|<version>\|[tfm]` | the release on nuget.org before `<version>` |
-| `github\|<owner/repo>\|<commit>\|<build command>\|<relative output path>` | a commit, cloned and built with the command you give |
+| `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it on nuget.org; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
+| `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
+| `nuget <id> <old-version> <new-version>` | two published versions, from the NuGet sources your NuGet.config lists |
+| `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a new build with an older commit, cloned and built with the command you give |
 
-| Flag | What |
+Every command takes the same options:
+
+| Option | What |
 |---|---|
-| `-t`, `--target` | only diff these assemblies (repeatable); defaults to every assembly both sides have |
-| `-f`, `--format` | `xml` (default), `markdown`, `asciidoc`, `github-comment` (a pull request comment with a collapsible diff per assembly) or `json` (`api-changes.json`: the suggested change, breaking changes and every change as a tree, for tools) |
-| `-o`, `--output` | output directory or file; without it the diff only goes to the console |
-| `-p`, `--prevent-change` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
-| `-a`, `--allow-empty-previous-nuget` | succeed when `previous-nuget` finds no earlier release, for a first release |
+| `-t`, `--target` | only compare these assemblies, by file name without extension (repeatable); defaults to every assembly both sides have |
+| `-f`, `--format` | `markdown` (default), `xml`, `asciidoc`, `github-comment` (a pull request comment with a collapsible diff per assembly) or `json` (`api-changes.json`: the suggested change, breaking changes and every change as a tree, for tools) |
+| `-o`, `--output` | a directory or file to write the report to, besides the console |
+| `--fail-on` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
+| `--framework` | the target framework to compare, such as `net8.0` (`files`, `nuget` and `release`); defaults to the newest the packages share |
+
+A single assembly on each side is compared whatever its file name. With more, assemblies pair by file name, and one
+only a side has is printed; it counts as removed or added API when `--target` names it.
 
 The suggested change follows semantic versioning. It is `None` when the public API is unchanged, `Patch` when only
-assembly references changed, and `Minor` when API was only added or attributes changed: diffing Proc 0.12.0 against
-0.13.0, which only adds `NoWrapInThread`, suggests `Minor`. It is `Major` when something was removed or changed, and
-when a new interface member, abstract member or `required` member makes existing code change. Always name the `diff` subcommand: a provider spec as the first argument is read as
-a command name.
+assembly references changed, and `Minor` when API was only added or attributes changed: Proc 0.13.0 marks
+`NoWrapInThread` `[Obsolete]`, and `assembly-differ nuget Proc 0.12.0 0.13.0` suggests `Minor`. It is `Major` when
+something was removed or changed, and when a new interface member, abstract member or `required` member makes existing
+code change.
 
 More examples:
 
 ```sh
 # two local builds, every dll matched by name
-assembly-differ diff "directory|build/1.2.0" "directory|build/1.3.0"
+assembly-differ files build/1.2.0 build/1.3.0
 
-# two published packages
-assembly-differ diff "nuget|Proc|0.13.0|netstandard2.0" "nuget|Proc|0.14.0|netstandard2.0" -t proc -f markdown
+# two published packages, as Markdown
+assembly-differ nuget Proc 0.13.0 0.14.0 -t proc
 
-# the last release before 0.14.0 against a local build
-assembly-differ diff "previous-nuget|Proc|0.14.0|netstandard2.0" "directory|build/proc" -t proc
+# the release before 1.3.0 against a build directory
+assembly-differ release src/MyLib/bin/Release/net8.0 --package MyLib --version 1.3.0 -t MyLib
 ```
+
+### Provider specs
+
+Before it had a command per source, the tool took two provider specs, and `diff` still does, unchanged, for the builds
+that call it: `assembly-differ diff "previous-nuget|MyLib|1.3.0|net8.0" "directory|bin" -t MyLib -p major`. A spec is
+`assembly|<path>`, `directory|<path>`, `nuget|<id>|<version>|[tfm]`, `previous-nuget|<id>|<version>|[tfm]` or
+`github|<owner/repo>|<commit>|<build command>|<relative output path>`. Its options are `-t`, `-o`, `-f` (default
+`xml`), `-p`/`--prevent-change` in place of `--fail-on`, and `-a`/`--allow-empty-previous-nuget`, which succeeds when
+`previous-nuget` finds no earlier release.
 
 ### GitHub Action
 
@@ -125,7 +137,7 @@ Container actions run on Linux runners only.
 The same image works anywhere `docker run` does, such as GitLab CI or a machine without the .NET SDK:
 
 ```sh
-docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge diff "directory|/workspace/old" "directory|/workspace/new"
+docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge files /workspace/old /workspace/new
 ```
 
 It is native-AOT on a chiseled `runtime-deps` base, with no shell, running as a non-root user. `edge` tracks the latest

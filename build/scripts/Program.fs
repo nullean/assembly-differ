@@ -133,6 +133,11 @@ let main argv =
               let! result = text $"{binary} diff 'previous-nuget|Proc|0.18.0' 'nuget|Proc|0.20.0' --target Proc -f markdown"
               printfn "%s" result
               for expected in [ "Found previous nuget package found for Proc 0.18.0: 0.17.0"; "Suggested version change: Minor" ] do
-                  if not (result.Contains expected) then failwithf "the native-AOT binary did not print '%s'" expected }
+                  if not (result.Contains expected) then failwithf "the native-AOT binary did not print '%s'" expected
+              // the commands bind through argh's generated code; Proc 0.13.0 only marks NoWrapInThread obsolete
+              let! command = text $"{binary} nuget Proc 0.12.0 0.13.0 --target Proc --format json"
+              printfn "%s" command
+              if not (command.Contains "\"suggestedVersionChange\": \"Minor\"") then
+                  failwith "the native-AOT binary's nuget command did not suggest Minor" }
 
     app.RunAsync(argv).GetAwaiter().GetResult()

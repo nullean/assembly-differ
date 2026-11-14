@@ -1,0 +1,34 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+{
+  "suggestedVersionChange": "Minor",
+  "breakingChanges": 0,
+  "assemblies": [
+    {
+      "name": "Lib.dll",
+      "suggestedVersionChange": "Minor",
+      "breakingChanges": 0,
+      "changes": [
+        {
+          "kind": "Type",
+          "name": "Lib.Widget",
+          "change": "modified",
+          "suggestedVersionChange": "Minor",
+          "changes": [
+            {
+              "kind": "Method",
+              "name": "Erase()",
+              "change": "added",
+              "suggestedVersionChange": "Minor"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}
+[diff] Suggested version change: Minor
+--- stderr

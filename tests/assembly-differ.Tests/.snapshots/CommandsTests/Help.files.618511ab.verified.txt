@@ -1,0 +1,22 @@
+Usage: assembly-differ files <old> <new> [options]
+
+   Compares two local builds: dlls, directories of dlls, or .nupkg files.
+
+Arguments:
+  <old>  The old build: a .dll, a directory or a .nupkg.
+  <new>  The new build: a .dll, a directory or a .nupkg.
+
+Global options:
+  -h, --help             Show help.
+
+Options:
+  --framework <string>   The target framework to take from a .nupkg, such as net8.0. Defaults to the newest both packages ship. [default: null]
+  -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
+  -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
+  -o, --output <string>  A directory or file to write the report to, besides the console.
+  --fail-on <string>     Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major. [default: none] [allowed: none|patch|minor|major]
+
+Examples:
+  assembly-differ files bin/1.2.0/MyLib.dll bin/1.3.0/MyLib.dll
+
+  assembly-differ files MyLib.1.2.0.nupkg MyLib.1.3.0.nupkg --framework net8.0

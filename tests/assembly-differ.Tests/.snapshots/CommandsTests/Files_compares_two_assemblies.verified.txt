@@ -1,0 +1,9 @@
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Draw()` is deleted
+[diff] Suggested version change: Major
+--- stderr
