@@ -82,7 +82,7 @@ Each side is a provider spec, and the two sides can mix:
 | Flag | What |
 |---|---|
 | `-t`, `--target` | only diff these assemblies (repeatable); defaults to every assembly both sides have |
-| `-f`, `--format` | `xml` (default), `markdown`, `asciidoc` or `github-comment` (a pull request comment with a collapsible diff per assembly) |
+| `-f`, `--format` | `xml` (default), `markdown`, `asciidoc`, `github-comment` (a pull request comment with a collapsible diff per assembly) or `json` (`api-changes.json`: the suggested change, breaking changes and every change as a tree, for tools) |
 | `-o`, `--output` | output directory or file; without it the diff only goes to the console |
 | `-p`, `--prevent-change` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
 | `-a`, `--allow-empty-previous-nuget` | succeed when `previous-nuget` finds no earlier release, for a first release |

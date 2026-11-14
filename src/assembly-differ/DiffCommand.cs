@@ -28,7 +28,7 @@ internal sealed class DiffCommands
 	/// -t, --target, The assembly targets. Defaults to *all* assemblies located by the provider. May be
 	/// given more than once.
 	/// </param>
-	/// <param name="format">-f, --format, The format of the diff output: xml, markdown, or asciidoc.</param>
+	/// <param name="format">-f, --format, The format of the diff output: xml, markdown, asciidoc, github-comment or json.</param>
 	/// <param name="output">-o, --output, The output directory or file name. If not specified only prints to console.</param>
 	/// <param name="preventChange">
 	/// -p, --prevent-change, Fail if the change detected is higher than specified: none, patch, minor,
@@ -61,7 +61,13 @@ internal sealed class DiffCommands
 			new GitHubAssemblyProviderFactory(new Git(Environment.GetEnvironmentVariable("GIT")))
 		);
 
-		var exporters = new ExporterCollection(new XmlExporter(), new MarkdownExporter(), new AsciiDocExporter(), new GitHubActionCommentExporter());
+		var exporters = new ExporterCollection(
+			new XmlExporter(),
+			new MarkdownExporter(),
+			new AsciiDocExporter(),
+			new GitHubActionCommentExporter(),
+			new JsonExporter()
+		);
 
 		var outputWriterFactory = new OutputWriterFactory(output);
 		var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

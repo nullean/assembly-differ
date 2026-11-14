@@ -1,0 +1,37 @@
+exit code: 0
+--- stdout
+[diff] Difference found: DirectoryAssemblyProvider:Lib.dll and DirectoryAssemblyProvider:Lib.dll
+{
+  "suggestedVersionChange": "Major",
+  "breakingChanges": 1,
+  "assemblies": [
+    {
+      "name": "Lib.dll",
+      "suggestedVersionChange": "Major",
+      "breakingChanges": 1,
+      "changes": [
+        {
+          "kind": "Type",
+          "name": "Lib.Widget",
+          "change": "modified",
+          "suggestedVersionChange": "Major",
+          "changes": [
+            {
+              "kind": "Method",
+              "name": "Draw()",
+              "change": "removed",
+              "suggestedVersionChange": "Major"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}
+[diff] Suggested version change: Major
+--- stderr
+
+--- files
+api-changes.json
