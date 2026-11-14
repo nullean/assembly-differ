@@ -15,7 +15,7 @@ public class NuGetAssemblyProviderFactory : IAssemblyProviderFactory
 
 	public string Format => $"{Name}|<package id>|<version>|[framework version]";
 
-	public virtual IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command);
+	public virtual IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command, Name);
 }
 
 public class NuGetAssemblyProvider : IAssemblyProvider
@@ -23,15 +23,24 @@ public class NuGetAssemblyProvider : IAssemblyProvider
 	private readonly INuGet _installer;
 	private readonly NuGetDiffCommand _command;
 
-	public NuGetAssemblyProvider(INuGet installer, string[] command)
+	private readonly string _providerName;
+
+	/// <param name="installer">Downloads and unpacks the package.</param>
+	/// <param name="command">The provider spec's parts after the provider name.</param>
+	/// <param name="providerName">
+	/// The provider's name, which keeps each provider's packages in their own folder: <c>previous-nuget</c> and <c>nuget</c>
+	/// for the same version unpack different packages.
+	/// </param>
+	public NuGetAssemblyProvider(INuGet installer, string[] command, string providerName = "nuget")
 	{
+		_providerName = providerName;
 		_installer = installer ?? throw new ArgumentNullException(nameof(installer));
 		_command = new NuGetDiffCommand(command);
 	}
 
 	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		var tempDir = Path.Combine(_command.TempDir, "differ", "nuget");
+		var tempDir = Path.Combine(_command.TempDir, "differ", _providerName);
 		if (!Directory.Exists(tempDir))
 			Directory.CreateDirectory(tempDir);
 
@@ -41,6 +50,9 @@ public class NuGetAssemblyProvider : IAssemblyProvider
 			Directory.CreateDirectory(packageDirectory);
 
 		var versionDirectory = Path.Combine(packageDirectory, _command.Version);
+		// dependencies are copied next to the package's own assemblies, so a folder from an earlier run is not reused
+		if (Directory.Exists(versionDirectory))
+			Directory.Delete(versionDirectory, true);
 		var package = _installer.InstallPackage(_command.Package, _command.Version, versionDirectory);
 		if (package == NuGetPackage.NotFound)
 			return Enumerable.Empty<FileInfo>();

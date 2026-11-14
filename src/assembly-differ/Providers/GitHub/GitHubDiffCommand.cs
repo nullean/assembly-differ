@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace Differ.Providers.GitHub;
@@ -44,5 +45,5 @@ public class GitHubDiffCommand
 
 	public string Output { get; }
 
-	public string TempDir { get; } = Environment.GetEnvironmentVariable("TEMP");
+	public string TempDir { get; } = Path.GetTempPath();
 }
