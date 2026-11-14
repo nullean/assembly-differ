@@ -289,7 +289,9 @@ implementers or inheritors), whether it breaks compiled code, source or both, an
 
 A change that only breaks implementers or inheritors of a type nobody outside can implement or derive from is no break;
 one on a type marked with an attribute named `InternalImplementationOnlyAttribute` is listed but does not ask for a
-major version. `api` takes a `.dll`, a directory or a `.nupkg` instead of the solution, `--split namespace` or
+major version. `api` shows a public API and what changed in it; for everything else in a package, such as its dependencies,
+frameworks and files, use [dotnet-inspect](https://github.com/richlander/dotnet-inspect). `api` takes a `.dll`, a
+directory or a `.nupkg` instead of the solution, `--split namespace` or
 `--split top-level-namespace` for a file per namespace in a large assembly, and `-f json` to print every part of each
 declaration as a field.
 
@@ -317,6 +319,18 @@ It fails when the files do not match, with the report above in the log. With `co
 `pull-requests: write`) it also keeps a comment on the pull request with the report and the command that updates the
 files. Its other inputs are `path`, `projects`, `target`, `framework` and `split`, as for the command, and
 `working-directory`, `token` and `version`; its outputs are `matches` and `suggested-change`.
+
+### In a test
+
+[Nullean.Snapshots.PublicApi](https://www.nuget.org/packages/Nullean.Snapshots.PublicApi) keeps the same `.api` file
+as a snapshot in a test, for repositories that would rather fail a test than a build step:
+
+```csharp
+[Test]
+public void Public_api_is_unchanged() => typeof(Widget).Assembly.Should().MatchApiSnapshot();
+```
+
+A failure lists each change with the version change it calls for, who it breaks and its line in the verified file.
 
 ### Container
 
@@ -358,6 +372,8 @@ The tool ships as one package per platform. Install the root package; the .NET S
 | `assembly-differ.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-differ.linux-x64) |
 | [`assembly-differ.skills`](src/assembly-differ.skills/README.md) | the agent skill for the tool, content only; a development dependency | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.skills?style=flat-square)](https://www.nuget.org/packages/assembly-differ.skills) |
 | `assembly-differ.any` | the framework-dependent fallback (net11.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.any?style=flat-square)](https://www.nuget.org/packages/assembly-differ.any) |
+| [`Nullean.PublicApi`](src/Nullean.PublicApi/README.md) | the library: reads an assembly's public API into a model, and writes and parses `.api` files (netstandard2.0, net10.0) | [![NuGet](https://img.shields.io/nuget/v/Nullean.PublicApi?style=flat-square)](https://www.nuget.org/packages/Nullean.PublicApi) |
+| [`Nullean.PublicApi.Diff`](src/Nullean.PublicApi.Diff/README.md) | the library: compares two APIs and says who each change breaks and the version change it calls for | [![NuGet](https://img.shields.io/nuget/v/Nullean.PublicApi.Diff?style=flat-square)](https://www.nuget.org/packages/Nullean.PublicApi.Diff) |
 
 ## Learn more
 
