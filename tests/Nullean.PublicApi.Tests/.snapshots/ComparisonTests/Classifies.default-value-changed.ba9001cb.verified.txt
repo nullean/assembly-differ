@@ -1,2 +1,2 @@
-A › M(int) › parameter a default  changed: 1 → 2  [Major, breaks Callers Binary] (compiled callers pass the old default)
+A › M(int) › parameter 1 default  changed: 1 → 2  [Major, breaks Callers Binary] (compiled callers pass the old default)
 suggested: Major
