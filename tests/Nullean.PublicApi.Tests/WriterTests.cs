@@ -92,6 +92,7 @@ public class WriterTests
 				public int this[int index, string key] { get => 0; set { } }
 				public unsafe void Pointers(int* p, delegate*<int, void> f) { }
 				public volatile int Flag;
+				public unsafe delegate*<int, void> Callback;
 				public static bool operator ==(Signatures? a, Signatures? b) => true;
 				public static bool operator !=(Signatures? a, Signatures? b) => false;
 				public override bool Equals(object? obj) => false;

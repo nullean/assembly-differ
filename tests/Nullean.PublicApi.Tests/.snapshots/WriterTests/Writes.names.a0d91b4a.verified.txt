@@ -5,21 +5,21 @@ using System.IO: Stream
 using System.Threading.Tasks: Task
 
 namespace global
-  public class InGlobal
-    public InGlobal()
+  class InGlobal
+    InGlobal()
 
 namespace Lib.A
-  public class Range
-    public Range()
+  class Range
+    Range()
 
-  public class Task
-    public Task()
+  class Task
+    Task()
 
 namespace Lib.B
-  public class Uses
-    public Uses()
-    public System.Range Bcl()
-    public Dictionary<string, Stream> Map()
-    public Lib.A.Task Mine()
-    public Lib.A.Range Own()
-    public System.Threading.Tasks.Task Run()
+  class Uses
+    Uses()
+    System.Range Bcl()
+    Dictionary<string, Stream> Map()
+    Lib.A.Task Mine()
+    Lib.A.Range Own()
+    System.Threading.Tasks.Task Run()

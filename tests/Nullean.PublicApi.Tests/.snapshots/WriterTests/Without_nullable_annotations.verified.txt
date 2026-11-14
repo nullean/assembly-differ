@@ -1,6 +1,6 @@
 assembly Lib
 
 namespace Lib
-  public class Oblivious
-    public Oblivious()
-    public string Name(string? value)
+  class Oblivious
+    Oblivious()
+    string Name(string? value)

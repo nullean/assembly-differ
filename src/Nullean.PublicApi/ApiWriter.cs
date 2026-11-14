@@ -316,7 +316,7 @@ public static class ApiWriter
 				Attributes(invoke.ReturnAttributes, depth, "return");
 			Attributes(type.Attributes, depth, null);
 			Line(depth);
-			builder.Append(Access(type.Accessibility)).Append(' ');
+			builder.Append(AccessPrefix(type.Accessibility));
 			if (invoke is not null)
 			{
 				builder.Append("delegate ").Append(RefKind(invoke.ReturnRefKind)).Append(Reference(invoke.ReturnType)).Append(' ').Append(Declared(type.Name));
@@ -381,7 +381,7 @@ public static class ApiWriter
 					builder.Append(field.Name).Append(" = ").Append(field.Constant);
 					break;
 				case ApiField field:
-					builder.Append(Access(field.Accessibility)).Append(' ');
+					builder.Append(AccessPrefix(field.Accessibility));
 					if (field.Constant is not null)
 						builder.Append("const ");
 					else if (field.IsStatic)
@@ -423,7 +423,7 @@ public static class ApiWriter
 						builder.Append(" { … }");
 					break;
 				case ApiMethod { Kind: ApiMethodKind.Constructor } constructor:
-					builder.Append(Access(constructor.Accessibility)).Append(' ').Append(Declared(type.Name));
+					builder.Append(AccessPrefix(constructor.Accessibility)).Append(Declared(type.Name));
 					Parameters(constructor.Parameters, false);
 					break;
 				case ApiMethod method:
@@ -453,9 +453,8 @@ public static class ApiWriter
 
 		private void MemberStart(ApiAccessibility accessibility, ApiMemberModifiers modifiers, bool inInterface)
 		{
-			// an interface member is public and abstract unless it says otherwise; a default implementation shows a body
-			if (!inInterface || accessibility != ApiAccessibility.Public)
-				builder.Append(Access(accessibility)).Append(' ');
+			// a member is public unless it says otherwise; an interface member is also abstract unless it shows a body
+			builder.Append(AccessPrefix(accessibility));
 			if ((modifiers & ApiMemberModifiers.Static) != 0)
 				builder.Append("static ");
 			if (inInterface)
@@ -604,6 +603,10 @@ public static class ApiWriter
 
 		/// <summary>A declared type's or constructor's name: <c>Box`1</c> as <c>Box</c>.</summary>
 		private static string Declared(string metadataName) => NonGeneric(metadataName);
+
+		/// <summary>Everything in a .api file can be seen from outside, so public goes without saying: only protected is written.</summary>
+		private static string AccessPrefix(ApiAccessibility accessibility) =>
+			accessibility == ApiAccessibility.Public ? string.Empty : Access(accessibility) + " ";
 
 		private static string Access(ApiAccessibility accessibility) => accessibility switch
 		{

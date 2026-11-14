@@ -1,2 +1,2 @@
-A › M()  removed: public void M() → -  [Major, breaks Callers Binary, Source]
+A › M()  removed: void M() → -  [Major, breaks Callers Binary, Source]
 suggested: Major

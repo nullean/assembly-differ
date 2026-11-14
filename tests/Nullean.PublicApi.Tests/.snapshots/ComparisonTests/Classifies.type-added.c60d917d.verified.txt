@@ -1,2 +1,2 @@
-B  added: - → public class B  [Minor]
+B  added: - → class B  [Minor]
 suggested: Minor

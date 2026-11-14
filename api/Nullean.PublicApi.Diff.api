@@ -6,122 +6,122 @@ using System.Collections.Generic: Dictionary<,>, HashSet<>, ICollection<>, IEnum
 
 namespace Nullean.PublicApi.Diff
   [Flags]
-  public enum ApiAudience
+  enum ApiAudience
     None = 0
     Callers = 1
     Implementers = 2
     Inheritors = 4
 
-  public sealed record ApiChange : IEquatable<ApiChange>
-    public ApiChange(IReadOnlyList<string> Path, ApiChangeKind Kind, string Part, string? Old, string? New, ApiAudience Breaks, ApiCompatibility Compatibility, bool Counts, string? Note)
-    public ApiAudience Breaks { get; init; }
-    public ApiCompatibility Compatibility { get; init; }
-    public bool Counts { get; init; }
-    public ApiChangeKind Kind { get; init; }
-    public SuggestedVersionChange Level { get; init; }
-    public string? New { get; init; }
-    public object? NewNode { get; init; }
-    public string? Note { get; init; }
-    public string? Old { get; init; }
-    public object? OldNode { get; init; }
-    public object? OldScope { get; init; }
-    public string Part { get; init; }
-    public IReadOnlyList<string> Path { get; init; }
-    public string Where { get; }
-    public ApiChange <Clone>$()
-    public void Deconstruct(out IReadOnlyList<string> Path, out ApiChangeKind Kind, out string Part, out string? Old, out string? New, out ApiAudience Breaks, out ApiCompatibility Compatibility, out bool Counts, out string? Note)
-    public bool Equals(ApiChange? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiChange? left, ApiChange? right)
-    public static bool operator !=(ApiChange? left, ApiChange? right)
+  sealed record ApiChange : IEquatable<ApiChange>
+    ApiChange(IReadOnlyList<string> Path, ApiChangeKind Kind, string Part, string? Old, string? New, ApiAudience Breaks, ApiCompatibility Compatibility, bool Counts, string? Note)
+    ApiAudience Breaks { get; init; }
+    ApiCompatibility Compatibility { get; init; }
+    bool Counts { get; init; }
+    ApiChangeKind Kind { get; init; }
+    SuggestedVersionChange Level { get; init; }
+    string? New { get; init; }
+    object? NewNode { get; init; }
+    string? Note { get; init; }
+    string? Old { get; init; }
+    object? OldNode { get; init; }
+    object? OldScope { get; init; }
+    string Part { get; init; }
+    IReadOnlyList<string> Path { get; init; }
+    string Where { get; }
+    ApiChange <Clone>$()
+    void Deconstruct(out IReadOnlyList<string> Path, out ApiChangeKind Kind, out string Part, out string? Old, out string? New, out ApiAudience Breaks, out ApiCompatibility Compatibility, out bool Counts, out string? Note)
+    bool Equals(ApiChange? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiChange? left, ApiChange? right)
+    static bool operator !=(ApiChange? left, ApiChange? right)
 
-  public enum ApiChangeKind
+  enum ApiChangeKind
     Added = 0
     Removed = 1
     Changed = 2
 
-  public static class ApiComparison
-    public static ApiComparisonResult Compare(ApiAssembly oldApi, ApiAssembly newApi, ApiComparisonOptions? options = null)
+  static class ApiComparison
+    static ApiComparisonResult Compare(ApiAssembly oldApi, ApiAssembly newApi, ApiComparisonOptions? options = null)
 
-  public sealed class ApiComparisonOptions
-    public ApiComparisonOptions()
-    public IReadOnlyList<string> NotExtensionPoints { get; init; }
+  sealed class ApiComparisonOptions
+    ApiComparisonOptions()
+    IReadOnlyList<string> NotExtensionPoints { get; init; }
 
-  public sealed class ApiComparisonResult
-    public IEnumerable<ApiChange> Breaking { get; }
-    public IReadOnlyList<ApiChange> Changes { get; }
-    public SuggestedVersionChange Suggest(Version? baseline = null)
+  sealed class ApiComparisonResult
+    IEnumerable<ApiChange> Breaking { get; }
+    IReadOnlyList<ApiChange> Changes { get; }
+    SuggestedVersionChange Suggest(Version? baseline = null)
 
   [Flags]
-  public enum ApiCompatibility
+  enum ApiCompatibility
     None = 0
     Binary = 1
     Source = 2
 
-  public static class ApiDiff
-    public static IMetadataDiffItem? Compare(string oldAssemblyPath, string newAssemblyPath)
+  static class ApiDiff
+    static IMetadataDiffItem? Compare(string oldAssemblyPath, string newAssemblyPath)
 
-  public sealed class AssemblyDiffItem : MetadataDiffItem
-    public override MetadataType MetadataType { get; }
+  sealed class AssemblyDiffItem : MetadataDiffItem
+    override MetadataType MetadataType { get; }
 
-  public sealed class AssemblyReferenceDiffItem : MetadataDiffItem
-    public override MetadataType MetadataType { get; }
+  sealed class AssemblyReferenceDiffItem : MetadataDiffItem
+    override MetadataType MetadataType { get; }
 
-  public sealed class CustomAttributeDiffItem : DiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
-    public override void Visit(Action<IDiffItem, int> visit, int depth = 0)
+  sealed class CustomAttributeDiffItem : DiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
+    override void Visit(Action<IDiffItem, int> visit, int depth = 0)
 
-  public abstract class DeclarationDiffItem : DiffItem
-    public override void Visit(Action<IDiffItem, int> visit, int depth = 0)
+  abstract class DeclarationDiffItem : DiffItem
+    override void Visit(Action<IDiffItem, int> visit, int depth = 0)
 
-  public abstract class DiffItem : IDiffItem
-    public DiffType DiffType { get; }
-    public abstract string HumanReadable { get; }
-    public abstract bool IsBreakingChange { get; }
-    public string ToXml()
-    public abstract void Visit(Action<IDiffItem, int> visit, int depth = 0)
+  abstract class DiffItem : IDiffItem
+    DiffType DiffType { get; }
+    abstract string HumanReadable { get; }
+    abstract bool IsBreakingChange { get; }
+    string ToXml()
+    abstract void Visit(Action<IDiffItem, int> visit, int depth = 0)
 
-  public enum DiffType : byte
+  enum DiffType : byte
     Deleted = 0
     Modified = 1
     New = 2
 
-  public interface IDiffItem
+  interface IDiffItem
     DiffType DiffType { get; }
     string HumanReadable { get; }
     bool IsBreakingChange { get; }
     string ToXml()
     void Visit(Action<IDiffItem, int> visit, int depth = 0)
 
-  public interface IMetadataDiffItem : IDiffItem
+  interface IMetadataDiffItem : IDiffItem
     ICollection<IMetadataDiffItem> ChildrenDiffs { get; }
     int Count { get; }
     ICollection<IDiffItem> DeclarationDiffs { get; }
     MetadataType MetadataType { get; }
 
-  public sealed class MemberDiffItem : MetadataDiffItem
-    public bool AddsObligation { get; }
-    public override MetadataType MetadataType { get; }
+  sealed class MemberDiffItem : MetadataDiffItem
+    bool AddsObligation { get; }
+    override MetadataType MetadataType { get; }
 
-  public sealed class MemberTypeDiffItem : DeclarationDiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
+  sealed class MemberTypeDiffItem : DeclarationDiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
 
-  public abstract class MetadataDiffItem : DiffItem, IMetadataDiffItem, IDiffItem
-    public ICollection<IMetadataDiffItem> ChildrenDiffs { get; }
-    public int Count { get; }
-    public ICollection<IDiffItem> DeclarationDiffs { get; }
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
-    public string? Key { get; }
-    public abstract MetadataType MetadataType { get; }
-    public string Name { get; }
-    public override void Visit(Action<IDiffItem, int> visit, int depth = 0)
+  abstract class MetadataDiffItem : DiffItem, IMetadataDiffItem, IDiffItem
+    ICollection<IMetadataDiffItem> ChildrenDiffs { get; }
+    int Count { get; }
+    ICollection<IDiffItem> DeclarationDiffs { get; }
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
+    string? Key { get; }
+    abstract MetadataType MetadataType { get; }
+    string Name { get; }
+    override void Visit(Action<IDiffItem, int> visit, int depth = 0)
 
-  public enum MetadataType : byte
+  enum MetadataType : byte
     Assembly = 0
     Module = 1
     Type = 2
@@ -131,43 +131,43 @@ namespace Nullean.PublicApi.Diff
     Event = 6
     AssemblyReference = 7
 
-  public sealed class ModuleDiffItem : MetadataDiffItem
-    public override MetadataType MetadataType { get; }
+  sealed class ModuleDiffItem : MetadataDiffItem
+    override MetadataType MetadataType { get; }
 
-  public sealed class ParameterDiffItem : DeclarationDiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
+  sealed class ParameterDiffItem : DeclarationDiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
 
-  public sealed class StaticFlagChangedDiffItem : DeclarationDiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
+  sealed class StaticFlagChangedDiffItem : DeclarationDiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
 
-  public enum SuggestedVersionChange
+  enum SuggestedVersionChange
     None = 1
     Patch = 2
     Minor = 3
     Major = 4
 
-  public sealed class TypeDiffItem : MetadataDiffItem
-    public override MetadataType MetadataType { get; }
+  sealed class TypeDiffItem : MetadataDiffItem
+    override MetadataType MetadataType { get; }
 
-  public static class UsageFilter
-    public static IMetadataDiffItem? Apply(IMetadataDiffItem assembly, UsedApi used)
+  static class UsageFilter
+    static IMetadataDiffItem? Apply(IMetadataDiffItem assembly, UsedApi used)
 
-  public sealed class UsedApi
-    public UsedApi()
-    public Dictionary<string, HashSet<string>> Members { get; }
-    public HashSet<string> Types { get; }
-    public static UsedApi Read(IEnumerable<string> assemblies, IEnumerable<string> packageAssemblies)
-    public bool UsesMember(string type, string member)
+  sealed class UsedApi
+    UsedApi()
+    Dictionary<string, HashSet<string>> Members { get; }
+    HashSet<string> Types { get; }
+    static UsedApi Read(IEnumerable<string> assemblies, IEnumerable<string> packageAssemblies)
+    bool UsesMember(string type, string member)
 
-  public static class VersionChange
-    public static SuggestedVersionChange Classify(IDiffItem item)
+  static class VersionChange
+    static SuggestedVersionChange Classify(IDiffItem item)
 
-  public sealed class VirtualFlagChangedDiffItem : DeclarationDiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
+  sealed class VirtualFlagChangedDiffItem : DeclarationDiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }
 
-  public sealed class VisibilityChangedDiffItem : DeclarationDiffItem
-    public override string HumanReadable { get; }
-    public override bool IsBreakingChange { get; }
+  sealed class VisibilityChangedDiffItem : DeclarationDiffItem
+    override string HumanReadable { get; }
+    override bool IsBreakingChange { get; }

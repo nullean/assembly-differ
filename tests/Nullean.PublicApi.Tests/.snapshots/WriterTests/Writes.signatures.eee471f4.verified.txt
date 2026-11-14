@@ -1,0 +1,28 @@
+assembly Lib
+using System: IComparable<>
+using struct System: DateTime, DayOfWeek, IntPtr, UIntPtr
+using System.Collections.Generic: Dictionary<,>, List<>
+
+namespace Lib
+  class Signatures
+    Signatures()
+    delegate*<int, void> Callback
+    volatile int Flag
+    int this[int index, string key] { get; set; }
+    void Defaults(string s = "a\"b", char c = 'x', double d = 1.5d, decimal m = 2.5m, DayOfWeek day = (DayOfWeek)1, object? o = null, DateTime when = default)
+    dynamic Dynamic(List<dynamic> list)
+    override bool Equals(object? obj)
+    T Generic<T, U>(U value) where T : struct, IComparable<T> where U : class?, new()
+    override int GetHashCode()
+    IntPtr Native(UIntPtr value)
+    List<(int a, (string b, int c) inner)> NestedTuples()
+    void NotNull<T>(T value) where T : notnull
+    void Nullability(string? a, List<string?> b, Dictionary<string, List<int?>?> c, string?[]? d, int[][,] jagged)
+    void Pointers(int* p, delegate*<int, void> f)
+    ref readonly int RefReturn()
+    void Refs(ref int a, out int b, in int c, ref readonly int d, params int[] rest)
+    void Scoped(scoped ref int value)
+    (int x, string? name) Tuple()
+    void Unmanaged<T>() where T : unmanaged
+    static bool operator ==(Signatures? a, Signatures? b)
+    static bool operator !=(Signatures? a, Signatures? b)
