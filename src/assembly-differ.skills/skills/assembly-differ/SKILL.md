@@ -56,7 +56,9 @@ Some repositories commit `.api` files (usually in `api/`): the public API as C#,
 change a library's public API on purpose, regenerate them with `assembly-differ api -o api` after a Release build and
 commit them with the change; `api --verify api` exits with 5 and lists each change by path, file and line, who it breaks
 (callers, implementers or inheritors), whether compiled code, source or both, and the suggested version change. To see
-a package's API without decompiling it, `assembly-differ api MyLib.1.2.0.nupkg` prints it.
+a package's API without decompiling it, `assembly-differ api MyLib.1.2.0.nupkg` prints it. In a test, the same file can be a snapshot:
+`typeof(Widget).Assembly.Should().MatchApiSnapshot()` from the `Nullean.Snapshots.PublicApi` package. For what a package
+holds beyond its API (dependencies, frameworks, files), use `dotnet-inspect` instead.
 
 ## Reading the result
 
