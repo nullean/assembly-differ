@@ -25,6 +25,10 @@ type Target =
     | Validatepackages
     /// Report public API changes against the previous release
     | Generateapichanges
+    /// Write the libraries' public API to api/, with the tool built from this checkout
+    | Api
+    /// Fail when api/ no longer matches the libraries' build: run `api` and commit the files after an intended change
+    | Verifyapi
     /// Publish the native-AOT build as the ghcr.io/nullean/assembly-differ container image
     | Publishcontainers
     /// Publish the native-AOT build for this machine and run the previous-nuget and nuget providers with it
@@ -34,6 +38,9 @@ type Target =
 let private output = Paths.RootRelative Paths.Output.FullName
 
 let private toolProject = Paths.RootRelative Paths.ToolProject.FullName
+
+/// The libraries whose public API api/ holds, as the api command's --project options
+let private libraries = Paths.Libraries |> List.collect (fun l -> ["--project"; $"src/{l}/{l}.csproj"])
 
 [<EntryPoint>]
 let main argv =
@@ -59,7 +66,9 @@ let main argv =
                        sh $"dotnet test --project tests/assembly-differ.Tests -c Release --no-build" }
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
         // ci is build, test, then create, validate and diff the packages
-        | Ci -> command { requires [Pack]; composes [Test] }
+        | Ci -> command { requires [Pack]; composes [Test; Verifyapi] }
+        | Api -> command { requires [Build] } |> executes { sh $"dotnet run -c Release -f net11.0 --no-build --project {toolProject} -- api {libraries} -o api" }
+        | Verifyapi -> target [] { sh $"dotnet run -c Release -f net11.0 --no-build --project {toolProject} -- api {libraries} --verify api" }
         | Generatepackages -> target [] {
               if not Paths.Output.Exists then Paths.Output.Create()
               // A plain `dotnet pack` emits the root package (whose DotnetToolSettings.xml v2 maps each RID to
