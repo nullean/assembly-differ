@@ -14,7 +14,8 @@ Options:
   -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
   -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
   -o, --output <string>  A directory or file to write the report to, besides the console.
-  --fail-on <string>     Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major. [default: none] [allowed: none|patch|minor|major]
+  --fail-on <enum>       Exit with code 4 when the suggested version change is at least this; none never fails. [default: none]
+                         One of: <none|patch|minor|major>
 
 Examples:
   assembly-differ files bin/1.2.0/MyLib.dll bin/1.3.0/MyLib.dll

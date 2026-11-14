@@ -107,7 +107,7 @@ internal static class ProjectComparison
 		}
 
 		var targets = new HashSet<string>(report.Target ?? projects.Select(p => p.AssemblyName), StringComparer.OrdinalIgnoreCase);
-		var failOn = Enum.Parse<SuggestedVersionChange>(report.FailOn, ignoreCase: true);
+		var failOn = report.FailOn;
 		return DiffRunner.Run(
 			new DiffSide(new CompositeAssemblyProvider(oldAssemblies.Select(s => s.Provider)), "projects"),
 			new DiffSide(new CompositeAssemblyProvider(newAssemblies.Select(s => s.Provider)), "projects"),

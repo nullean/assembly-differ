@@ -26,9 +26,8 @@ public sealed class ReportOptions
 	/// <summary>-o, --output, A directory or file to write the report to, besides the console.</summary>
 	public string? Output { get; set; }
 
-	/// <summary>Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major.</summary>
-	[AllowedValues("none", "patch", "minor", "major")]
-	public string FailOn { get; set; } = "none";
+	/// <summary>Exit with code 4 when the suggested version change is at least this; none never fails.</summary>
+	public SuggestedVersionChange FailOn { get; set; } = SuggestedVersionChange.None;
 }
 
 /// <summary>Compares the public API of two versions of a library and suggests the version change it calls for.</summary>
@@ -260,7 +259,7 @@ internal sealed class ApiCommands
 		{
 			if (sides() is not var (oldSide, newSide))
 				return null;
-			var failOn = Enum.Parse<SuggestedVersionChange>(report.FailOn, ignoreCase: true);
+			var failOn = report.FailOn;
 			return DiffRunner.Run(
 				oldSide,
 				newSide,
