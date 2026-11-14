@@ -1,0 +1,4 @@
+exit code: 0
+--- stdout
+[api] {fixture}/api matches the build: 1 file
+--- stderr

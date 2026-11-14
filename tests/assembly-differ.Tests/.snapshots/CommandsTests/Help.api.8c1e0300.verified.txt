@@ -1,0 +1,38 @@
+Usage: assembly-differ api [<path>] [options]
+
+   Writes the public API of a build as .api files, or checks committed ones against it.
+
+Arguments:
+  [<path>]  A .dll, a directory of them, or a .nupkg. Defaults to the libraries in the current directory. [default: null]
+
+Global options:
+  -h, --help             Show help.
+
+Options:
+  -o, --output <string>  Write the files to this directory, and remove the .api files there the API no longer has. [default: null]
+  --verify <string>      Check that the .api files in this directory match the build, and exit with 5 when they do not. [default: null]
+  --split <string>       Split each API into a file per namespace, or per namespace's first two parts, such as System.Collections, for large assemblies. [default: none] [allowed: none|namespace|top-level-namespace]
+  -f, --format <string>  text writes .api files; json prints the API with every part of each declaration as a field. [default: text] [allowed: text|json]
+  -t, --target <values>  [repeatable] Only these assemblies, by file name without extension. Repeat it for more than one. [default: null]
+  --framework <string>   Only this target framework, such as net8.0. [default: null]
+  --project <values>     [repeatable] Read this project file, whatever kind it is. Repeat it for more than one. [default: null]
+  --include-tests        Read test projects too.
+  --include-unpackable   Read projects with IsPackable set to false too.
+
+Notes:
+
+  A .api file is the API as C#: an indented tree of namespaces, types and members, one declaration per line, with a
+  header that names the types from other assemblies. Commit them next to the code and a change to the API shows in
+  the pull request as a change to the file; --verify fails the build when they are out of date. Without a path it
+  reads the solution or projects in the current directory, as the projects command does, and takes each library's
+  Release build for every framework it targets; it does not build, so run dotnet build -c Release first. An assembly
+  whose frameworks have the same API gets one file; otherwise one per framework, such as MyLib.net8.0.api.
+
+Examples:
+  dotnet build -c Release && assembly-differ api -o api
+
+  assembly-differ api --verify api
+
+  assembly-differ api bin/Release/net8.0/MyLib.dll
+
+  assembly-differ api MyLib.1.2.0.nupkg --split namespace -o api

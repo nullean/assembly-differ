@@ -23,27 +23,30 @@ public sealed class ApiParseException : FormatException
 	public int Column { get; }
 }
 
-/// <summary>A parsed <c>.api</c> file: the API it describes, and where in the file each type and member is.</summary>
+/// <summary>Where a type or member is declared in a <c>.api</c> file.</summary>
+/// <param name="File">The file, as it was given to the parser; null for text parsed without a name.</param>
+/// <param name="Line">The line, counted from one.</param>
+public sealed record ApiLocation(string? File, int Line);
+
+/// <summary>Parsed <c>.api</c> files: the API they describe, and where each type and member is declared.</summary>
 public sealed class ApiDocument
 {
-	private readonly ConditionalWeakTable<object, Box> _lines;
+	private readonly ConditionalWeakTable<object, ApiLocation> _locations;
 
-	internal ApiDocument(ApiAssembly assembly, ConditionalWeakTable<object, Box> lines)
+	internal ApiDocument(ApiAssembly assembly, ConditionalWeakTable<object, ApiLocation> locations)
 	{
 		Assembly = assembly;
-		_lines = lines;
+		_locations = locations;
 	}
 
-	/// <summary>The API the file describes. Its version, public key token and target framework are not in the file and are left empty.</summary>
+	/// <summary>The API the files describe. Its version, public key token and target framework are not in them and are left empty.</summary>
 	public ApiAssembly Assembly { get; }
 
-	/// <summary>The line a type or member was declared on, counted from one; null for anything else.</summary>
-	public int? LineOf(object node) => _lines.TryGetValue(node, out var line) ? line.Value : null;
+	/// <summary>Where a type or member was declared; null for anything else.</summary>
+	public ApiLocation? LocationOf(object node) => _locations.TryGetValue(node, out var location) ? location : null;
 
-	internal sealed class Box(int value)
-	{
-		public int Value { get; } = value;
-	}
+	/// <summary>The line a type or member was declared on, counted from one; null for anything else.</summary>
+	public int? LineOf(object node) => LocationOf(node)?.Line;
 }
 
 /// <summary>Reads a <c>.api</c> file, as <see cref="ApiWriter"/> writes one, back into an <see cref="ApiAssembly"/>.</summary>
@@ -51,7 +54,31 @@ public static class ApiParser
 {
 	/// <summary>Parses <paramref name="text"/>.</summary>
 	/// <exception cref="ApiParseException">The text is not a <c>.api</c> file.</exception>
-	public static ApiDocument Parse(string text) => new Parser(text).Parse();
+	public static ApiDocument Parse(string text) => Parse([(null, text)]);
+
+	/// <summary>
+	/// Parses the files one assembly's API was split into, as <see cref="ApiWriter.Write(ApiAssembly, ApiSplit)"/> writes
+	/// them, into one API.
+	/// </summary>
+	/// <exception cref="ApiParseException">A file is not a <c>.api</c> file, or the files are of different assemblies.</exception>
+	public static ApiDocument Parse(IEnumerable<(string? File, string Text)> files)
+	{
+		var locations = new ConditionalWeakTable<object, ApiLocation>();
+		string? name = null;
+		var types = new List<ApiType>();
+		foreach (var (file, text) in files)
+		{
+			var assembly = new Parser(text, file, locations).Parse();
+			if (name is not null && assembly.Name != name)
+				throw new ApiParseException($"{file} is of {assembly.Name}, the others of {name}", 1, 1);
+			name = assembly.Name;
+			types.AddRange(assembly.Types);
+		}
+		if (name is null)
+			throw new ApiParseException("no .api file to read", 1, 1);
+		types = types.OrderBy(t => t.Namespace, StringComparer.Ordinal).ThenBy(t => t.Name, StringComparer.Ordinal).ToList();
+		return new ApiDocument(new ApiAssembly(name, new Version(0, 0, 0, 0), null, null, types), locations);
+	}
 
 	private sealed record Line(int Number, int Depth, string Text);
 
@@ -71,7 +98,8 @@ public static class ApiParser
 	private sealed class Parser
 	{
 		private readonly List<Line> _lines = [];
-		private readonly ConditionalWeakTable<object, ApiDocument.Box> _locations = new();
+		private readonly string? _file;
+		private readonly ConditionalWeakTable<object, ApiLocation> _locations;
 
 		// (namespace, metadata name) of every top-level type the file declares or its header names
 		private readonly Dictionary<(string, string), Declared> _own = [];
@@ -80,8 +108,10 @@ public static class ApiParser
 		private readonly HashSet<(string Namespace, string Path)> _externalInterfaces = [];
 		private readonly Dictionary<string, List<string>> _byShortName = new(StringComparer.Ordinal);
 
-		public Parser(string text)
+		public Parser(string text, string? file, ConditionalWeakTable<object, ApiLocation> locations)
 		{
+			_file = file;
+			_locations = locations;
 			var number = 0;
 			foreach (var raw in text.Split('\n'))
 			{
@@ -98,7 +128,7 @@ public static class ApiParser
 			}
 		}
 
-		public ApiDocument Parse()
+		public ApiAssembly Parse()
 		{
 			var index = 0;
 			if (_lines.Count == 0 || !_lines[0].Text.StartsWith("assembly ", StringComparison.Ordinal))
@@ -127,7 +157,7 @@ public static class ApiParser
 					throw new ApiParseException("a type outside a namespace", line.Number, 1);
 				types.Add(Type(ref i, 1, ns, null));
 			}
-			return new ApiDocument(new ApiAssembly(name, new Version(0, 0, 0, 0), null, null, types), _locations);
+			return new ApiAssembly(name, new Version(0, 0, 0, 0), null, null, types);
 		}
 
 		private static string Namespace(string label) => label == "global" ? string.Empty : label;
@@ -406,7 +436,7 @@ public static class ApiParser
 					m => m is ApiMethod { Kind: ApiMethodKind.Constructor }
 				));
 			var type = shell with { Members = members, NestedTypes = nested, CanBeExtendedOutside = canBeExtended };
-			_locations.Add(type, new ApiDocument.Box(line.Number));
+			_locations.Add(type, new ApiLocation(_file, line.Number));
 			return type;
 		}
 
@@ -548,7 +578,7 @@ public static class ApiParser
 			var member = type.Kind == ApiTypeKind.Enum
 				? EnumValue(cursor, attributes, enumType!)
 				: Declaration(cursor, type, scope, attributes, returnAttributes, indexerName);
-			_locations.Add(member, new ApiDocument.Box(line.Number));
+			_locations.Add(member, new ApiLocation(_file, line.Number));
 			return member;
 		}
 

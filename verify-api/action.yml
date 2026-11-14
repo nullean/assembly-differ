@@ -1,0 +1,150 @@
+name: 'assembly-differ verify-api'
+description: 'Fail when the committed .api files no longer match the build, and say what changed, who it breaks and the version bump'
+branding:
+  icon: 'check-square'
+  color: 'blue'
+
+# Checkout and the build are your own steps, before this one: it reads the build output and does not build.
+
+inputs:
+  directory:
+    description: 'The directory of committed .api files, as assembly-differ api -o wrote them.'
+    required: false
+    default: 'api'
+  path:
+    description: 'A .dll, a directory of them, or a .nupkg to check. Leave empty to read every library project of the solution in working-directory.'
+    required: false
+    default: ''
+  projects:
+    description: 'Project files to read instead of the libraries the solution holds, one per line.'
+    required: false
+    default: ''
+  target:
+    description: 'Only these assemblies, by file name without extension, one per line.'
+    required: false
+    default: ''
+  framework:
+    description: 'Only this target framework, such as net8.0.'
+    required: false
+    default: ''
+  split:
+    description: 'How the files were split: none, namespace or top-level-namespace.'
+    required: false
+    default: 'none'
+  comment:
+    description: 'On a pull request, keep a comment with what changed; it needs pull-requests: write.'
+    required: false
+    default: 'false'
+  working-directory:
+    description: 'Where the solution is, and where relative paths start.'
+    required: false
+    default: '.'
+  token:
+    description: 'The token for the comment.'
+    required: false
+    default: ${{ github.token }}
+  version:
+    description: 'The assembly-differ version to install. Defaults to the latest release.'
+    required: false
+    default: ''
+
+outputs:
+  matches:
+    description: 'true when the files match the build.'
+    value: ${{ steps.verify.outputs.matches }}
+  suggested-change:
+    description: 'The version change the differences call for: None, Patch, Minor or Major.'
+    value: ${{ steps.verify.outputs.suggested-change }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install assembly-differ
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        tools="$RUNNER_TEMP/assembly-differ-tool"
+        if [ -n "$VERSION" ]; then
+          dotnet tool install assembly-differ --tool-path "$tools" --version "$VERSION"
+        else
+          dotnet tool install assembly-differ --tool-path "$tools"
+        fi
+
+    - name: Verify the .api files
+      id: verify
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        DIRECTORY: ${{ inputs.directory }}
+        API_PATH: ${{ inputs.path }}
+        PROJECTS: ${{ inputs.projects }}
+        TARGETS: ${{ inputs.target }}
+        FRAMEWORK: ${{ inputs.framework }}
+        SPLIT: ${{ inputs.split }}
+      run: |
+        args=(api)
+        [ -n "$API_PATH" ] && args+=("$API_PATH")
+        while IFS= read -r project; do [ -n "$project" ] && args+=(--project "$project"); done <<< "$PROJECTS"
+        while IFS= read -r target; do [ -n "$target" ] && args+=(--target "$target"); done <<< "$TARGETS"
+        [ -n "$FRAMEWORK" ] && args+=(--framework "$FRAMEWORK")
+        args+=(--split "$SPLIT" --verify "$DIRECTORY")
+        report="$RUNNER_TEMP/assembly-differ-verify.txt"
+        set +e
+        "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}" | tee "$report"
+        code=${PIPESTATUS[0]}
+        set -e
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+        if [ "$code" = "0" ]; then
+          echo "matches=true" >> "$GITHUB_OUTPUT"
+          echo "suggested-change=None" >> "$GITHUB_OUTPUT"
+        else
+          echo "matches=false" >> "$GITHUB_OUTPUT"
+          suggested=$(sed -n 's/.*Suggested version change: \([A-Za-z]*\).*/\1/p' "$report" | tail -1)
+          echo "suggested-change=${suggested:-None}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && github.event.pull_request.number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ github.repository }}
+        PULL_REQUEST: ${{ github.event.pull_request.number }}
+        REPORT: ${{ steps.verify.outputs.report }}
+        CODE: ${{ steps.verify.outputs.code }}
+        SUGGESTED: ${{ steps.verify.outputs.suggested-change }}
+      run: |
+        marker='<!-- assembly-differ:verify-api -->'
+        existing=$(gh api "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+        body="$RUNNER_TEMP/assembly-differ-verify.md"
+        if [ "$CODE" = "0" ]; then
+          # only an earlier comment is updated: a pull request whose files always matched gets none
+          [ -z "$existing" ] && exit 0
+          printf '%s\n### Public API files match the build\n' "$marker" > "$body"
+        elif [ "$CODE" = "5" ]; then
+          {
+            printf '%s\n### Public API files are out of date\n\nSuggested version change: **%s**\n\n```text\n' "$marker" "$SUGGESTED"
+            grep -v '^\[api\] Update the files' "$REPORT" || true
+            printf '```\n\n'
+            sed -n 's/^\[api\] Update the files with: \(.*\)/Update them with `\1`, and commit the result./p' "$REPORT"
+          } > "$body"
+        else
+          exit 0
+        fi
+        if [ -n "$existing" ]; then
+          gh api -X PATCH "repos/$REPOSITORY/issues/comments/$existing" -F "body=@$body" > /dev/null
+        else
+          gh api -X POST "repos/$REPOSITORY/issues/$PULL_REQUEST/comments" -F "body=@$body" > /dev/null
+        fi
+
+    - name: Fail when the files do not match
+      shell: bash
+      env:
+        CODE: ${{ steps.verify.outputs.code }}
+      run: |
+        if [ "$CODE" = "5" ]; then
+          echo "::error title=assembly-differ::the .api files do not match the build; see the step above for what changed"
+        fi
+        exit "$CODE"

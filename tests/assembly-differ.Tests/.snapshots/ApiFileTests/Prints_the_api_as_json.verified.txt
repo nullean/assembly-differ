@@ -1,0 +1,110 @@
+exit code: 0
+--- stdout
+[
+  {
+    "assembly": "Lib",
+    "version": "0.0.0.0",
+    "types": [
+      {
+        "declaration": "public interface IShape",
+        "namespace": "Lib",
+        "name": "IShape",
+        "kind": "interface",
+        "accessibility": "public",
+        "modifiers": [],
+        "canBeExtendedOutside": true,
+        "typeParameters": [],
+        "interfaces": [],
+        "attributes": [],
+        "members": [
+          {
+            "declaration": "double Area()",
+            "name": "Area",
+            "accessibility": "public",
+            "kind": "method",
+            "modifiers": [
+              "abstract"
+            ],
+            "returnType": "double",
+            "typeParameters": [],
+            "parameters": [],
+            "extension": false,
+            "attributes": []
+          }
+        ],
+        "nestedTypes": []
+      },
+      {
+        "declaration": "public class Widget",
+        "namespace": "Lib",
+        "name": "Widget",
+        "kind": "class",
+        "accessibility": "public",
+        "modifiers": [],
+        "canBeExtendedOutside": true,
+        "typeParameters": [],
+        "interfaces": [],
+        "attributes": [],
+        "members": [
+          {
+            "declaration": "public Widget()",
+            "name": ".ctor",
+            "accessibility": "public",
+            "kind": "constructor",
+            "modifiers": [],
+            "returnType": "void",
+            "typeParameters": [],
+            "parameters": [],
+            "extension": false,
+            "attributes": []
+          },
+          {
+            "declaration": "public int Size { get; set; }",
+            "name": "Size",
+            "accessibility": "public",
+            "kind": "property",
+            "modifiers": [],
+            "type": "int",
+            "parameters": [],
+            "get": "public",
+            "set": "public",
+            "required": false,
+            "attributes": []
+          },
+          {
+            "declaration": "public void Draw()",
+            "name": "Draw",
+            "accessibility": "public",
+            "kind": "method",
+            "modifiers": [],
+            "returnType": "void",
+            "typeParameters": [],
+            "parameters": [],
+            "extension": false,
+            "attributes": []
+          },
+          {
+            "declaration": "public string Name(int index)",
+            "name": "Name",
+            "accessibility": "public",
+            "kind": "method",
+            "modifiers": [],
+            "returnType": "string",
+            "typeParameters": [],
+            "parameters": [
+              {
+                "name": "index",
+                "type": "int",
+                "attributes": []
+              }
+            ],
+            "extension": false,
+            "attributes": []
+          }
+        ],
+        "nestedTypes": []
+      }
+    ]
+  }
+]
+--- stderr

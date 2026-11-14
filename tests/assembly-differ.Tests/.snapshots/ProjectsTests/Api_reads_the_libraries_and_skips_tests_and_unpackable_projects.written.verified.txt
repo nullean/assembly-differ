@@ -1,0 +1,6 @@
+exit code: 0
+--- stdout
+[diff] Skipping Internal: IsPackable is false (--include-unpackable includes it)
+[diff] Skipping Lib.Tests: a test project (--include-tests includes it)
+[api] Wrote api/Lib.api
+--- stderr

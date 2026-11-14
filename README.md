@@ -108,6 +108,7 @@ earlier release is a first release: there is nothing to compare, so the command 
 |---|---|
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
+| `api [path]` | nothing: writes the public API as `.api` files, and `--verify` checks committed ones against the build (see [Public API files](#public-api-files)) |
 | `upgrades` | in a solution, every package it references directly that has a newer release, and what updating each breaks in your code |
 | `nuget <id> [<version>] [<new-version>]` | in a solution, the version your projects resolve with the latest release, or with `<version>`: what updating would change; anywhere, two published versions |
 | `projects` | every library project in the directory against its latest release; what runs without a command |
@@ -247,6 +248,74 @@ Outputs: `suggested-change` (`None`, `Patch`, `Minor` or `Major`), `breaking-cha
 On a pull request from a fork the token cannot write, so the action writes the job summary and still applies
 `fail-on`, but leaves the comment and labels alone. The deprecated `first`, `second` and `args` inputs still run `diff`
 with two provider specs in the container image, as the action did before.
+
+### Public API files
+
+`assembly-differ api` writes a library's public API as `.api` files: C#, one declaration per line, in a tree of
+namespaces, types and members, with base types, interfaces, constraints, nullability and default values. Commit them,
+and a change to the API shows in the pull request as a diff of the file, next to the code that caused it:
+
+```sh
+dotnet build -c Release && assembly-differ api -o api   # write api/MyLib.api for every library in the solution
+assembly-differ api --verify api                        # exit 5 when the build no longer matches them
+```
+
+```
+assembly MyLib
+using System: ObsoleteAttribute
+using interface System: IComparable<>, IDisposable
+
+namespace MyLib.Drawing
+  public interface IShape : IDisposable
+    double Area { get; }
+    void Scale(double factor) { … }
+
+  public sealed class Widget : Shape, IComparable<Widget>
+    public Widget(string name, int size = 1)
+    public required string? Name { get; init; }
+```
+
+`--verify` says what changed since the committed files, by path and line, who each change breaks (callers,
+implementers or inheritors), whether it breaks compiled code, source or both, and the version change it calls for:
+
+```
+[api] MyLib: 2 changes since the committed files, suggested version change: Major
+  api/MyLib.api:4  MyLib.Drawing › IShape › Resize(double)  added void Resize(double factor)  [major: breaks implementers, compiled code and source]
+  api/MyLib.api:9  MyLib.Drawing › Widget › Draw()  removed public void Draw()  [major: breaks callers, compiled code and source]
+[api] api does not match the build. Suggested version change: Major
+[api] Update the files with: assembly-differ api -o api
+```
+
+A change that only breaks implementers or inheritors of a type nobody outside can implement or derive from is no break;
+one on a type marked with an attribute named `InternalImplementationOnlyAttribute` is listed but does not ask for a
+major version. `api` takes a `.dll`, a directory or a `.nupkg` instead of the solution, `--split namespace` or
+`--split top-level-namespace` for a file per namespace in a large assembly, and `-f json` to print every part of each
+declaration as a field.
+
+Check them on every pull request with the `verify-api` action. Checkout and the build are your steps, before it:
+
+```yaml
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build -c Release
+      - uses: nullean/assembly-differ/verify-api@v1
+        with:
+          directory: api
+```
+
+It fails when the files do not match, with the report above in the log. With `comment: true` (and
+`pull-requests: write`) it also keeps a comment on the pull request with the report and the command that updates the
+files. Its other inputs are `path`, `projects`, `target`, `framework` and `split`, as for the command, and
+`working-directory`, `token` and `version`; its outputs are `matches` and `suggested-change`.
 
 ### Container
 

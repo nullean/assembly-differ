@@ -82,6 +82,9 @@ public sealed record ApiChange(
 	/// <summary>The type or member in the new version.</summary>
 	public object? NewNode { get; init; }
 
+	/// <summary>The old version of the type the change is in, which locates an addition in the old file.</summary>
+	public object? OldScope { get; init; }
+
 	/// <summary>The version change this change calls for on its own.</summary>
 	public SuggestedVersionChange Level { get; init; }
 

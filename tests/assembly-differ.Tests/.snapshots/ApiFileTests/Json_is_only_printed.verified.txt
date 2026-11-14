@@ -1,0 +1,5 @@
+exit code: 1
+--- stdout
+
+--- stderr
+[api] json is printed; -o and --verify work with .api files, the text format

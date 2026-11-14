@@ -14,6 +14,8 @@ Global options:
   --version   Show version.
 
 Commands:
+  api           Writes the public API of a build as .api files, or checks
+                committed ones against it.
   files         Compares two local builds: dlls, directories of dlls, or .nupkg
                 files.
   nuget         Compares two versions of a package; in a solution, the version

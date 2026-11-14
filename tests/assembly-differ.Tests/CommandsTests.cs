@@ -7,7 +7,7 @@ namespace Differ.Tests;
 /// <summary>The command for each source: <c>files</c>, <c>nuget</c> and <c>release</c>, and the help of every command.</summary>
 public class CommandsTests
 {
-	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "projects", "pull-request", "upgrades"];
+	public static IEnumerable<string> Helps() => ["", "files", "nuget", "release", "projects", "pull-request", "upgrades", "api"];
 
 	[Test]
 	[MethodDataSource(nameof(Helps))]

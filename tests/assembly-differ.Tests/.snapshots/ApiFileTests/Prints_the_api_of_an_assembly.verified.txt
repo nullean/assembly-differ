@@ -1,0 +1,14 @@
+exit code: 0
+--- stdout
+assembly Lib
+
+namespace Lib
+  public interface IShape
+    double Area()
+
+  public class Widget
+    public Widget()
+    public int Size { get; set; }
+    public void Draw()
+    public string Name(int index)
+--- stderr

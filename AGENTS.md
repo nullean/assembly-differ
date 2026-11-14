@@ -12,6 +12,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ` | the tool (net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
+| `src/assembly-differ/ApiFiles` | the `api` command: writes `.api` files (`-o`, `--split`), prints them or JSON, and `--verify` checks committed ones (exit 5) with the rich comparison |
 | `src/assembly-differ.skills` | the `assembly-differ.skills` package: the agent skill (`skills/assembly-differ/SKILL.md`), content only. Keep it in step with the CLI |
 | `src/Nullean.PublicApi` | the `Nullean.PublicApi` package (netstandard2.0, net10.0): `ApiReader` reads an assembly's public API with System.Reflection.Metadata into the rich model (base types, interfaces, constraints, nullability, tuple names, defaults, attributes), `ApiWriter` writes it as a `.api` file and `ApiParser` reads one back |
 | `src/Nullean.PublicApi.Diff` | the `Nullean.PublicApi.Diff` package (netstandard2.0, net10.0): `ApiComparison` compares two rich models and classifies each change by who it breaks, binary or source, and extension points; `ApiDiff`, `VersionChange` and `UsageFilter` are the JustAssembly-compatible comparison behind the commands' reports, on the internal model in `JustAssembly/` |
@@ -20,6 +21,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `build/scripts` | the F# build ([Runna.Fs](https://www.nuget.org/packages/Runna.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's and the libraries' assemblies are signed with |
 | `action.yml` | the GitHub Action: runs the `edge` container image |
+| `verify-api/action.yml` | the `verify-api` action: installs the tool and runs `api --verify`; checkout and build are the caller's steps; `comment: true` keeps a pull request comment through `gh api` |
 
 ## Commands
 
@@ -90,7 +92,7 @@ one release label.
   PolySharp supplies the language features.
 
 - The CLI surface is the contract `action.yml`, the container and other repositories' builds rely on: the commands
-  (`projects`, the default, `release`, `files`, `nuget`, `pull-request`) and their options, and the hidden `diff` with its provider specs and flags.
+  (`projects`, the default, `release`, `files`, `nuget`, `pull-request`, `api`) and their options, and the hidden `diff` with its provider specs and flags.
   Removing or renaming any of it is a breaking change. `ApiCommands.cs` holds the commands, `DiffRunner.cs` the
   comparison they share with `diff`.
 - The build diffs this tool against its own previous release (`generateapichanges`), so a broken diff fails its own CI.

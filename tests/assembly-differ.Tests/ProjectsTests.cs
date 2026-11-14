@@ -115,6 +115,16 @@ public class ProjectsTests
 	}
 
 	[Test]
+	public async Task Api_reads_the_libraries_and_skips_tests_and_unpackable_projects()
+	{
+		using var repository = new Repository("method-removed");
+		repository.Build();
+
+		(await repository.Run("api", "-o", "api")).Should().MatchSnapshot(name: "written");
+		(await repository.Run("api", "--verify", "api")).Should().MatchSnapshot(name: "checked");
+	}
+
+	[Test]
 	public async Task A_library_without_a_release_has_nothing_to_compare()
 	{
 		using var repository = new Repository("method-added", released: false);

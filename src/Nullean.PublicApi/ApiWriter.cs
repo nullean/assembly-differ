@@ -75,6 +75,34 @@ public static class ApiWriter
 		return builder.ToString();
 	}
 
+	/// <summary>
+	/// The <c>.api</c> files for <paramref name="assembly"/>, split as asked. Each file's header names every type it
+	/// uses from other files and other assemblies, so it parses on its own; <see cref="ApiParser.Parse(IEnumerable{ValueTuple{string, string}})"/>
+	/// reads them back together.
+	/// </summary>
+	public static IReadOnlyList<ApiFile> Write(ApiAssembly assembly, ApiSplit split)
+	{
+		if (split == ApiSplit.None)
+			return [new ApiFile(assembly.Name, Write(assembly))];
+		return assembly
+			.Types
+			.GroupBy(t => Chunk(t.Namespace, split))
+			.OrderBy(g => g.Key, StringComparer.Ordinal)
+			.Select(g => new ApiFile(g.Key, Write(assembly with { Types = g.ToList() })))
+			.ToList();
+	}
+
+	/// <summary>The file a namespace goes to: itself, or its first two parts, such as <c>System.Collections</c>.</summary>
+	private static string Chunk(string ns, ApiSplit split)
+	{
+		if (ns.Length == 0)
+			return "global";
+		if (split == ApiSplit.Namespace)
+			return ns;
+		var parts = ns.Split('.');
+		return parts.Length <= 2 ? ns : parts[0] + "." + parts[1];
+	}
+
 	/// <summary>A type's declaration line, as in a <c>.api</c> file: <c>public sealed class Widget : Shape</c>.</summary>
 	public static string Declaration(ApiType type)
 	{
@@ -696,3 +724,21 @@ public static class ApiWriter
 		};
 	}
 }
+
+/// <summary>How <see cref="ApiWriter.Write(ApiAssembly, ApiSplit)"/> splits a large API into files.</summary>
+public enum ApiSplit
+{
+	/// <summary>One file.</summary>
+	None,
+
+	/// <summary>A file per namespace.</summary>
+	Namespace,
+
+	/// <summary>A file per namespace's first two parts, such as <c>System.Collections</c> for <c>System.Collections.Generic</c>.</summary>
+	TopLevelNamespace,
+}
+
+/// <summary>One <c>.api</c> file of a split API.</summary>
+/// <param name="Name">The assembly's name for an API in one file; otherwise the namespace or namespaces the file holds, <c>global</c> for the global namespace.</param>
+/// <param name="Text">The file's text.</param>
+public sealed record ApiFile(string Name, string Text);
