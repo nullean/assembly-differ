@@ -19,13 +19,14 @@ the `assembly-differ` package itself, not those.
 
 ## Quick start
 
-Diff the last release on nuget.org against what you just built, and fail on a breaking change:
+Compare the package you just packed with its last release on nuget.org, and fail on a breaking change:
 
 ```sh
-assembly-differ diff "previous-nuget|MyLib|1.3.0|net8.0" "directory|src/MyLib/bin/Release/net8.0" -t MyLib -f markdown -p major
+assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major
 ```
 
-A diff of Proc 0.13.0 against 0.14.0, which replaced its `Start*` overloads, ends with:
+`assembly-differ nuget Proc 0.13.0 0.14.0 -f xml`, a diff of two versions where 0.14.0 replaced the `Start*`
+overloads, ends with:
 
 ```console
       <Method Name="Start(StartArguments, CancellationToken)" DiffType="New" />
@@ -34,21 +35,21 @@ A diff of Proc 0.13.0 against 0.14.0, which replaced its `Start*` overloads, end
 [diff] Suggested version change: Major
 ```
 
-| Spec | Assemblies |
+| Command | Compares |
 |---|---|
-| `assembly\|<path>` | one dll |
-| `directory\|<path>` | every dll in a directory, matched by file name |
-| `nuget\|<id>\|<version>\|[tfm]` | a package from the NuGet sources your NuGet.config lists |
-| `previous-nuget\|<id>\|<version>\|[tfm]` | the release on nuget.org before `<version>` |
-| `github\|<owner/repo>\|<commit>\|<build command>\|<relative output path>` | a commit, cloned and built |
+| `release <path>` | a `.nupkg`, `.dll` or directory with the release before it on nuget.org |
+| `files <old> <new>` | two local builds: `.dll`s, directories or `.nupkg`s |
+| `nuget <id> <old-version> <new-version>` | two published versions |
+| `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a build with an older commit, built with your command |
 
-| Flag | What |
+| Option | What |
 |---|---|
-| `-t`, `--target` | only diff these assemblies (repeatable); defaults to every assembly both sides have |
-| `-f`, `--format` | `xml` (default), `markdown`, `asciidoc` or `github-comment` |
-| `-o`, `--output` | output directory or file; without it the diff only goes to the console |
-| `-p`, `--prevent-change` | exit with `4` when the suggested change is at least `patch`, `minor` or `major` |
-| `-a`, `--allow-empty-previous-nuget` | succeed when `previous-nuget` finds no earlier release (a first release) |
+| `-t`, `--target` | only compare these assemblies (repeatable); defaults to every assembly both sides have |
+| `-f`, `--format` | `markdown` (default), `xml`, `asciidoc`, `github-comment` or `json` |
+| `-o`, `--output` | a directory or file to write the report to, besides the console |
+| `--fail-on` | exit with `4` when the suggested change is at least `patch`, `minor` or `major` |
+
+`diff` with provider specs, such as `"nuget|Proc|0.13.0"`, still works as before for the builds that call it.
 
 It also runs as a GitHub Action (`uses: nullean/assembly-differ@main`) and as a container
 (`ghcr.io/nullean/assembly-differ`), both without a .NET SDK.

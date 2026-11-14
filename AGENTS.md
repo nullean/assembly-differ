@@ -1,8 +1,8 @@
 # assembly-differ
 
 A .NET tool that diffs the public API of two sets of assemblies and suggests the version change it needs (none,
-patch, minor, major). Each side comes from a provider: `assembly`, `directory`, `nuget`, `previous-nuget` or
-`github`; the result is written as `xml`, `markdown`, `asciidoc` or `github-comment`. It is also published as a
+patch, minor, major). A command per source (`release`, `files`, `nuget`, `github`) picks the two sides; the result is
+written as `markdown`, `xml`, `asciidoc`, `github-comment` or `json`. It is also published as a
 distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`action.yml`) that runs it.
 
 ## Layout
@@ -80,8 +80,10 @@ one release label.
 - `Engine/` reproduces the reports of JustAssembly, which it replaced, quirks included: a type that became less visible
   is reported as more visible, and nested types are named `.Name`. Changing a report is a change to the CLI contract.
 
-- The CLI surface (`diff`, the provider specs and the flags) is the contract `action.yml`, the container and other
-  repositories' builds rely on. Removing or renaming any of it is a breaking change.
+- The CLI surface is the contract `action.yml`, the container and other repositories' builds rely on: the commands
+  (`release`, `files`, `nuget`, `github`) and their options, and the hidden `diff` with its provider specs and flags.
+  Removing or renaming any of it is a breaking change. `ApiCommands.cs` holds the commands, `DiffRunner.cs` the
+  comparison they share with `diff`.
 - The build diffs this tool against its own previous release (`generateapichanges`), so a broken diff fails its own CI.
 - Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
   lines; values come from `text` inside `shell { }` (`Versions.fs`). Do not call the C# `ProcNet` API from the build.

@@ -1,0 +1,16 @@
+Usage: assembly-differ <namespace|command> [options]
+
+ (default command)
+   Compares the public API of two versions of a library and suggests the version change it calls for. Pick a command for where the versions come from; diff with provider specs, such as nuget|Proc|0.13.0, still works for existing builds.
+
+Global options:
+  -h, --help  Show help.
+  --version   Show version.
+
+Commands:
+  files    Compares two local builds: dlls, directories of dlls, or .nupkg
+           files.
+  github   Compares a new build with an older commit of a GitHub repository,
+           built with the command you give.
+  nuget    Compares two published versions of a package.
+  release  Compares a new build with the release before it on nuget.org.

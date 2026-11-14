@@ -1,0 +1,21 @@
+Usage: assembly-differ nuget <package> <old-version> <new-version> [options]
+
+   Compares two published versions of a package.
+
+Arguments:
+  <package>      The package id.
+  <old-version>  The old version.
+  <new-version>  The new version.
+
+Global options:
+  -h, --help             Show help.
+
+Options:
+  --framework <string>   The target framework to compare, such as net8.0. Defaults to the first the package ships. [default: null]
+  -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
+  -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
+  -o, --output <string>  A directory or file to write the report to, besides the console.
+  --fail-on <string>     Exit with code 4 when the suggested version change is at least this: none (never), patch, minor or major. [default: none] [allowed: none|patch|minor|major]
+
+Examples:
+  assembly-differ nuget Proc 0.13.0 0.14.0

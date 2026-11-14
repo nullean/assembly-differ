@@ -1,0 +1,8 @@
+exit code: 0
+--- stdout
+[diff] Difference found: NupkgAssemblyProvider:Lib.dll and NupkgAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.IShape` is deleted
+[diff] Suggested version change: Major
+--- stderr
