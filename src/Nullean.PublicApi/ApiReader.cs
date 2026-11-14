@@ -609,6 +609,9 @@ public sealed class ApiReader
 		}
 		else if (isVirtual)
 		{
+			// a covariant return override is a new slot that the runtime is told overrides the base one
+			if (isNewSlot && HasAttribute(method.GetCustomAttributes(), CompilerServices + "PreserveBaseOverridesAttribute"))
+				isNewSlot = false;
 			if (!isNewSlot)
 				modifiers |= ApiMemberModifiers.Override | (isFinal ? ApiMemberModifiers.Sealed : 0) | (isAbstract ? ApiMemberModifiers.Abstract : 0);
 			else if (isAbstract)

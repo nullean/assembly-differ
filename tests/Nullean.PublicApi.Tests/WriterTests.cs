@@ -62,6 +62,9 @@ public class WriterTests
 			}
 			public ref struct Span2 { public int Length; }
 			public record Person(string Name, int Age);
+			public sealed record Employee(string Name, int Age, string Team) : Person(Name, Age);
+			public class Animal { public virtual Animal Clone() => new(); }
+			public class Dog : Animal { public override Dog Clone() => new(); }
 			public class Outer<T>
 			{
 				public class Inner<U> { public T? First; public U? Second; }
