@@ -17,11 +17,24 @@ public static class Comment
 	/// <summary>GitHub refuses a comment over 65536 characters; the details stop well before that.</summary>
 	private const int MaxLength = 60000;
 
-	public static string Render(JsonElement report, IReadOnlyCollection<string> labels)
+	public static string Render(JsonElement report, IReadOnlyCollection<string> labels, Gate gate = Gate.None, string allowLabel = "")
 	{
 		var body = new StringBuilder();
 		body.AppendLine(Marker);
 		body.AppendLine(LabelsMarkerPrefix + string.Join(",", labels) + " -->");
+		switch (gate)
+		{
+			case Gate.Blocked:
+				body.AppendLine(
+					allowLabel.Length > 0
+						? $"> [!CAUTION]\n> This check fails on this change. If it is intended, add the `{allowLabel}` label to allow it.\n"
+						: "> [!CAUTION]\n> This check fails on this change.\n"
+				);
+				break;
+			case Gate.Allowed:
+				body.AppendLine($"> [!NOTE]\n> The `{allowLabel}` label allows this change.\n");
+				break;
+		}
 
 		if (report.TryGetProperty("firstRelease", out var first) && first.GetBoolean())
 		{

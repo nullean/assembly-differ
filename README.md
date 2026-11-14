@@ -153,6 +153,11 @@ version (`--major-label`, `--minor-label` and `--patch-label` rename them). It r
 and a later run removes only those, never a label a person added. It needs `GITHUB_TOKEN` with `pull-requests: write`.
 Without write access, as on a pull request from a fork, it writes the job summary, warns and succeeds.
 
+With `--fail-on major`, a breaking change fails the check, and the comment says how to go ahead: add the
+`breaking-allowed` label (`--allow-label` renames it). Adding the label runs the workflow again, provided it runs on
+the `labeled` and `unlabeled` events, and the check passes with the change labelled `breaking`. So a breaking change is
+caught, labelled for release-drafter, and merged only once someone says it is intended.
+
 ### Provider specs
 
 Before it had a command per source, the tool took two provider specs, and `diff` still does, unchanged, for the builds

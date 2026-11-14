@@ -94,6 +94,66 @@ public class PullRequestTests
 	}
 
 	[Test]
+	public async Task Fails_a_breaking_change_until_the_allow_label_is_added()
+	{
+		using var fixture = Scenarios.Create("method-removed");
+		using var github = new FakeGitHub();
+		var report = await ReportFor(fixture, "report");
+
+		var (blocked, _) = await PullRequest(github, fixture, report, true, "--fail-on", "major");
+
+		blocked.ExitCode.Should().Be(4);
+		blocked.Error.Should().Contain("add the breaking-allowed label to the pull request to allow it");
+		github.Labels.Should().Equal("breaking");
+		github.Comments.Should().ContainSingle().Which.Body.Should().Contain("add the `breaking-allowed` label to allow it");
+
+		// the author agrees: adding the label runs the workflow again
+		github.Labels.Add("breaking-allowed");
+		var (allowed, _) = await PullRequest(github, fixture, report, true, "--fail-on", "major");
+
+		allowed.ExitCode.Should().Be(0, allowed.Error);
+		allowed.Out.Should().Contain("The Major change is allowed by the breaking-allowed label");
+		github.Labels.Should().Equal("breaking", "breaking-allowed");
+		github.Comments.Should().ContainSingle().Which.Body.Should().Contain("The `breaking-allowed` label allows this change.");
+	}
+
+	[Test]
+	public async Task A_change_below_fail_on_passes()
+	{
+		using var fixture = Scenarios.Create("method-added");
+		using var github = new FakeGitHub();
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), true, "--fail-on", "major");
+
+		result.ExitCode.Should().Be(0, result.Error);
+		github.Labels.Should().Equal("feature");
+	}
+
+	[Test]
+	public async Task The_allow_label_can_be_renamed()
+	{
+		using var fixture = Scenarios.Create("method-removed");
+		using var github = new FakeGitHub();
+		github.Labels.Add("api-break-ok");
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), true, "--fail-on", "major", "--allow-label", "api-break-ok");
+
+		result.ExitCode.Should().Be(0, result.Error);
+	}
+
+	[Test]
+	public async Task Outside_a_pull_request_fail_on_still_applies()
+	{
+		using var fixture = Scenarios.Create("method-removed");
+		using var github = new FakeGitHub();
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), false, "--fail-on", "major");
+
+		result.ExitCode.Should().Be(4);
+		result.Error.Should().Contain("The Major change is at least --fail-on major").And.NotContain("add the");
+	}
+
+	[Test]
 	public async Task Never_removes_a_label_a_person_added()
 	{
 		using var fixture = Scenarios.Create("unchanged");
@@ -135,7 +195,7 @@ public class PullRequestTests
 		var result = await Cli.RunInAsync(fixture.Root, environment, "pull-request", report, "--repository", "owner/repo", "--pull-request", "7");
 
 		result.ExitCode.Should().Be(1);
-		result.Error.Should().StartWith("[diff] could not update pull request #7 in owner/repo:").And.NotContain("   at ");
+		result.Error.Should().StartWith("[diff] could not read pull request #7 in owner/repo:").And.NotContain("   at ");
 	}
 
 	[Test]
