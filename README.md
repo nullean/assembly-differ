@@ -259,6 +259,25 @@ docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-differ:edge file
 It is native-AOT on a chiseled `runtime-deps` base, with no shell, running as a non-root user. `edge` tracks the latest
 build of `main`; `latest` and the version tags (for example `0.18.1`) follow releases.
 
+## Next to package validation
+
+The .NET SDK's [package validation](https://learn.microsoft.com/dotnet/fundamentals/apicompat/package-validation/overview)
+(`EnablePackageValidation`, built on ApiCompat) checks that a package is consistent within itself: that its target
+frameworks and runtime-specific assemblies are compatible with each other. It can also compare with a baseline version
+you set in the project file, and it answers one question: does this break? Keep it for the checks inside one package.
+
+assembly-differ answers the questions around it:
+
+- **Which version bump.** It suggests `None`, `Patch`, `Minor` or `Major`, and treats a new interface, abstract or
+  `required` member as breaking, since existing code has to change for it. Package validation reports additions only in
+  strict mode, as errors like removals, and did not flag a new `required` property when we tried it.
+- **Against which release.** It finds the release before the version being built on your NuGet.config feeds, and a
+  first release passes, so no baseline version is kept by hand.
+- **On the pull request.** It comments, sets the release-drafter label, and fails on a breaking change until someone
+  adds the allow label.
+- **For the code that consumes a package.** `nuget X 2.0.0` and `upgrades` show what an update breaks in the code you
+  build, by the API it uses.
+
 ## Packages
 
 The tool ships as one package per platform. Install the root package; the .NET SDK picks the right one.
