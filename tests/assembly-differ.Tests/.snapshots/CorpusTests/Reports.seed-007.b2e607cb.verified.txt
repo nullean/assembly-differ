@@ -1,0 +1,93 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C1" DiffType="New" />
+    <Type Name="Lib.S2&lt;T&gt;" DiffType="Modified">
+      <Method Name="G2&lt;U&gt;(U, IntPtr)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member changed to instance.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+      <Event Name="Ev0" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C1` is new
+## `Lib.S2<T>`
+### `G2<U>(U, IntPtr)`
+Member changed to instance.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C1`
+
+[horizontal]
+type:: added
+
+[discrete]
+=== `Lib.S2<T>`
+
+[horizontal]
+`G2<U>(U, IntPtr)` method::
+Member changed to instance.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 1 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 4 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
++ 🌟 Lib.C1 
+```
+```diff
+Lib.S2<T> 
+- 🔴 Ev0 💥 
++ 🔷 G2<U>(U, IntPtr) 💥 
++ 🔷 Member changed to instance. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

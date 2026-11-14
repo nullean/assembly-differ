@@ -1,0 +1,81 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.I1&lt;in T&gt;" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.ObsoleteAttribute::.ctor()" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Method Name="M6(Int32, Int32)" DiffType="New" />
+      <Event Name="Ev1" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.I1<in T>`
+### `M6(Int32, Int32)` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.I1<in T>`
+
+[horizontal]
+`M6(Int32, Int32)` method:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 2 removals
+- 🔷 0 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 3 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.I1<in T> 
+- 🔴 System.ObsoleteAttribute::.ctor() 💥 
+- 🔴 Ev1 💥 
++ 🌟 M6(Int32, Int32) 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

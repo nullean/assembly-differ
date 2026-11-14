@@ -1,0 +1,121 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C3&lt;T&gt;" DiffType="Modified">
+      <Property Name="P8" DiffType="New" />
+      <Method Name="M0(List&lt;Int32&gt;&amp;)" DiffType="Deleted" />
+      <Method Name="M3(ValueTuple&lt;Int32, String&gt;)" DiffType="Deleted" />
+      <Method Name="M3(ValueTuple&lt;Int32, String&gt;&amp;)" DiffType="New" />
+    </Type>
+    <Type Name="Lib.S0" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()" DiffType="New" />
+      </DeclarationDiffs>
+      <Property Name="P2" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()" DiffType="New" />
+        </DeclarationDiffs>
+      </Property>
+      <Method Name="M5()" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member type changed from Dictionary&lt;String, List&lt;Int32&gt;&gt; to List&lt;Int32&gt;.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C3<T>`
+### `M0(List<Int32>&)` is added
+### `M3(ValueTuple<Int32, String>)` is added
+### `M3(ValueTuple<Int32, String>&)` is added
+### `P8` is added
+## `Lib.S0`
+### `M5()`
+Member type changed from `Dictionary<String, List<Int32>>` to `List<Int32>`.
+### `P2` is added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C3<T>`
+
+[horizontal]
+`M0(List<Int32>&)` method:: deleted
+`M3(ValueTuple<Int32, String>)` method:: deleted
+`M3(ValueTuple<Int32, String>&)` method:: added
+`P8` property:: added
+
+[discrete]
+=== `Lib.S0`
+
+[horizontal]
+`M5()` method::
+Member type changed from `Dictionary<String, List<Int32>>` to `List<Int32>`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 4 new additions
+- 🔴 2 removals
+- 🔷 3 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 9 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.S0 
++ 🌟 System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor() 
++ 🔷 M5() 💥 
++ 🔷 Member type changed from Dictionary<String, List<Int32>> to List<Int32>. 💥 
++ 🔷 P2 
++ 🌟 System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor() 
+```
+```diff
+Lib.C3<T> 
+- 🔴 M0(List<Int32>&) 💥 
+- 🔴 M3(ValueTuple<Int32, String>) 💥 
++ 🌟 M3(ValueTuple<Int32, String>&) 
++ 🌟 P8 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

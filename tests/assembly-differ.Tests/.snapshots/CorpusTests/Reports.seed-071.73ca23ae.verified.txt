@@ -1,0 +1,104 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.D2" DiffType="Modified">
+      <Method Name="BeginInvoke(String&amp;, AsyncCallback, Object)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Parameter name changed from value to index.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="EndInvoke(String&amp;, IAsyncResult)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Parameter name changed from value to index.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+      <Method Name="Invoke(String&amp;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Parameter name changed from value to index.</DiffItem>
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.D2`
+### `BeginInvoke(String&, AsyncCallback, Object)`
+Parameter name changed from `value` to `index`.
+### `EndInvoke(String&, IAsyncResult)`
+Parameter name changed from `value` to `index`.
+### `Invoke(String&)`
+Parameter name changed from `value` to `index`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.D2`
+
+[horizontal]
+`BeginInvoke(String&, AsyncCallback, Object)` method::
+Parameter name changed from `value` to `index`.
+`EndInvoke(String&, IAsyncResult)` method::
+Parameter name changed from `value` to `index`.
+`Invoke(String&)` method::
+Parameter name changed from `value` to `index`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 0 new additions
+- 🔴 0 removals
+- 🔷 6 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 6 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.D2 
++ 🔷 BeginInvoke(String&, AsyncCallback, Object) 💥 
++ 🔷 Parameter name changed from value to index. 💥 
++ 🔷 EndInvoke(String&, IAsyncResult) 💥 
++ 🔷 Parameter name changed from value to index. 💥 
++ 🔷 Invoke(String&) 💥 
++ 🔷 Parameter name changed from value to index. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

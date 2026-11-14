@@ -1,0 +1,108 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Field Name="F0" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)" DiffType="Deleted" />
+          <DiffItem DiffType="Modified">Member type changed from List&lt;Int32&gt; to Boolean.</DiffItem>
+        </DeclarationDiffs>
+      </Field>
+      <Event Name="Ev1" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.ObsoleteAttribute::.ctor(System.String)" DiffType="New" />
+        </DeclarationDiffs>
+      </Event>
+      <Event Name="Ev6" DiffType="New" />
+      <Type Name=".N5" DiffType="Modified">
+        <Method Name="N5()" DiffType="Deleted" />
+        <Method Name="X5()" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member changed to static.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Type>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N5`
+### `N5()` is added
+### `X5()`
+Member changed to static.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N5`
+
+[horizontal]
+`N5()` method:: deleted
+`X5()` method::
+Member changed to static.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 6 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 10 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
++ 🌟 Ev6 
++ 🔷 Ev1 
++ 🌟 System.ObsoleteAttribute::.ctor(System.String) 
++ 🔷 .N5 💥 
+- 🔴 N5() 💥 
++ 🔷 X5() 💥 
++ 🔷 Member changed to static. 💥 
++ 🔷 F0 💥 
+- 🔴 System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte) 💥 
++ 🔷 Member type changed from List<Int32> to Boolean. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

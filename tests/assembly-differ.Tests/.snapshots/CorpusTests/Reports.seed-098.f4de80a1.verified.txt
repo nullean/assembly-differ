@@ -1,0 +1,148 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C1" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.ObsoleteAttribute::.ctor()" DiffType="New" />
+      </DeclarationDiffs>
+      <Event Name="Ev3" DiffType="New" />
+      <Type Name=".N0" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.C2" DiffType="Modified">
+      <Method Name="C2()" DiffType="New" />
+      <Type Name=".N6" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.C3" DiffType="Modified">
+      <DeclarationDiffs>
+        <CustomAttribute Name="System.Reflection.DefaultMemberAttribute::.ctor(System.String)" DiffType="Deleted" />
+      </DeclarationDiffs>
+      <Field Name="F2" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member type changed from Int64 to Int32.</DiffItem>
+        </DeclarationDiffs>
+      </Field>
+      <Property Name="Item" DiffType="Deleted" />
+      <Method Name="C3(Int64, String, UInt16)" DiffType="New" />
+      <Method Name="C3(String, Nullable&lt;Int32&gt;, UInt16)" DiffType="Deleted" />
+      <Type Name=".N4" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `.N0` is deleted
+## `Lib.C2`
+### `C2()` is added
+## `.N6` is deleted
+## `Lib.C3`
+### `C3(Int64, String, UInt16)` is added
+### `C3(String, Nullable<Int32>, UInt16)` is added
+### `Item` is added
+## `.N4` is deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+
+[discrete]
+=== `.N0`
+
+[horizontal]
+type:: deleted
+
+[discrete]
+=== `Lib.C2`
+
+[horizontal]
+`C2()` method:: added
+
+[discrete]
+=== `.N6`
+
+[horizontal]
+type:: deleted
+
+[discrete]
+=== `Lib.C3`
+
+[horizontal]
+`C3(Int64, String, UInt16)` method:: added
+`C3(String, Nullable<Int32>, UInt16)` method:: deleted
+`Item` property:: deleted
+
+[discrete]
+=== `.N4`
+
+[horizontal]
+type:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 4 new additions
+- 🔴 6 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 12 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C2 
+- 🔴 .N6 💥 
++ 🌟 C2() 
+```
+```diff
+Lib.C1 
++ 🌟 System.ObsoleteAttribute::.ctor() 
+- 🔴 .N0 💥 
++ 🌟 Ev3 
+```
+```diff
+Lib.C3 
+- 🔴 System.Reflection.DefaultMemberAttribute::.ctor(System.String) 💥 
+- 🔴 .N4 💥 
++ 🌟 C3(Int64, String, UInt16) 
+- 🔴 C3(String, Nullable<Int32>, UInt16) 💥 
+- 🔴 Item 💥 
++ 🔷 F2 💥 
++ 🔷 Member type changed from Int64 to Int32. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

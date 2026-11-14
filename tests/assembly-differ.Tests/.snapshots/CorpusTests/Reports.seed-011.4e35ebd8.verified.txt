@@ -1,0 +1,103 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Method Name="op_ExclusiveOr(C0, Int32)" DiffType="Deleted" />
+    </Type>
+    <Type Name="Lib.C2" DiffType="Modified">
+      <DeclarationDiffs>
+        <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+      </DeclarationDiffs>
+      <Method Name="op_Addition(C2, C2)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)" DiffType="Deleted" />
+        </DeclarationDiffs>
+      </Method>
+      <Type Name=".N2" DiffType="New" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0`
+### `op_ExclusiveOr(C0, Int32)` is added
+## `Lib.C2`
+### `op_Addition(C2, C2)` is added
+## `.N2` is new
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0`
+
+[horizontal]
+`op_ExclusiveOr(C0, Int32)` method:: deleted
+
+
+[discrete]
+=== `.N2`
+
+[horizontal]
+type:: added
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 1 new additions
+- 🔴 2 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 5 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+```
+```diff
+Lib.C0 
+- 🔴 op_ExclusiveOr(C0, Int32) 💥 
+```
+```diff
+Lib.C2 
++ 🔷 Member is more visible. 
++ 🌟 .N2 
++ 🔷 op_Addition(C2, C2) 💥 
+- 🔴 System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState) 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

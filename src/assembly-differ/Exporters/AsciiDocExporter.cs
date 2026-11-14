@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using JustAssembly.Core;
+using Differ.Engine;
 
 namespace Differ.Exporters;
 

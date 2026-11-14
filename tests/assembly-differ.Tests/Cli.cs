@@ -12,10 +12,13 @@ public static class Cli
 {
 	private static readonly string ToolPath = typeof(Cli).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().Single(a => a.Key == "ToolPath").Value!;
 
-	public static async Task<CliResult> RunAsync(params string[] args)
+	public static Task<CliResult> RunAsync(params string[] args) => RunToolAsync(ToolPath, args);
+
+	/// <summary>Runs another build of the tool, such as a previous release, given the path to its dll.</summary>
+	public static async Task<CliResult> RunToolAsync(string toolPath, params string[] args)
 	{
-		if (!File.Exists(ToolPath))
-			throw new FileNotFoundException($"build the tool first, {ToolPath} does not exist");
+		if (!File.Exists(toolPath))
+			throw new FileNotFoundException($"build the tool first, {toolPath} does not exist");
 
 		var start = new ProcessStartInfo("dotnet")
 		{
@@ -26,7 +29,7 @@ public static class Cli
 			StandardErrorEncoding = Encoding.UTF8,
 		};
 		start.ArgumentList.Add("exec");
-		start.ArgumentList.Add(ToolPath);
+		start.ArgumentList.Add(toolPath);
 		foreach (var arg in args)
 			start.ArgumentList.Add(arg);
 

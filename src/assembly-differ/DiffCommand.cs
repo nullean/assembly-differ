@@ -8,7 +8,7 @@ using Differ.Providers;
 using Differ.Providers.GitHub;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;
-using JustAssembly.Core;
+using Differ.Engine;
 using Nullean.Argh;
 
 namespace Differ;
@@ -107,7 +107,7 @@ internal sealed class DiffCommands
 			var result = new AllComparisonResults(pairs, preventChangeValue);
 			foreach (var assemblyPair in pairs)
 			{
-				assemblyPair.Diff = APIDiffHelper.GetAPIDifferences(assemblyPair.First.FullName, assemblyPair.Second.FullName);
+				assemblyPair.Diff = ApiDiff.Compare(assemblyPair.First.FullName, assemblyPair.Second.FullName);
 
 				if (assemblyPair.Diff == null)
 				{

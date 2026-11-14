@@ -1,0 +1,89 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C2" DiffType="Deleted" />
+    <Type Name="Lib.S0" DiffType="Modified">
+      <Property Name="Item" DiffType="Modified">
+        <DeclarationDiffs>
+          <DiffItem DiffType="Modified">Member type changed from Func&lt;Int32, String&gt; to Int32[,].</DiffItem>
+        </DeclarationDiffs>
+      </Property>
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C2` is deleted
+## `Lib.S0`
+### `Item`
+Member type changed from `Func<Int32, String>` to `Int32[,]`.
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C2`
+
+[horizontal]
+type:: deleted
+
+[discrete]
+=== `Lib.S0`
+
+[horizontal]
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 0 new additions
+- 🔴 1 removals
+- 🔷 2 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 3 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+- 🔴 Lib.C2 💥 
+```
+```diff
+Lib.S0 
++ 🔷 Item 💥 
++ 🔷 Member type changed from Func<Int32, String> to Int32[,]. 💥 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr

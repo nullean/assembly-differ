@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using JustAssembly.Core;
-using Mono.Cecil;
+using Differ.Engine;
 
 namespace Differ;
 

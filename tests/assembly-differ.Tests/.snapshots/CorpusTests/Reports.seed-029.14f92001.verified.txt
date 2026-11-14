@@ -1,0 +1,117 @@
+=== xml
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.C0" DiffType="Modified">
+      <Property Name="Item" DiffType="Modified">
+        <Method Name="get" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+        <Method Name="set" DiffType="Modified">
+          <DeclarationDiffs>
+            <DiffItem DiffType="Modified">Member is more visible.</DiffItem>
+          </DeclarationDiffs>
+        </Method>
+      </Property>
+      <Method Name="C0()" DiffType="New" />
+      <Method Name="M1(Int32&amp;)" DiffType="Modified">
+        <DeclarationDiffs>
+          <CustomAttribute Name="System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)" DiffType="Deleted" />
+          <CustomAttribute Name="System.ObsoleteAttribute::.ctor()" DiffType="New" />
+        </DeclarationDiffs>
+      </Method>
+    </Type>
+    <Type Name="Lib.C4" DiffType="Deleted" />
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr
+
+
+=== markdown
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.C0`
+### `C0()` is added
+### `M1(Int32&)` is added
+### `Item`
+Member is more visible.
+## `Lib.C4` is deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== asciidoc
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+== Breaking changes for Lib
+
+[discrete]
+=== `Lib.C0`
+
+[horizontal]
+`C0()` method:: added
+`Item` property getter::
+Member is more visible.
+`Item` property setter::
+Member is more visible.
+
+[discrete]
+=== `Lib.C4`
+
+[horizontal]
+type:: deleted
+[diff] Suggested version change: Major
+--- stderr
+
+
+=== github-comment
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
+### API Changes: `Lib`
+
+```diff
+Scanned: 📑 1 assemblies(s), Suggested change in version: Major
++ 0 breaking change(s) detected.
+
++ 🌟 2 new additions
+- 🔴 2 removals
+- 🔷 6 modifications
+```
+
+-----
+
+<details>
+<summary><b>📑 Lib.dll
+</b> <pre><b> Click here to see the 10 differences </b>
+</summary>
+
+```diff
+
+Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null 
+Lib.dll 
+- 🔴 Lib.C4 💥 
+```
+```diff
+Lib.C0 
++ 🌟 C0() 
++ 🔷 Item 
++ 🔷 get 
++ 🔷 Member is more visible. 
++ 🔷 set 
++ 🔷 Member is more visible. 
++ 🔷 M1(Int32&) 💥 
+- 🔴 System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState) 💥 
++ 🌟 System.ObsoleteAttribute::.ctor() 
+```
+</details>
+[diff] Suggested version change: Major
+--- stderr
