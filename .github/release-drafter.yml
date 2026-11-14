@@ -1,7 +1,6 @@
 # Drafts the next release from merged pull request labels. Publishing the draft releases (see workflows/release.yml).
 #
-# 0.x rule: `breaking` bumps the minor version, never the major. Going to 1.0 is a manual decision: edit the draft's
-# tag to 1.0.0 when publishing, then move `breaking` from minor to a `major:` resolver (the breaking-changes skill).
+# Since 1.0.0, `breaking` bumps the major version.
 name-template: '$RESOLVED_VERSION'
 tag-template: '$RESOLVED_VERSION'
 change-template: '- $TITLE by @$AUTHOR in #$NUMBER'
@@ -25,6 +24,8 @@ categories:
 exclude-labels:
   - 'changelog:skip'
 version-resolver:
+  major:
+    labels: [breaking]
   minor:
-    labels: [breaking, feature, enhancement]
+    labels: [feature, enhancement]
   default: patch
