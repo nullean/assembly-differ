@@ -27,6 +27,9 @@ dotnet tool install --global assembly-differ
 | What does this packed package change since the release before it? | `assembly-differ release path/to/MyLib.1.3.0.nupkg` |
 | What changed between two published versions? | `assembly-differ nuget X 1.0.0 2.0.0` |
 | What changed between two local builds? | `assembly-differ files old/MyLib.dll new/MyLib.dll` |
+| What is this library's public API, as C#? | `assembly-differ api path/to/MyLib.dll` (or a `.nupkg`; `-f json` for every part as a field) |
+| Are the committed `.api` files still what the build produces, and if not, what changed? | `dotnet build -c Release && assembly-differ api --verify api` |
+| Update the committed `.api` files after an intended API change | `dotnet build -c Release && assembly-differ api -o api` |
 
 Every command takes `-f json -o <dir>` to write `api-changes.json`, `-t <assembly name>` to compare only some
 assemblies, and `--fail-on <none|patch|minor|major>` to exit with code 4 at or above a change; `files`, `nuget` and
@@ -46,6 +49,14 @@ assemblies, and `--fail-on <none|patch|minor|major>` to exit with code 4 at or a
   `--include-unpackable` or `--project <path>` change that.
 - **A package with no earlier release is a first release**: nothing to compare, exit code 0 (`--require-baseline`
   fails instead).
+
+## Public API files
+
+Some repositories commit `.api` files (usually in `api/`): the public API as C#, one declaration per line. When you
+change a library's public API on purpose, regenerate them with `assembly-differ api -o api` after a Release build and
+commit them with the change; `api --verify api` exits with 5 and lists each change by path, file and line, who it breaks
+(callers, implementers or inheritors), whether compiled code, source or both, and the suggested version change. To see
+a package's API without decompiling it, `assembly-differ api MyLib.1.2.0.nupkg` prints it.
 
 ## Reading the result
 

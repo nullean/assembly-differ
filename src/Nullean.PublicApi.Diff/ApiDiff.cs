@@ -18,7 +18,7 @@ public static class ApiDiff
 	public static IMetadataDiffItem? Compare(string oldAssemblyPath, string newAssemblyPath) =>
 		Compare(ApiReader.Read(oldAssemblyPath), ApiReader.Read(newAssemblyPath));
 
-	private static IMetadataDiffItem? Compare(ApiAssembly oldAssembly, ApiAssembly newAssembly)
+	private static AssemblyDiffItem? Compare(ApiAssembly oldAssembly, ApiAssembly newAssembly)
 	{
 		var declarationDiffs = Comparers.Attributes(oldAssembly.Attributes, newAssembly.Attributes);
 		var childrenDiffs = Comparers.Modules.Differences(oldAssembly.Modules, newAssembly.Modules);

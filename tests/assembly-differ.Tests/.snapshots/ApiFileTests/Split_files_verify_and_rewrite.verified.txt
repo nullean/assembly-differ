@@ -1,0 +1,4 @@
+exit code: 0
+--- stdout
+[api] Wrote {fixture}/api/Lib/Lib.api
+--- stderr

@@ -1,0 +1,6 @@
+exit code: 5
+--- stdout
+[api] Lib: the build has it, and {fixture}/missing has no .api file for it
+[api] {fixture}/missing does not match the build. Suggested version change: Minor
+[api] Update the files with: assembly-differ api {fixture}/old -o {fixture}/missing
+--- stderr

@@ -10,6 +10,7 @@ var app = new ArghApp();
 app.Map<ApiCommands>();
 app.Map<Differ.PullRequests.PullRequestCommand>();
 app.Map<Differ.Projects.UpgradesCommand>();
+app.Map<Differ.ApiFiles.ApiFileCommand>();
 app.Map<DiffCommands>();
 app.MapAndRootAlias<Differ.Projects.ProjectsCommand>();
 

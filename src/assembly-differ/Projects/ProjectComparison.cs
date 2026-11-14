@@ -27,33 +27,9 @@ internal static class ProjectComparison
 			return 1;
 		}
 
-		var projects = new List<Project>();
-		foreach (var path in candidates)
-		{
-			var properties = Dotnet.Properties(path, ["IsPackable", "IsTestProject", "PackageId", "AssemblyName", "TargetFramework", "TargetFrameworks"]);
-			var name = System.IO.Path.GetFileNameWithoutExtension(path);
-			var explicitlyNamed = options.Projects.Count > 0;
-			if (!explicitlyNamed && IsTrue(properties["IsTestProject"]) && !options.IncludeTests)
-			{
-				Console.WriteLine($"[diff] Skipping {name}: a test project (--include-tests compares it)");
-				continue;
-			}
-			if (!explicitlyNamed && !IsTrue(properties["IsPackable"]) && !options.IncludeUnpackable)
-			{
-				Console.WriteLine($"[diff] Skipping {name}: IsPackable is false (--include-unpackable compares it)");
-				continue;
-			}
-			var frameworks = (properties["TargetFrameworks"].Length > 0 ? properties["TargetFrameworks"] : properties["TargetFramework"])
-				.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-				.Select(NuGetFramework.Parse)
-				.ToList();
-			if (frameworks.Count == 0)
-			{
-				Console.WriteLine($"[diff] Skipping {name}: it has no target framework");
-				continue;
-			}
-			projects.Add(new Project(path, properties["PackageId"], properties["AssemblyName"], Nupkg.Newest(frameworks)));
-		}
+		var projects = Libraries(candidates, options, "compares")
+			.Select(l => new Project(l.Path, l.PackageId, l.AssemblyName, Nupkg.Newest(l.Frameworks)))
+			.ToList();
 		if (projects.Count == 0)
 		{
 			Console.WriteLine("[diff] Nothing to compare");
@@ -112,6 +88,45 @@ internal static class ProjectComparison
 			new DiffSide(new CompositeAssemblyProvider(newAssemblies.Select(s => s.Provider)), "projects"),
 			new DiffSettings(targets, report.Format, report.Output, failOn, AllowEmptyPreviousNuget: false)
 		);
+	}
+
+	/// <summary>A library project, with every framework it targets.</summary>
+	internal sealed record Library(string Path, string PackageId, string AssemblyName, IReadOnlyList<NuGetFramework> Frameworks);
+
+	/// <summary>
+	/// The candidates that are libraries: not test projects or projects with IsPackable false, unless the options let
+	/// them in or they were named; each skipped one is reported, saying which option <paramref name="verb"/> it.
+	/// </summary>
+	internal static List<Library> Libraries(IReadOnlyList<string> candidates, Options options, string verb)
+	{
+		var libraries = new List<Library>();
+		foreach (var path in candidates)
+		{
+			var properties = Dotnet.Properties(path, ["IsPackable", "IsTestProject", "PackageId", "AssemblyName", "TargetFramework", "TargetFrameworks"]);
+			var name = System.IO.Path.GetFileNameWithoutExtension(path);
+			var explicitlyNamed = options.Projects.Count > 0;
+			if (!explicitlyNamed && IsTrue(properties["IsTestProject"]) && !options.IncludeTests)
+			{
+				Console.WriteLine($"[diff] Skipping {name}: a test project (--include-tests {verb} it)");
+				continue;
+			}
+			if (!explicitlyNamed && !IsTrue(properties["IsPackable"]) && !options.IncludeUnpackable)
+			{
+				Console.WriteLine($"[diff] Skipping {name}: IsPackable is false (--include-unpackable {verb} it)");
+				continue;
+			}
+			var frameworks = (properties["TargetFrameworks"].Length > 0 ? properties["TargetFrameworks"] : properties["TargetFramework"])
+				.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+				.Select(NuGetFramework.Parse)
+				.ToList();
+			if (frameworks.Count == 0)
+			{
+				Console.WriteLine($"[diff] Skipping {name}: it has no target framework");
+				continue;
+			}
+			libraries.Add(new Library(path, properties["PackageId"], properties["AssemblyName"], frameworks));
+		}
+		return libraries;
 	}
 
 	private static bool IsTrue(string value) => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);

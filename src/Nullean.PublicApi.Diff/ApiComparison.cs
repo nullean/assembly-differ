@@ -19,7 +19,7 @@ public static class ApiComparison
 	/// <summary>The differences from <paramref name="oldApi"/> to <paramref name="newApi"/>.</summary>
 	public static ApiComparisonResult Compare(ApiAssembly oldApi, ApiAssembly newApi, ApiComparisonOptions? options = null)
 	{
-		var context = new Context(options ?? new ApiComparisonOptions(), oldApi, newApi);
+		var context = new Context(options ?? new ApiComparisonOptions(), newApi);
 		Pair(
 			oldApi.Types,
 			newApi.Types,
@@ -47,12 +47,13 @@ public static class ApiComparison
 				visit(item, null);
 	}
 
-	private sealed class Context(ApiComparisonOptions options, ApiAssembly oldApi, ApiAssembly newApi)
+	private sealed class Context(ApiComparisonOptions options, ApiAssembly newApi)
 	{
 		public List<ApiChange> Changes { get; } = [];
 
 		private readonly Dictionary<string, ApiType> _newTypes = Index(newApi);
 		private readonly Dictionary<ApiType, ApiType> _pairs = new(TypeIdentity.Instance);
+		private ApiType? _oldScope;
 
 		private static Dictionary<string, ApiType> Index(ApiAssembly api)
 		{
@@ -101,7 +102,20 @@ public static class ApiComparison
 			}
 
 			_pairs[oldType] = newType;
+			var outer = _oldScope;
+			_oldScope = oldType;
+			try
+			{
+				Compare(oldType, newType, here);
+			}
+			finally
+			{
+				_oldScope = outer;
+			}
+		}
 
+		private void Compare(ApiType oldType, ApiType newType, List<string> here)
+		{
 			void Changed(string part, string? old, string? @new, ApiAudience breaks, ApiCompatibility compatibility, string? note = null) =>
 				Add(here, ApiChangeKind.Changed, part, old, @new, breaks, compatibility, oldType, oldType, newType, note);
 
@@ -213,7 +227,7 @@ public static class ApiComparison
 		private static string FullName(ApiNamedType named) =>
 			named.DeclaringType is null ? named.Namespace + "." + named.Name : FullName(named.DeclaringType) + "/" + named.Name;
 
-		private void TypeParameters(
+		private static void TypeParameters(
 			IReadOnlyList<ApiTypeParameter> oldParameters,
 			IReadOnlyList<ApiTypeParameter> newParameters,
 			ApiType oldType,
@@ -253,7 +267,16 @@ public static class ApiComparison
 		private static List<string> Constraints(ApiTypeParameter parameter, ApiType context)
 		{
 			var constraints = new List<string>();
-			foreach (ApiConstraints flag in Enum.GetValues(typeof(ApiConstraints)))
+			ApiConstraints[] flags =
+			[
+				ApiConstraints.Class,
+				ApiConstraints.NullableClass,
+				ApiConstraints.Struct,
+				ApiConstraints.Unmanaged,
+				ApiConstraints.NotNull,
+				ApiConstraints.New
+			];
+			foreach (var flag in flags)
 				if (flag != ApiConstraints.None && (parameter.Constraints & flag) != 0 && flag != ApiConstraints.AllowsRefStruct)
 					constraints.Add(flag switch
 					{
@@ -828,6 +851,7 @@ public static class ApiComparison
 			{
 				OldNode = oldNode,
 				NewNode = newNode,
+				OldScope = _oldScope,
 				Level = level
 			});
 		}

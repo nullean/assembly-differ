@@ -1,0 +1,7 @@
+exit code: 5
+--- stdout
+[api] Lib: 1 change since the committed files, suggested version change: Major
+  {fixture}/api/Lib.api:7  Lib › Widget › Label  added public required string Label { get; init; }  [major: breaks callers, source only] (every object initializer has to set it)
+[api] {fixture}/api does not match the build. Suggested version change: Major
+[api] Update the files with: assembly-differ api {fixture}/new -o {fixture}/api
+--- stderr

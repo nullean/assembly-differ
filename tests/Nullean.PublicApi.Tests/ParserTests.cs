@@ -29,6 +29,38 @@ public class ParserTests
 	[MethodDataSource(typeof(RoslynOracleTests), nameof(RoslynOracleTests.FrameworkAssemblies))]
 	public void Parses_back_the_model_of_a_framework_assembly(string name) => SameModel(ApiReader.Read(RoslynOracleTests.FrameworkPath(name)));
 
+	[Test]
+	[Arguments("System.Private.CoreLib", ApiSplit.Namespace)]
+	[Arguments("System.Private.CoreLib", ApiSplit.TopLevelNamespace)]
+	[Arguments("System.Text.Json", ApiSplit.Namespace)]
+	public void Parses_back_a_split_api(string name, ApiSplit split)
+	{
+		var read = ApiReader.Read(RoslynOracleTests.FrameworkPath(name));
+		var files = ApiWriter.Write(read, split);
+		files.Count.Should().BeGreaterThan(1);
+		var parsed = ApiParser.Parse(files.Select(f => ((string?)f.Name, f.Text))).Assembly;
+		var differences = ModelDump
+			.Lines(read)
+			.Zip(ModelDump.Lines(parsed))
+			.Where(p => p.First != p.Second)
+			.Take(5)
+			.Select(p => $"read:   {p.First}\nparsed: {p.Second}");
+		differences.Should().BeEmpty();
+		ModelDump.Lines(parsed).Count.Should().Be(ModelDump.Lines(read).Count);
+	}
+
+	[Test]
+	public void Knows_the_file_of_each_member_of_a_split_api()
+	{
+		var document = ApiParser.Parse([
+			("a.api", "assembly Lib\nusing Lib.B: Other\n\nnamespace Lib.A\n  public class Widget\n    public Other Make()\n"),
+			("b.api", "assembly Lib\n\nnamespace Lib.B\n  public class Other\n"),
+		]);
+		var widget = document.Assembly.Types.Single(t => t.Name == "Widget");
+		document.LocationOf(widget.Members[0]).Should().Be(new ApiLocation("a.api", 6));
+		document.LocationOf(document.Assembly.Types.Single(t => t.Name == "Other")).Should().Be(new ApiLocation("b.api", 4));
+	}
+
 	/// <summary>A delegate's Invoke attributes are not written; everything else the reader knows comes back.</summary>
 	private static void SameModel(ApiAssembly read)
 	{
