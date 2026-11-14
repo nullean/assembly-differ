@@ -3,6 +3,14 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <!-- Nullean.PublicApi and Nullean.PublicApi.Diff on netstandard2.0 -->
+  <ItemGroup>
+    <PackageVersion Include="System.Reflection.Metadata" Version="11.0.0" />
+    <PackageVersion Include="System.Collections.Immutable" Version="11.0.0" />
+    <PackageVersion Include="System.Memory" Version="4.6.3" />
+    <PackageVersion Include="PolySharp" Version="1.17.1" />
+  </ItemGroup>
+
   <!-- the tool -->
   <ItemGroup>
     <PackageVersion Include="MinVer" Version="8.0.0" />

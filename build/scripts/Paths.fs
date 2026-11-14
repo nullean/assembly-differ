@@ -6,6 +6,9 @@ open System.IO
 let ToolName = "assembly-differ"
 let Repository = sprintf "nullean/%s" ToolName
 
+/// The library packages under src/, packed and published with the tool
+let Libraries = ["Nullean.PublicApi"; "Nullean.PublicApi.Diff"]
+
 /// The RIDs we ship native-AOT tool packages for. AOT compilation requires a matching
 /// OS/arch, so CI packs one RID per runner; this list only documents the set.
 let AotRuntimeIdentifiers = ["linux-x64"; "linux-arm64"; "win-x64"; "win-arm64"; "osx-arm64"]

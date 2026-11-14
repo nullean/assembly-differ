@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Differ.Engine;
 
 namespace Differ;
 
@@ -24,50 +23,7 @@ public class AssemblyComparison
 	/// when API is only added or changed compatibly, <c>Patch</c> when only assembly references changed, and <c>None</c>
 	/// when nothing changed.
 	/// </summary>
-	public SuggestedVersionChange SuggestedVersionChange => Diff == null ? SuggestedVersionChange.None : Classify(Diff);
-
-	/// <summary>The version change one difference calls for on its own; the comment counts the <c>Major</c> ones as breaking.</summary>
-	internal static SuggestedVersionChange Classify(IDiffItem item)
-	{
-		switch (item)
-		{
-			// a reference the new assembly dropped is not part of its API
-			case AssemblyReferenceDiffItem:
-				return SuggestedVersionChange.Patch;
-			// the compiler moves its own attributes, such as NullableContextAttribute, whenever members change
-			case CustomAttributeDiffItem attribute when attribute.HumanReadable.StartsWith("System.Runtime.CompilerServices.", StringComparison.Ordinal):
-				return SuggestedVersionChange.Patch;
-			// adding or removing an attribute, such as [Obsolete], does not break a caller
-			case CustomAttributeDiffItem:
-				return SuggestedVersionChange.Minor;
-			case IMetadataDiffItem metadata when metadata.DiffType == DiffType.Deleted:
-				return SuggestedVersionChange.Major;
-			// an abstract or required member is new work for every implementer or caller
-			case MemberDiffItem { DiffType: DiffType.New, AddsObligation: true }:
-				return SuggestedVersionChange.Major;
-			case IMetadataDiffItem metadata when metadata.DiffType == DiffType.New:
-				return SuggestedVersionChange.Minor;
-			case IMetadataDiffItem metadata:
-				var change = SuggestedVersionChange.Patch;
-				foreach (var child in metadata.DeclarationDiffs.Concat(metadata.ChildrenDiffs))
-				{
-					var childChange = Classify(child);
-					if (childChange > change)
-						change = childChange;
-				}
-				return change;
-			default:
-				return item.IsBreakingChange ? SuggestedVersionChange.Major : SuggestedVersionChange.Minor;
-		}
-	}
-}
-
-public enum SuggestedVersionChange
-{
-	None = 1,
-	Patch = 2,
-	Minor = 3,
-	Major = 4
+	public SuggestedVersionChange SuggestedVersionChange => Diff == null ? SuggestedVersionChange.None : VersionChange.Classify(Diff);
 }
 
 public class AllComparisonResults

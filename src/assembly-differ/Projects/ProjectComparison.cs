@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Differ.Engine;
 using Differ.Providers;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;

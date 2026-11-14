@@ -8,7 +8,6 @@ using Differ.Providers;
 using Differ.Providers.GitHub;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;
-using Differ.Engine;
 using Nullean.Argh;
 
 namespace Differ;

@@ -8,7 +8,9 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace Differ.Engine;
+using Nullean.PublicApi;
+
+namespace Nullean.PublicApi.Diff;
 
 /// <summary>
 /// The API of some assemblies that other code uses: types by metadata full name (<c>Lib.Outer/Inner</c>), and per type
@@ -16,10 +18,13 @@ namespace Differ.Engine;
 /// </summary>
 public sealed class UsedApi
 {
+	/// <summary>The used types, by metadata full name.</summary>
 	public HashSet<string> Types { get; } = new(StringComparer.Ordinal);
 
+	/// <summary>Per used type, the names of the members called on it.</summary>
 	public Dictionary<string, HashSet<string>> Members { get; } = new(StringComparer.Ordinal);
 
+	/// <summary>Whether a member named <paramref name="member"/> is used on <paramref name="type"/>.</summary>
 	public bool UsesMember(string type, string member) => Members.TryGetValue(type, out var members) && members.Contains(member);
 
 	/// <summary>What <paramref name="assemblies"/> reference of the assemblies named <paramref name="packageAssemblies"/>.</summary>

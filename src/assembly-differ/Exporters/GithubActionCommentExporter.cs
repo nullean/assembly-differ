@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Differ.Engine;
 
 namespace Differ.Exporters;
 
@@ -46,7 +45,7 @@ public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 					return;
 
 				// a modified member is breaking because of a change inside it, which is counted on its own
-				var breaking = AssemblyComparison.Classify(item) == SuggestedVersionChange.Major;
+				var breaking = VersionChange.Classify(item) == SuggestedVersionChange.Major;
 				if (breaking && item is not IMetadataDiffItem { DiffType: DiffType.Modified })
 				{
 					breakingChanges.Add(item);
