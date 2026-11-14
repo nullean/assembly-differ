@@ -10,9 +10,9 @@ let Repository = sprintf "nullean/%s" ToolName
 /// OS/arch, so CI packs one RID per runner; this list only documents the set.
 let AotRuntimeIdentifiers = ["linux-x64"; "linux-arm64"; "win-x64"; "win-arm64"; "osx-arm64"]
 
-/// Must mirror assembly-differ.csproj's TargetFrameworks. Used to patch the signed managed dll back
+/// Must mirror assembly-differ.csproj's TargetFramework. Used to patch the signed managed dll back
 /// into the packed 'any' fallback for every TFM it ships — see fixAnyPackageSigning in Targets.fs.
-let ManagedTargetFrameworks = ["net10.0"; "net11.0"]
+let ManagedTargetFrameworks = ["net11.0"]
 
 let Root =
     let mutable dir = DirectoryInfo(".")
