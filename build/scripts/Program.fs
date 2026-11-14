@@ -19,7 +19,7 @@ type Target =
     | Pack
     /// Runs build, the tests, then creates and validates the packages: what CI's build job runs
     | Ci
-    /// Pack the root and 'any' tool packages into build/output; CI's aot-pack matrix builds the per-RID ones
+    /// Pack the root and 'any' tool packages and the skills package into build/output; CI's aot-pack matrix builds the per-RID ones
     | Generatepackages
     /// Validate the signed managed assembly in the 'any' package
     | Validatepackages
@@ -76,7 +76,9 @@ let main argv =
                       package.CopyTo(destination, true) |> ignore
                       if package.Name.Contains(sprintf "%s.any." Paths.ToolName) then
                           Packaging.fixAnyPackageSigning destination
-              Directory.Delete(staging, true) }
+              Directory.Delete(staging, true)
+              // the agent skill, a content-only package published with the tool
+              sh $"dotnet pack src/assembly-differ.skills -c Release -o {output}" }
         | Validatepackages -> target [] {
               // Only the 'any' package carries a signed managed assembly to check: the root package is
               // just a DotnetToolSettings.xml pointer with no dll of its own, and the per-RID AOT packages

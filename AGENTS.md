@@ -12,6 +12,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ` | the tool (net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
+| `src/assembly-differ.skills` | the `assembly-differ.skills` package: the agent skill (`skills/assembly-differ/SKILL.md`), content only. Keep it in step with the CLI |
 | `src/assembly-differ/Engine` | the comparison: reads both assemblies with System.Reflection.Metadata and reports what differs |
 | `tests/assembly-differ.Tests` | TUnit tests that run the built tool as a process on assemblies Roslyn compiles from C# source |
 | `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks and CI call |
