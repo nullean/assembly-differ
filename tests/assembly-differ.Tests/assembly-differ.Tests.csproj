@@ -15,8 +15,6 @@
     <PackageReference Include="CsCheck" />
     <PackageReference Include="Nullean.Snapshots.AwesomeAssertions" />
     <PackageReference Include="Nullean.Snapshots.TUnit" />
-    <!-- pinned, see Directory.Packages.props -->
-    <PackageReference Include="Nullean.ScopedFileSystem" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
