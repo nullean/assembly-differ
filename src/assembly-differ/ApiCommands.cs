@@ -52,32 +52,95 @@ internal sealed class ApiCommands
 			report
 		);
 
-	/// <summary>Compares two published versions of a package.</summary>
+	/// <summary>Compares two versions of a package; in a solution, the version your projects use with another.</summary>
+	/// <remarks>
+	/// In a directory with a solution or project files, nuget X compares the version of X your projects resolve with
+	/// its latest stable release, and nuget X 2.0.0 with 2.0.0: what updating would change. It reads the resolved version,
+	/// and the target framework each project compiles X for, from obj/project.assets.json, so restore first. When projects
+	/// resolve different versions, each is compared. Give two versions to compare them anywhere.
+	/// </remarks>
 	/// <param name="package">The package id.</param>
-	/// <param name="oldVersion">The old version.</param>
-	/// <param name="newVersion">The new version.</param>
-	/// <param name="framework">The target framework to compare, such as net8.0. Defaults to the first the package ships.</param>
+	/// <param name="version">With one version, the version to update to; with two, the old one.</param>
+	/// <param name="newVersion">The new version, when the old one is given too.</param>
+	/// <param name="framework">The target framework to compare, such as net8.0. In a solution, defaults to the one each project compiles against.</param>
 	/// <param name="report">How to report the comparison.</param>
+	/// <example>assembly-differ nuget Polly</example>
+	/// <example>assembly-differ nuget Polly 8.5.0</example>
 	/// <example>assembly-differ nuget Proc 0.13.0 0.14.0</example>
 	[CommandName("nuget")]
 	public int NuGet(
 		[Argument] string package,
-		[Argument] string oldVersion,
-		[Argument] string newVersion,
+		[Argument] string? version = null,
+		[Argument] string? newVersion = null,
 		string? framework = null,
 		[AsParameters] ReportOptions? report = null
-	) =>
-		Run(
-			() =>
+	)
+	{
+		var installer = new Providers.NuGet.NuGet();
+		if (version is not null && newVersion is not null)
+			return Run(
+				() =>
+					(new DiffSide(new NuGetAssemblyProvider(installer, Spec(package, version, framework)), "nuget"), new DiffSide(
+						new NuGetAssemblyProvider(installer, Spec(package, newVersion, framework)),
+						"nuget"
+					)),
+				report
+			);
+
+		IReadOnlyList<Projects.Resolution> resolutions;
+		try
+		{
+			resolutions = Projects.ResolvedPackages.Find(Directory.GetCurrentDirectory(), package);
+		}
+		catch (Exception e) when (e is Projects.Dotnet.SdkException or ArgumentException)
+		{
+			Console.Error.WriteLine($"[diff] {e.Message}");
+			return 1;
+		}
+		if (resolutions.Count == 0)
+		{
+			Console.Error.WriteLine(
+				$"[diff] no project in {Directory.GetCurrentDirectory()} resolves {package}; give two versions to compare, such as: assembly-differ nuget {package} 1.0.0 2.0.0"
+			);
+			return 1;
+		}
+
+		var target = version;
+		if (target is null)
+		{
+			var latest = PreviousRelease.Find(package, new NuGetVersion(int.MaxValue, 0, 0));
+			if (latest is null)
 			{
-				var installer = new Providers.NuGet.NuGet();
-				return (new DiffSide(new NuGetAssemblyProvider(installer, Spec(package, oldVersion, framework)), "nuget"), new DiffSide(
-					new NuGetAssemblyProvider(installer, Spec(package, newVersion, framework)),
-					"nuget"
-				));
-			},
-			report
-		);
+				Console.Error.WriteLine($"[diff] no stable release of {package} on {string.Join(", ", PreviousRelease.Sources().Select(s => s.Name))}");
+				return 1;
+			}
+			target = latest.ToNormalizedString();
+		}
+
+		var exitCode = 0;
+		foreach (var group in resolutions.GroupBy(r => (r.Version, Folder: framework ?? r.LibFolder)))
+		{
+			var names = group.Select(r => r.Project).Distinct().ToList();
+			var projects = string.Join(", ", names);
+			var resolve = names.Count == 1 ? "resolves" : "resolve";
+			if (NuGetVersion.Parse(group.Key.Version) == NuGetVersion.Parse(target))
+			{
+				Console.WriteLine($"[diff] {projects} already {resolve} {package} {target}");
+				continue;
+			}
+			Console.WriteLine($"[diff] Comparing {package} {group.Key.Version}, which {projects} {resolve} for {group.Key.Folder}, with {target}");
+			var code = Run(
+				() =>
+					(new DiffSide(new NuGetAssemblyProvider(installer, Spec(package, group.Key.Version, group.Key.Folder)), "nuget"), new DiffSide(
+						new NuGetAssemblyProvider(installer, Spec(package, target, group.Key.Folder)),
+						"nuget"
+					)),
+				report
+			);
+			exitCode = Math.Max(exitCode, code);
+		}
+		return exitCode;
+	}
 
 	/// <summary>Compares a new build with the release before it.</summary>
 	/// <remarks>

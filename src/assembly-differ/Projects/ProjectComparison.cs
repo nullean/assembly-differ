@@ -121,7 +121,7 @@ internal static class ProjectComparison
 	/// The project files to consider: the ones named, or the projects of the one solution in the directory, or the
 	/// project files in it.
 	/// </summary>
-	private static List<string> Candidates(string directory, IReadOnlyList<string> named)
+	internal static List<string> Candidates(string directory, IReadOnlyList<string> named)
 	{
 		if (named.Count > 0)
 			return named.Select(System.IO.Path.GetFullPath).ToList();

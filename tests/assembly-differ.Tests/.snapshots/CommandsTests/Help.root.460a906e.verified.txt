@@ -16,7 +16,8 @@ Global options:
 Commands:
   files         Compares two local builds: dlls, directories of dlls, or .nupkg
                 files.
-  nuget         Compares two published versions of a package.
+  nuget         Compares two versions of a package; in a solution, the version
+                your projects use with another.
   projects      Compares every library project in the current directory with the
                 latest release of its package. Runs when no command is given.
   pull-request  Puts a report on the pull request a GitHub Actions run is for:

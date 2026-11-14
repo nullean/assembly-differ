@@ -1,0 +1,17 @@
+exit code: 0
+--- stdout
+[diff] Comparing AssemblyDiffer.Tests.Dependency 1.0.0, which App resolves for net11.0, with 2.0.0
+[diff] Difference found: NuGetAssemblyProvider:Lib.dll and NuGetAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Draw()` is deleted
+[diff] Suggested version change: Major
+[diff] Comparing AssemblyDiffer.Tests.Dependency 1.1.0, which Worker resolves for net11.0, with 2.0.0
+[diff] Difference found: NuGetAssemblyProvider:Lib.dll and NuGetAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Draw()` is deleted
+[diff] Suggested version change: Major
+--- stderr

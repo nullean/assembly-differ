@@ -1,0 +1,6 @@
+exit code: 1
+--- stdout
+
+--- stderr
+[diff] warning: not restored, so not read: App, Worker; run dotnet restore first
+[diff] no project in {fixture}/repo resolves AssemblyDiffer.Tests.Dependency; give two versions to compare, such as: assembly-differ nuget AssemblyDiffer.Tests.Dependency 1.0.0 2.0.0

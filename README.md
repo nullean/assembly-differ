@@ -87,7 +87,7 @@ earlier release is a first release: there is nothing to compare, so the command 
 |---|---|
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
-| `nuget <id> <old-version> <new-version>` | two published versions, from the NuGet sources your NuGet.config lists |
+| `nuget <id> [<version>] [<new-version>]` | in a solution, the version your projects resolve with the latest release, or with `<version>`: what updating would change; anywhere, two published versions |
 | `projects` | every library project in the directory against its latest release; what runs without a command |
 
 Every command takes the same options:
@@ -121,6 +121,9 @@ More examples:
 ```sh
 # two local builds, every dll matched by name
 assembly-differ files build/1.2.0 build/1.3.0
+
+# what updating Polly from the version this solution resolves to 8.5.0 would change
+assembly-differ nuget Polly 8.5.0
 
 # two published packages, as Markdown
 assembly-differ nuget Proc 0.13.0 0.14.0 -t proc
