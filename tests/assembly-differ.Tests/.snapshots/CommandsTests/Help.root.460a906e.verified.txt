@@ -8,9 +8,12 @@ Global options:
   --version   Show version.
 
 Commands:
-  files    Compares two local builds: dlls, directories of dlls, or .nupkg
-           files.
-  github   Compares a new build with an older commit of a GitHub repository,
-           built with the command you give.
-  nuget    Compares two published versions of a package.
-  release  Compares a new build with the release before it.
+  files         Compares two local builds: dlls, directories of dlls, or .nupkg
+                files.
+  github        Compares a new build with an older commit of a GitHub
+                repository, built with the command you give.
+  nuget         Compares two published versions of a package.
+  pull-request  Puts a report on the pull request a GitHub Actions run is for:
+                the job summary, one comment kept up to date, and the release
+                label for the suggested version change.
+  release       Compares a new build with the release before it.
