@@ -21,11 +21,44 @@ public static class ApiWriter
 		var names = new Names(assembly);
 		var builder = new StringBuilder();
 		builder.Append("assembly ").Append(assembly.Name).Append('\n');
-		foreach (var group in names.External.GroupBy(t => t.Namespace).OrderBy(g => g.Key, StringComparer.Ordinal))
+		// every type from another assembly is listed, a value type in a "using struct" line, so a reader of the file
+		// can tell List<int>? from int? without that assembly
+		// and an interface a base list names in a "using interface" line, which tells it from a base class
+		var namespaces = names
+			.External
+			.Select(t => t.Namespace)
+			.Concat(names.ExternalValueTypes.Select(t => t.Namespace))
+			.Concat(names.ExternalInterfaces.Select(t => t.Namespace))
+			.Distinct()
+			.OrderBy(n => n, StringComparer.Ordinal);
+		foreach (var ns in namespaces)
 		{
-			builder.Append("using ").Append(group.Key.Length == 0 ? "global" : group.Key).Append(": ");
-			builder.Append(string.Join(", ", group.Select(t => Unbound(t.Name)).OrderBy(n => n, StringComparer.Ordinal)));
-			builder.Append('\n');
+			static string Display((string Namespace, string Path) type) => string.Join(".", type.Path.Split('/').Select(Unbound));
+
+			var references = names
+				.External
+				.Where(t => t.Namespace == ns && !names.ExternalValueTypes.Contains(t) && !names.ExternalInterfaces.Contains(t))
+				.Select(t => Unbound(t.Name))
+				.ToList();
+			var values = names.ExternalValueTypes.Where(t => t.Namespace == ns).Select(Display).ToList();
+			var interfaces = names.ExternalInterfaces.Where(t => t.Namespace == ns).Select(Display).ToList();
+			var label = ns.Length == 0 ? "global" : ns;
+			if (references.Count > 0)
+				builder.Append("using ").Append(label).Append(": ").Append(string.Join(", ", references.OrderBy(n => n, StringComparer.Ordinal))).Append('\n');
+			if (values.Count > 0)
+				builder
+					.Append("using struct ")
+					.Append(label)
+					.Append(": ")
+					.Append(string.Join(", ", values.OrderBy(n => n, StringComparer.Ordinal)))
+					.Append('\n');
+			if (interfaces.Count > 0)
+				builder
+					.Append("using interface ")
+					.Append(label)
+					.Append(": ")
+					.Append(string.Join(", ", interfaces.OrderBy(n => n, StringComparer.Ordinal)))
+					.Append('\n');
 		}
 		foreach (var ns in assembly.Types.GroupBy(t => t.Namespace))
 		{
@@ -59,6 +92,8 @@ public static class ApiWriter
 	private sealed class Names
 	{
 		private readonly HashSet<(string Namespace, string Name)> _qualified = [];
+		private readonly HashSet<(string Namespace, string Path)> _values = [];
+		private readonly HashSet<(string Namespace, string Path)> _interfaces = [];
 
 		public Names(ApiAssembly assembly)
 		{
@@ -71,24 +106,36 @@ public static class ApiWriter
 			foreach (var clash in used.GroupBy(t => t.Name).Where(g => g.Count() > 1))
 				foreach (var type in clash)
 					_qualified.Add(type);
-			External = used
-				.Where(t => !own.Contains(t) && !_qualified.Contains(t))
-				.Select(t => new ApiNamedType(t.Namespace, t.Name, null, [], false))
-				.ToList();
+			External = used.Where(t => !own.Contains(t)).ToList();
+			ExternalValueTypes = new HashSet<(string Namespace, string Path)>(_values.Where(v => !own.Contains((v.Namespace, v.Path.Split('/')[0]))));
+			ExternalInterfaces = new HashSet<(string Namespace, string Path)>(_interfaces.Where(v => !own.Contains((v.Namespace, v.Path.Split('/')[0]))));
 		}
 
-		public IReadOnlyList<ApiNamedType> External { get; }
+		/// <summary>The top-level types from other assemblies, by namespace and metadata name.</summary>
+		public IReadOnlyList<(string Namespace, string Name)> External { get; }
+
+		/// <summary>The value types from other assemblies, by namespace and nesting path: <c>Outer`1/Inner</c>.</summary>
+		public HashSet<(string Namespace, string Path)> ExternalValueTypes { get; }
+
+		/// <summary>The interfaces from other assemblies that a base list names.</summary>
+		public HashSet<(string Namespace, string Path)> ExternalInterfaces { get; }
 
 		public bool IsQualified(string ns, string name) => _qualified.Contains((ns, name));
 
-		private static void Collect(ApiType type, HashSet<(string, string)> used)
+		internal static string Path(ApiNamedType named) => named.DeclaringType is null ? named.Name : Path(named.DeclaringType) + "/" + named.Name;
+
+		private void Collect(ApiType type, HashSet<(string, string)> used)
 		{
 			foreach (var attribute in type.Attributes)
 				Collect(attribute.Type, used);
 			if (type.BaseType is { } baseType)
 				Collect(baseType, used);
 			foreach (var item in type.Interfaces)
+			{
 				Collect(item, used);
+				if (item is ApiNamedType named)
+					_interfaces.Add((named.Namespace, Path(named)));
+			}
 			foreach (var parameter in type.TypeParameters)
 				Collect(parameter, used);
 			foreach (var member in type.Members)
@@ -123,20 +170,20 @@ public static class ApiWriter
 				Collect(nested, used);
 		}
 
-		private static void Collect(ApiTypeParameter parameter, HashSet<(string, string)> used)
+		private void Collect(ApiTypeParameter parameter, HashSet<(string, string)> used)
 		{
 			foreach (var constraint in parameter.ConstraintTypes)
 				Collect(constraint, used);
 		}
 
-		private static void Collect(ApiParameter parameter, HashSet<(string, string)> used)
+		private void Collect(ApiParameter parameter, HashSet<(string, string)> used)
 		{
 			Collect(parameter.Type, used);
 			foreach (var attribute in parameter.Attributes)
 				Collect(attribute.Type, used);
 		}
 
-		private static void Collect(ApiTypeReference type, HashSet<(string, string)> used)
+		private void Collect(ApiTypeReference type, HashSet<(string, string)> used)
 		{
 			switch (type)
 			{
@@ -146,7 +193,11 @@ public static class ApiWriter
 						outermost = outermost.DeclaringType;
 					// Nullable<T> is written T?
 					if (Keyword(outermost) is null && !named.IsNullableValueType)
+					{
 						used.Add((outermost.Namespace, outermost.Name));
+						if (named.IsValueType)
+							_values.Add((named.Namespace, Path(named)));
+					}
 					for (var current = named; current is not null; current = current.DeclaringType)
 						foreach (var argument in current.TypeArguments)
 							Collect(argument, used);
@@ -202,12 +253,15 @@ public static class ApiWriter
 	{
 		public void Type(ApiType type, int depth)
 		{
+			var invoke = type.Kind == ApiTypeKind.Delegate ? type.Members.OfType<ApiMethod>().FirstOrDefault() : null;
+			if (invoke is not null)
+				Attributes(invoke.ReturnAttributes, depth, "return");
 			Attributes(type.Attributes, depth, null);
 			Line(depth);
 			builder.Append(Access(type.Accessibility)).Append(' ');
-			if (type.Kind == ApiTypeKind.Delegate && type.Members is [ApiMethod invoke, ..])
+			if (invoke is not null)
 			{
-				builder.Append("delegate ").Append(Reference(invoke.ReturnType)).Append(' ').Append(Declared(type.Name));
+				builder.Append("delegate ").Append(RefKind(invoke.ReturnRefKind)).Append(Reference(invoke.ReturnType)).Append(' ').Append(Declared(type.Name));
 				TypeParameters(type.TypeParameters);
 				Parameters(invoke.Parameters, false);
 				Constraints(type.TypeParameters);
@@ -254,6 +308,12 @@ public static class ApiWriter
 		{
 			if (member is ApiMethod { ReturnAttributes: var returnAttributes })
 				Attributes(returnAttributes, depth, "return");
+			// metadata names an indexer by the attribute that renamed it in source
+			if (member is ApiProperty { Parameters.Count: > 0, Name: not "Item" } indexer)
+			{
+				Line(depth);
+				builder.Append("[IndexerName(").Append(ApiReader.Constant(indexer.Name)).Append(")]\n");
+			}
 			Attributes(member.Attributes, depth, null);
 			Line(depth);
 			var inInterface = type.Kind == ApiTypeKind.Interface;
@@ -295,13 +355,13 @@ public static class ApiWriter
 					Accessor(property.Getter, property.Accessibility, "get");
 					Accessor(property.Setter, property.Accessibility, property.Setter is { IsInit: true } ? "init" : "set");
 					builder.Append(" }");
-					if (inInterface && (property.Modifiers & ApiMemberModifiers.Virtual) != 0)
+					if (inInterface && HasBody(property.Modifiers))
 						builder.Append(" { … }");
 					break;
 				case ApiEvent @event:
 					MemberStart(@event.Accessibility, @event.Modifiers, inInterface);
 					builder.Append("event ").Append(Reference(@event.Type)).Append(' ').Append(@event.Name);
-					if (inInterface && (@event.Modifiers & ApiMemberModifiers.Virtual) != 0)
+					if (inInterface && HasBody(@event.Modifiers))
 						builder.Append(" { … }");
 					break;
 				case ApiMethod { Kind: ApiMethodKind.Constructor } constructor:
@@ -326,7 +386,7 @@ public static class ApiWriter
 					}
 					Parameters(method.Parameters, method.IsExtension);
 					Constraints(method.TypeParameters);
-					if (inInterface && (method.Modifiers & ApiMemberModifiers.Virtual) != 0)
+					if (inInterface && HasBody(method.Modifiers))
 						builder.Append(" { … }");
 					break;
 			}
@@ -344,6 +404,9 @@ public static class ApiWriter
 			{
 				if ((modifiers & ApiMemberModifiers.Static) != 0 && (modifiers & ApiMemberModifiers.Abstract) != 0)
 					builder.Append("abstract ");
+				// an instance member with a body that implementers cannot override
+				if ((modifiers & (ApiMemberModifiers.Static | ApiMemberModifiers.Abstract | ApiMemberModifiers.Virtual)) == 0)
+					builder.Append("sealed ");
 				return;
 			}
 			if ((modifiers & ApiMemberModifiers.Sealed) != 0)
@@ -357,6 +420,10 @@ public static class ApiWriter
 			if ((modifiers & ApiMemberModifiers.ReadOnly) != 0)
 				builder.Append("readonly ");
 		}
+
+		/// <summary>An interface member with a default implementation: virtual, or sealed, which is neither virtual nor abstract.</summary>
+		private static bool HasBody(ApiMemberModifiers modifiers) =>
+			(modifiers & ApiMemberModifiers.Virtual) != 0 || (modifiers & (ApiMemberModifiers.Static | ApiMemberModifiers.Abstract)) == 0;
 
 		private void Accessor(ApiAccessor? accessor, ApiAccessibility propertyAccessibility, string keyword)
 		{

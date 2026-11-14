@@ -578,6 +578,7 @@ public sealed class ApiReader
 		);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "a method without a return parameter row has no collection to return")]
 	private IEnumerable<CustomAttributeHandle> ReturnParameterAttributes(MethodDefinition method)
 	{
 		foreach (var handle in method.GetParameters())

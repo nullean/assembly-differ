@@ -18,13 +18,10 @@ public class RoslynOracleTests
 
 	[Test]
 	[MethodDataSource(nameof(FrameworkAssemblies))]
-	public void Agrees_with_Roslyn_on_a_framework_assembly(string name)
-	{
-		var path = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator).First(
-			p => Path.GetFileNameWithoutExtension(p) == name
-		);
-		Compare(File.ReadAllBytes(path));
-	}
+	public void Agrees_with_Roslyn_on_a_framework_assembly(string name) => Compare(File.ReadAllBytes(FrameworkPath(name)));
+
+	public static string FrameworkPath(string name) =>
+		((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator).First(p => Path.GetFileNameWithoutExtension(p) == name);
 
 	[Test]
 	[MethodDataSource(typeof(WriterTests), nameof(WriterTests.Cases))]

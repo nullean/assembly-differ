@@ -1,5 +1,6 @@
 assembly Lib
-using System: DateTime, DayOfWeek, IComparable<>, IntPtr, UIntPtr
+using System: IComparable<>
+using struct System: DateTime, DayOfWeek, IntPtr, UIntPtr
 using System.Collections.Generic: Dictionary<,>, List<>
 
 namespace Lib
