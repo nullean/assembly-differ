@@ -18,6 +18,8 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.E1`
+### `V8` is added
 [diff] Suggested version change: Minor
 --- stderr
 

@@ -40,14 +40,20 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C1`
+Attribute `System.ObsoleteAttribute::.ctor()` is added.
+### `Ev3` is added
 ## `.N0` is deleted
 ## `Lib.C2`
 ### `C2()` is added
 ## `.N6` is deleted
 ## `Lib.C3`
+Attribute `System.Reflection.DefaultMemberAttribute::.ctor(System.String)` is deleted.
+### `F2`
+Member type changed from `Int64` to `Int32`.
+### `Item` is deleted
 ### `C3(Int64, String, UInt16)` is added
-### `C3(String, Nullable<Int32>, UInt16)` is added
-### `Item` is added
+### `C3(String, Nullable<Int32>, UInt16)` is deleted
 ## `.N4` is deleted
 [diff] Suggested version change: Major
 --- stderr

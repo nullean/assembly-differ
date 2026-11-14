@@ -23,6 +23,8 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C1`
+Member is more visible.
 ## `Lib.I2<in T>`
 ### `M2(Int64&)` is added
 [diff] Suggested version change: Major

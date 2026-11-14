@@ -31,7 +31,10 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0<T>`
-### `M2(Boolean)` is added
+### `M2(Boolean)` is deleted
+### `Ev3`
+`add`: Member is more visible.
+`remove`: Member is more visible.
 [diff] Suggested version change: Major
 --- stderr
 

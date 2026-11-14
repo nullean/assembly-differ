@@ -21,6 +21,9 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.I3`
+Member is more visible.
+### `Ev1` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

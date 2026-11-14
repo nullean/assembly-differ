@@ -29,9 +29,9 @@ exit code: 0
 
 ## `Lib.S0`
 ### `M5()` is added
-### `M5(Int32)` is added
+### `M5(Int32)` is deleted
 ## `.N6`
-### `N6()` is added
+### `N6()` is deleted
 ### `X6()`
 Member changed to static.
 [diff] Suggested version change: Major

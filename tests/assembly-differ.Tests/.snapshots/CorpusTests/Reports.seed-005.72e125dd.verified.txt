@@ -36,9 +36,16 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `M5(DateTime&, List<Int32>)` is added
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is deleted.
+Attribute `System.ObsoleteAttribute::.ctor()` is added.
+### `M5(DateTime&, List<Int32>)` is deleted
+### `Ev0` is deleted
 ## `Lib.C2`
-### `P1` is added
+Member is more visible.
+### `F0` is deleted
+### `P1` is deleted
+## `Lib.I1<out T>`
+Attribute `System.ObsoleteAttribute::.ctor()` is deleted.
 [diff] Suggested version change: Major
 --- stderr
 

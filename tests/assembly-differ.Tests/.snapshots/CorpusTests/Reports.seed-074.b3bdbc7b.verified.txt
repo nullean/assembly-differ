@@ -20,7 +20,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C2`
-### `op_Addition(C2, C2)` is added
+### `op_Addition(C2, C2)` is deleted
 ## `Lib.S0` is new
 [diff] Suggested version change: Major
 --- stderr

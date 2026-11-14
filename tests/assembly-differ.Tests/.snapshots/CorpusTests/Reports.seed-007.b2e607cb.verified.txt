@@ -28,6 +28,7 @@ exit code: 0
 ## `Lib.S2<T>`
 ### `G2<U>(U, IntPtr)`
 Member changed to instance.
+### `Ev0` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

@@ -36,9 +36,11 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
+### `P1` is deleted
 ### `M0(Nullable<Int32>&, Int32[])`
 Parameter name changed from `b` to `index`.
-### `P1` is added
+## `Lib.C1`
+### `F4` is deleted
 ## `.N3`
 ### `N3()` is added
 ### `X3()`

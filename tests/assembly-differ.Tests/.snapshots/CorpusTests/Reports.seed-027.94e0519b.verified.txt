@@ -26,8 +26,9 @@ exit code: 0
 
 ## `Lib.C1` is new
 ## `Lib.I0<out T>`
-### `G1<U>(U)` is added
-### `M2(ValueTuple<Int32, String>)` is added
+### `G1<U>(U)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `M2(ValueTuple<Int32, String>)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

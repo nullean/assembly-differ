@@ -30,7 +30,10 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C1<T>`
-### `op_Subtraction(C1<T>, C1<T>)` is added
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
+### `op_Subtraction(C1<T>, C1<T>)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 ## `.N2` is new
 [diff] Suggested version change: Minor
 --- stderr

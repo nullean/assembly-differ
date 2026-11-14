@@ -4,9 +4,15 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.Widget`
-### `Widget()` is added
-### `Name(Int32)` is added
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is added.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
+Attribute `System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()` is added.
 ### `Label` is added
+### `Widget()`
+Attribute `System.ObsoleteAttribute::.ctor(System.String,System.Boolean)` is added.
+Attribute `System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute::.ctor(System.String)` is added.
+### `Name(Int32)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 [diff] Suggested version change: Major
 --- stderr
 

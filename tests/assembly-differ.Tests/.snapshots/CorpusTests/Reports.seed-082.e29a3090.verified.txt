@@ -32,11 +32,12 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C3`
-### `C3()` is added
+### `C3()` is deleted
 ## `Lib.D0`
 ### `EndInvoke(IAsyncResult)`
 Member type changed from `String` to `Int32`.
 ### `Invoke()`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 Member type changed from `String` to `Int32`.
 [diff] Suggested version change: Major
 --- stderr

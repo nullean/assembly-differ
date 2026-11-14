@@ -26,7 +26,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `.N4`
-### `N4()` is added
+### `N4()` is deleted
 ### `X4()`
 Member changed to static.
 [diff] Suggested version change: Major

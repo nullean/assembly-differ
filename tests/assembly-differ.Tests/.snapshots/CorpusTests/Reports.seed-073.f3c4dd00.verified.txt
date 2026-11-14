@@ -35,8 +35,17 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C2` is new
+## `Lib.C3`
+Attribute `System.ObsoleteAttribute::.ctor()` is added.
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is deleted.
+Attribute `System.Runtime.CompilerServices.NullableAttribute::.ctor(System.Byte)` is added.
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 ## `.N2` is deleted
 ## `.N3` is deleted
+## `Lib.I1<in T>`
+Member is more visible.
+## `Lib.I4`
+### `Ev1` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

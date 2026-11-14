@@ -37,12 +37,17 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.C2`
+Member is more visible.
+### `Ev6`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is added.
 ## `.N0`
 ### `X0()`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is deleted.
 Member type changed from `Object` to `Int32`.
 ## `Lib.C4`
-### `M2(Int32&)` is added
-### `op_Addition(C4, C4)` is added
+### `M2(Int32&)` is deleted
+### `op_Addition(C4, C4)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

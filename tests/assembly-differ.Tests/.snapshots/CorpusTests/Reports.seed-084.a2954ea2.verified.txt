@@ -22,6 +22,9 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.E2`
+### `value__`
+Member type changed from `Int32` to `Byte`.
 [diff] Suggested version change: Major
 --- stderr
 

@@ -22,9 +22,9 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C2`
-### `M2(String, Nullable<Int32>)` is added
+### `M2(String, Nullable<Int32>)` is deleted
 ## `Lib.I1<T>`
-### `G0<U>(U)` is added
+### `G0<U>(U)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

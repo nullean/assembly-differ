@@ -30,9 +30,11 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `op_ExclusiveOr(C0, Int32)` is added
+### `op_ExclusiveOr(C0, Int32)` is deleted
 ## `Lib.C2`
-### `op_Addition(C2, C2)` is added
+Member is more visible.
+### `op_Addition(C2, C2)`
+Attribute `System.ComponentModel.EditorBrowsableAttribute::.ctor(System.ComponentModel.EditorBrowsableState)` is deleted.
 ## `.N2` is new
 [diff] Suggested version change: Major
 --- stderr

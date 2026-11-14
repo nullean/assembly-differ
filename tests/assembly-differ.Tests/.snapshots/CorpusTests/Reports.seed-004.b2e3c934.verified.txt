@@ -30,6 +30,11 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `.N0` is deleted
+## `Lib.C2`
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is added.
+## `Lib.S3`
+Attribute `System.ObsoleteAttribute::.ctor(System.String)` is deleted.
+### `Ev4` is added
 [diff] Suggested version change: Major
 --- stderr
 

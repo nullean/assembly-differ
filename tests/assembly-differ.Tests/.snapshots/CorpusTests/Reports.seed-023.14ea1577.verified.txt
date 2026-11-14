@@ -23,7 +23,9 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.I1<in T>`
+Attribute `System.ObsoleteAttribute::.ctor()` is deleted.
 ### `M6(Int32, Int32)` is added
+### `Ev1` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

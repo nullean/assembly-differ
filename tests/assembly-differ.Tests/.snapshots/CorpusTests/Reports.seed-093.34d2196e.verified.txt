@@ -19,7 +19,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0<T>`
-### `G0<U>(U)` is added
+### `G0<U>(U)` is deleted
 [diff] Suggested version change: Major
 --- stderr
 

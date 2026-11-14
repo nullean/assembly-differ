@@ -50,14 +50,20 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `Lib.C0`
-### `G1<U>(U)` is added
+Attribute `System.Reflection.DefaultMemberAttribute::.ctor(System.String)` is deleted.
+### `Item` is deleted
+### `G1<U>(U)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 ### `M5(Int64&)`
 Member is more visible.
-### `op_BitwiseOr(C0, C0)` is added
-### `Item` is added
+### `op_BitwiseOr(C0, C0)`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 ## `.N0`
 ### `X0()`
+Attribute `System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte)` is added.
 Member type changed from `CancellationToken` to `List<Int32>`.
+## `Lib.C1`
+Member is more visible.
 [diff] Suggested version change: Major
 --- stderr
 

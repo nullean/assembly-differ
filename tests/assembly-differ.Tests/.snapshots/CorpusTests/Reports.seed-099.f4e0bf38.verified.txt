@@ -18,6 +18,8 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 ## API Changes: `Lib`
 
+## `Lib.E0`
+### `V5` is deleted
 [diff] Suggested version change: Major
 --- stderr
 
