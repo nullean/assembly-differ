@@ -41,6 +41,11 @@ description = "Build, pack the NuGet packages, validate them and report public A
 depends = ["setup"]
 run = "dotnet run --project build/scripts -- pack"
 
+[tasks.api]
+description = "Build, then write the libraries' public API to api/; commit it with an intended API change"
+depends = ["setup"]
+run = "dotnet run --project build/scripts -- api"
+
 [tasks.clean]
 description = "Delete build output"
 run = "dotnet run --project build/scripts -- clean"

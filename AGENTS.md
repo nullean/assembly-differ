@@ -87,6 +87,9 @@ one release label.
 - `ApiReader` must agree with Roslyn: `RoslynOracleTests` compares types, nullability, tuple names, ref kinds, modifiers,
   accessibility, constraints and parameter flags for CoreLib and other framework assemblies. A difference is a reader bug
   unless C# itself hides the metadata (a finalizer, a struct's implicit constructor); say so in the test when it does.
+- `api/` holds the two libraries' public API, one file per target framework where they differ, and CI's `verifyapi`
+  target fails when the build no longer matches it. After an intended change to their public API, run `mise run api` and
+  commit `api/` with the change; the diff of those files is the API change a reviewer reads.
 - The two libraries are published packages with a public API of their own: every public member has an XML doc, the diff
   items are built only inside the library (internal constructors), and they must compile for netstandard2.0, where
   PolySharp supplies the language features.

@@ -85,7 +85,7 @@ internal sealed class ApiFileCommand
 
 			var files = Files(assemblies, splitting);
 			if (verify is not null)
-				return Verify.Run(verify, files, assemblies, UpdateCommand(path, split, target, framework, verify));
+				return Verify.Run(verify, files, assemblies, UpdateCommand(path, split, target, framework, project, includeTests, includeUnpackable, verify));
 			if (output is not null)
 			{
 				Write(output, files);
@@ -252,7 +252,16 @@ internal sealed class ApiFileCommand
 		return files;
 	}
 
-	private static string UpdateCommand(string? path, string split, List<string>? target, string? framework, string directory)
+	private static string UpdateCommand(
+		string? path,
+		string split,
+		List<string>? target,
+		string? framework,
+		List<string>? project,
+		bool includeTests,
+		bool includeUnpackable,
+		string directory
+	)
 	{
 		var command = new StringBuilder("assembly-differ api");
 		if (path is not null)
@@ -263,6 +272,12 @@ internal sealed class ApiFileCommand
 			command.Append(" -t ").Append(name);
 		if (framework is not null)
 			command.Append(" --framework ").Append(framework);
+		foreach (var file in project ?? [])
+			command.Append(" --project ").Append(file);
+		if (includeTests)
+			command.Append(" --include-tests");
+		if (includeUnpackable)
+			command.Append(" --include-unpackable");
 		return command.Append(" -o ").Append(directory).ToString();
 	}
 }
