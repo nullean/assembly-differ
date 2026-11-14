@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A content-only package: the agent skill for assembly-differ, in skills/assembly-differ/SKILL.md, the layout
+       https://devblogs.microsoft.com/dotnet/delivering-skills-in-nuget-packages/ describes. Reference it next to
+       installing the tool, and dotnet restore puts the skill on the machine. It ships no assembly and no dependency. -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <PackageId>assembly-differ.skills</PackageId>
+    <Title>assembly-differ.skills: the agent skill for assembly-differ</Title>
+    <Description>The agent skill for the assembly-differ dotnet tool: how a coding agent finds out what a package update or a library change does to a public API, without decompiling anything.</Description>
+    <PackageTags>agent-skills;skills;api-diff;breaking-changes;semver;nuget</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="skills/**/*" Pack="true" PackagePath="skills/" />
+  </ItemGroup>
+</Project>

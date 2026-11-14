@@ -58,6 +58,9 @@ overloads, ends with:
 
 `diff` with provider specs, such as `"nuget|Proc|0.13.0"`, still works as before for the builds that call it.
 
+Coding agents can use it instead of decompiling assemblies: in a solution, `assembly-differ nuget X 2.0.0` shows what
+updating X would break in the code it builds. The `assembly-differ.skills` package carries an agent skill for it.
+
 It also runs as a GitHub Action (`uses: nullean/assembly-differ@v1`), which comments on and labels pull requests, and as a
 container (`ghcr.io/nullean/assembly-differ`) that needs no .NET SDK.
 

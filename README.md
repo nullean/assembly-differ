@@ -7,7 +7,7 @@
 
 <h1 align="center">assembly-differ</h1>
 
-<p align="center">Diff the public API of two versions of your assemblies, from disk, NuGet or a git commit, and find out whether the change is breaking.</p>
+<p align="center">Diff the public API of two versions of your assemblies or packages, find out whether the change is breaking, and see what a package update would break in your own code: for people, pull requests and coding agents.</p>
 
 <p align="center">
   <a href="https://www.nuget.org/packages/assembly-differ"><img src="https://img.shields.io/nuget/v/assembly-differ?style=flat-square" alt="NuGet"></a>
@@ -58,6 +58,27 @@ dotnet tool install --global assembly-differ
 On Linux (x64, arm64), Windows (x64, arm64) and macOS (arm64) this installs a self-contained native-AOT executable: no
 shared .NET runtime, no JIT warm-up. Everywhere else it falls back to a framework-dependent build, which needs the .NET 11
 runtime installed.
+
+## For coding agents
+
+An agent asked to update a package, or to change a library, usually has to decompile assemblies and read release notes
+to find out what changes. `assembly-differ` answers that from the metadata, in one command, and in a solution it narrows
+the answer to the API the code actually uses:
+
+```sh
+dotnet build && assembly-differ nuget Polly 8.5.0 -f json -o .   # what updating Polly to 8.5.0 breaks in this code
+dotnet build -c Release && assembly-differ -f json -o .          # what my changes did to this repo's libraries
+```
+
+`api-changes.json` holds the suggested version change, the number of breaking changes and every change as a tree. The
+[`assembly-differ.skills`](src/assembly-differ.skills/README.md) package carries an agent skill that teaches all of
+this: add it to a project next to installing the tool, and `dotnet restore` puts `skills/assembly-differ/SKILL.md` on
+the machine for skill loaders such as `dotnet-package-skills` to copy into `.agents/skills`.
+
+```sh
+dotnet tool install --global assembly-differ
+dotnet add package assembly-differ.skills
+```
 
 ## Quick start
 
@@ -241,6 +262,7 @@ The tool ships as one package per platform. Install the root package; the .NET S
 |---|---|---|
 | [`assembly-differ`](src/assembly-differ/README.md) | the tool; points the SDK at the package for your platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ?style=flat-square)](https://www.nuget.org/packages/assembly-differ) |
 | `assembly-differ.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-differ.linux-x64) |
+| [`assembly-differ.skills`](src/assembly-differ.skills/README.md) | the agent skill for the tool, content only; a development dependency | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.skills?style=flat-square)](https://www.nuget.org/packages/assembly-differ.skills) |
 | `assembly-differ.any` | the framework-dependent fallback (net11.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.any?style=flat-square)](https://www.nuget.org/packages/assembly-differ.any) |
 
 ## Learn more
