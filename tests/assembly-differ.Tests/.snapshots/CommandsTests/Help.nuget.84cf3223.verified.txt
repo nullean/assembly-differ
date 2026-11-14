@@ -12,6 +12,7 @@ Global options:
 
 Options:
   --framework <string>   The target framework to compare, such as net8.0. In a solution, defaults to the one each project compiles against. [default: null]
+  --all                  In a solution, show every change, not only the ones to API your built projects use.
   -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
   -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
   -o, --output <string>  A directory or file to write the report to, besides the console.
@@ -22,7 +23,10 @@ Notes:
   In a directory with a solution or project files, nuget X compares the version of X your projects resolve with
   its latest stable release, and nuget X 2.0.0 with 2.0.0: what updating would change. It reads the resolved version,
   and the target framework each project compiles X for, from obj/project.assets.json, so restore first. When projects
-  resolve different versions, each is compared. Give two versions to compare them anywhere.
+  resolve different versions, each is compared. In a solution it shows only the changes to the types and members your
+  built projects reference, the ones that affect you, unless --all is set; build first. Members match by name, and a
+  constant you use does not show, because the compiler copies its value into your code. Give two versions to compare
+  them anywhere.
 
 Examples:
   assembly-differ nuget Polly

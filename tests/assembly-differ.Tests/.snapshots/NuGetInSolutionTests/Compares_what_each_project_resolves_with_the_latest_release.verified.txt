@@ -15,3 +15,5 @@ exit code: 0
 ### `Draw()` is deleted
 [diff] Suggested version change: Major
 --- stderr
+[diff] warning: App not built, so every change is shown; build first to see only the changes your code uses
+[diff] warning: Worker not built, so every change is shown; build first to see only the changes your code uses

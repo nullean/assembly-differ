@@ -193,9 +193,9 @@ internal sealed partial class TypeComparer : Comparer<TypeModel>
 	protected override bool IsApi(TypeModel element) =>
 		element.Visibility is TypeAttributes.Public or TypeAttributes.NestedPublic or TypeAttributes.NestedFamily or TypeAttributes.NestedFamORAssem;
 
-	protected override IDiffItem Missing(TypeModel element) => new TypeDiffItem(true, false, element.DisplayName, null, null);
+	protected override IDiffItem Missing(TypeModel element) => new TypeDiffItem(true, false, element.DisplayName, null, null) { Key = element.FullName };
 
-	protected override IDiffItem Added(TypeModel element) => new TypeDiffItem(false, true, element.DisplayName, null, null);
+	protected override IDiffItem Added(TypeModel element) => new TypeDiffItem(false, true, element.DisplayName, null, null) { Key = element.FullName };
 
 	protected override IDiffItem? Changed(TypeModel oldElement, TypeModel newElement)
 	{
@@ -213,7 +213,7 @@ internal sealed partial class TypeComparer : Comparer<TypeModel>
 			.ToList();
 		if (declarationDiffs.Count == 0 && childrenDiffs.Count == 0)
 			return null;
-		return new TypeDiffItem(true, true, newElement.DisplayName, declarationDiffs, childrenDiffs.Cast<IMetadataDiffItem>());
+		return new TypeDiffItem(true, true, newElement.DisplayName, declarationDiffs, childrenDiffs.Cast<IMetadataDiffItem>()) { Key = newElement.FullName };
 	}
 }
 
@@ -236,17 +236,18 @@ internal sealed class MethodComparer : Comparer<MethodModel>
 
 	protected override bool IsApi(MethodModel element) => element.IsApi;
 
-	protected override IDiffItem Missing(MethodModel element) => new MemberDiffItem(MetadataType.Method, true, false, element.Display.Name, null, null);
+	protected override IDiffItem Missing(MethodModel element) =>
+		new MemberDiffItem(MetadataType.Method, true, false, element.Display.Name, null, null) { Key = element.Name };
 
 	protected override IDiffItem Added(MethodModel element) =>
-		new MemberDiffItem(MetadataType.Method, false, true, element.Display.Name, null, null) { AddsObligation = element.IsAbstract };
+		new MemberDiffItem(MetadataType.Method, false, true, element.Display.Name, null, null) { AddsObligation = element.IsAbstract, Key = element.Name };
 
 	protected override IDiffItem? Changed(MethodModel oldElement, MethodModel newElement)
 	{
 		var declarationDiffs = DeclarationDiffs(oldElement, newElement).ToList();
 		if (declarationDiffs.Count == 0)
 			return null;
-		return new MemberDiffItem(MetadataType.Method, true, true, newElement.Display.Name, declarationDiffs, null);
+		return new MemberDiffItem(MetadataType.Method, true, true, newElement.Display.Name, declarationDiffs, null) { Key = newElement.Name };
 	}
 
 	public static IEnumerable<IDiffItem> DeclarationDiffs(MethodModel oldMethod, MethodModel newMethod)
@@ -297,10 +298,11 @@ internal sealed class FieldComparer : Comparer<FieldModel>
 
 	protected override bool IsApi(FieldModel element) => element.IsApi;
 
-	protected override IDiffItem Missing(FieldModel element) => new MemberDiffItem(MetadataType.Field, true, false, element.Display.Name, null, null);
+	protected override IDiffItem Missing(FieldModel element) =>
+		new MemberDiffItem(MetadataType.Field, true, false, element.Display.Name, null, null) { Key = element.Name };
 
 	protected override IDiffItem Added(FieldModel element) =>
-		new MemberDiffItem(MetadataType.Field, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
+		new MemberDiffItem(MetadataType.Field, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
 	protected override IDiffItem? Changed(FieldModel oldElement, FieldModel newElement)
 	{
@@ -314,7 +316,7 @@ internal sealed class FieldComparer : Comparer<FieldModel>
 			declarationDiffs.Add(new MemberTypeDiffItem(oldElement.Display.Type, newElement.Display.Type));
 		if (declarationDiffs.Count == 0)
 			return null;
-		return new MemberDiffItem(MetadataType.Field, true, true, newElement.Display.Name, declarationDiffs, null);
+		return new MemberDiffItem(MetadataType.Field, true, true, newElement.Display.Name, declarationDiffs, null) { Key = newElement.Name };
 	}
 }
 
@@ -326,10 +328,11 @@ internal sealed class PropertyComparer : Comparer<PropertyModel>
 
 	protected override bool IsApi(PropertyModel element) => element.Get is { IsApi: true } || element.Set is { IsApi: true };
 
-	protected override IDiffItem Missing(PropertyModel element) => new MemberDiffItem(MetadataType.Property, true, false, element.Display.Name, null, null);
+	protected override IDiffItem Missing(PropertyModel element) =>
+		new MemberDiffItem(MetadataType.Property, true, false, element.Display.Name, null, null) { Key = element.Name };
 
 	protected override IDiffItem Added(PropertyModel element) =>
-		new MemberDiffItem(MetadataType.Property, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
+		new MemberDiffItem(MetadataType.Property, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
 	protected override IDiffItem? Changed(PropertyModel oldElement, PropertyModel newElement)
 	{
@@ -343,7 +346,7 @@ internal sealed class PropertyComparer : Comparer<PropertyModel>
 			childrenDiffs.Add(set);
 		if (declarationDiffs.Count == 0 && childrenDiffs.Count == 0)
 			return null;
-		return new MemberDiffItem(MetadataType.Property, true, true, newElement.Display.Name, declarationDiffs, childrenDiffs);
+		return new MemberDiffItem(MetadataType.Property, true, true, newElement.Display.Name, declarationDiffs, childrenDiffs) { Key = newElement.Name };
 	}
 }
 
@@ -355,10 +358,11 @@ internal sealed class EventComparer : Comparer<EventModel>
 
 	protected override bool IsApi(EventModel element) => element.Add is { IsApi: true } || element.Remove is { IsApi: true };
 
-	protected override IDiffItem Missing(EventModel element) => new MemberDiffItem(MetadataType.Event, true, false, element.Display.Name, null, null);
+	protected override IDiffItem Missing(EventModel element) =>
+		new MemberDiffItem(MetadataType.Event, true, false, element.Display.Name, null, null) { Key = element.Name };
 
 	protected override IDiffItem Added(EventModel element) =>
-		new MemberDiffItem(MetadataType.Event, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
+		new MemberDiffItem(MetadataType.Event, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation, Key = element.Name };
 
 	protected override IDiffItem? Changed(EventModel oldElement, EventModel newElement)
 	{
@@ -370,6 +374,6 @@ internal sealed class EventComparer : Comparer<EventModel>
 			childrenDiffs.Add(remove);
 		if (declarationDiffs.Count == 0 && childrenDiffs.Count == 0)
 			return null;
-		return new MemberDiffItem(MetadataType.Event, true, true, newElement.Display.Name, declarationDiffs, childrenDiffs);
+		return new MemberDiffItem(MetadataType.Event, true, true, newElement.Display.Name, declarationDiffs, childrenDiffs) { Key = newElement.Name };
 	}
 }

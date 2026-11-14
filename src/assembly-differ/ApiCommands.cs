@@ -57,12 +57,16 @@ internal sealed class ApiCommands
 	/// In a directory with a solution or project files, nuget X compares the version of X your projects resolve with
 	/// its latest stable release, and nuget X 2.0.0 with 2.0.0: what updating would change. It reads the resolved version,
 	/// and the target framework each project compiles X for, from obj/project.assets.json, so restore first. When projects
-	/// resolve different versions, each is compared. Give two versions to compare them anywhere.
+	/// resolve different versions, each is compared. In a solution it shows only the changes to the types and members your
+	/// built projects reference, the ones that affect you, unless --all is set; build first. Members match by name, and a
+	/// constant you use does not show, because the compiler copies its value into your code. Give two versions to compare
+	/// them anywhere.
 	/// </remarks>
 	/// <param name="package">The package id.</param>
 	/// <param name="version">With one version, the version to update to; with two, the old one.</param>
 	/// <param name="newVersion">The new version, when the old one is given too.</param>
 	/// <param name="framework">The target framework to compare, such as net8.0. In a solution, defaults to the one each project compiles against.</param>
+	/// <param name="all">In a solution, show every change, not only the ones to API your built projects use.</param>
 	/// <param name="report">How to report the comparison.</param>
 	/// <example>assembly-differ nuget Polly</example>
 	/// <example>assembly-differ nuget Polly 8.5.0</example>
@@ -73,6 +77,7 @@ internal sealed class ApiCommands
 		[Argument] string? version = null,
 		[Argument] string? newVersion = null,
 		string? framework = null,
+		bool all = false,
 		[AsParameters] ReportOptions? report = null
 	)
 	{
@@ -129,13 +134,15 @@ internal sealed class ApiCommands
 				continue;
 			}
 			Console.WriteLine($"[diff] Comparing {package} {group.Key.Version}, which {projects} {resolve} for {group.Key.Folder}, with {target}");
+			var filter = all ? null : UsesFilter(group.ToList());
 			var code = Run(
 				() =>
 					(new DiffSide(new NuGetAssemblyProvider(installer, Spec(package, group.Key.Version, group.Key.Folder)), "nuget"), new DiffSide(
 						new NuGetAssemblyProvider(installer, Spec(package, target, group.Key.Folder)),
 						"nuget"
 					)),
-				report
+				report,
+				filter
 			);
 			exitCode = Math.Max(exitCode, code);
 		}
@@ -212,11 +219,40 @@ internal sealed class ApiCommands
 		return 0;
 	}
 
-	private static int Run(Func<(DiffSide Old, DiffSide New)> sides, ReportOptions? report) =>
-		Run(() => (((DiffSide Old, DiffSide New)?)sides()), report, () => null)!.Value;
+	private static int Run(
+		Func<(DiffSide Old, DiffSide New)> sides,
+		ReportOptions? report,
+		Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? filter = null
+	) => Run(() => (((DiffSide Old, DiffSide New)?)sides()), report, () => null, filter)!.Value;
+
+	/// <summary>
+	/// The filter to the API the projects use, read from their builds; null, with a warning, when none is built.
+	/// </summary>
+	private static Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? UsesFilter(IReadOnlyList<Projects.Resolution> resolutions)
+	{
+		var builds = resolutions.Select(r => (r.Project, Output: Projects.ResolvedPackages.BuildOutput(r))).ToList();
+		var unbuilt = builds.Where(b => b.Output is null).Select(b => b.Project).Distinct().ToList();
+		var outputs = builds.Where(b => b.Output is not null).Select(b => b.Output!).Distinct().ToList();
+		if (outputs.Count == 0)
+		{
+			Console.Error.WriteLine(
+				$"[diff] warning: {string.Join(", ", unbuilt)} not built, so every change is shown; build first to see only the changes your code uses"
+			);
+			return null;
+		}
+		if (unbuilt.Count > 0)
+			Console.Error.WriteLine($"[diff] warning: {string.Join(", ", unbuilt)} not built, so what they use is left out");
+		Console.WriteLine("[diff] Showing the changes to API your projects use; --all shows every change");
+		return (pair, diff) => UsageFilter.Apply(diff, UsedApi.Read(outputs, [Path.GetFileNameWithoutExtension(pair.First.Name)]));
+	}
 
 	/// <summary>Compares the two sides <paramref name="sides"/> returns, or returns <c>null</c> when it returns none.</summary>
-	private static int? Run(Func<(DiffSide Old, DiffSide New)?> sides, ReportOptions? report, Func<string?> baseline)
+	private static int? Run(
+		Func<(DiffSide Old, DiffSide New)?> sides,
+		ReportOptions? report,
+		Func<string?> baseline,
+		Func<AssemblyComparison, IMetadataDiffItem, IMetadataDiffItem?>? filter = null
+	)
 	{
 		report ??= new ReportOptions();
 		var targets = new HashSet<string>(report.Target ?? [], StringComparer.OrdinalIgnoreCase);
@@ -228,7 +264,7 @@ internal sealed class ApiCommands
 			return DiffRunner.Run(
 				oldSide,
 				newSide,
-				new DiffSettings(targets, report.Format, report.Output, failOn, AllowEmptyPreviousNuget: false) { Baseline = baseline() }
+				new DiffSettings(targets, report.Format, report.Output, failOn, AllowEmptyPreviousNuget: false) { Baseline = baseline(), Filter = filter }
 			);
 		}
 		catch (Exception e) when (e is ArgumentException or FileNotFoundException or DirectoryNotFoundException)

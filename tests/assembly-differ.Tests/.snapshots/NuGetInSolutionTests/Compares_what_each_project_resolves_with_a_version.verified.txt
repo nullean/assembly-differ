@@ -5,3 +5,4 @@ exit code: 0
 [diff] Suggested version change: None
 [diff] Worker already resolves AssemblyDiffer.Tests.Dependency 1.1.0
 --- stderr
+[diff] warning: App not built, so every change is shown; build first to see only the changes your code uses

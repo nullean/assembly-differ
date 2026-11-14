@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace Differ.Projects;
 
 /// <summary>A package version a project resolves, and the lib/ folder it compiles against, such as net8.0.</summary>
-internal sealed record Resolution(string Project, string Version, string LibFolder);
+internal sealed record Resolution(string Project, string ProjectPath, string TargetFramework, string Version, string LibFolder);
 
 /// <summary>Reads which version of a package the projects in a directory resolve, from their project.assets.json.</summary>
 internal static class ResolvedPackages
@@ -37,13 +37,32 @@ internal static class ResolvedPackages
 					if (slash < 0 || !string.Equals(library.Name[..slash], packageId, StringComparison.OrdinalIgnoreCase))
 						continue;
 					if (LibFolder(library.Value) is { } folder)
-						resolutions.Add(new Resolution(name, library.Name[(slash + 1)..], folder));
+						resolutions.Add(new Resolution(name, project, target.Name, library.Name[(slash + 1)..], folder));
 				}
 			}
 		}
 		if (unrestored.Count > 0)
 			Console.Error.WriteLine($"[diff] warning: not restored, so not read: {string.Join(", ", unrestored)}; run dotnet restore first");
 		return resolutions;
+	}
+
+	/// <summary>
+	/// The assembly a project builds for a target framework, in Release or else Debug, or null when it is not built.
+	/// </summary>
+	public static string? BuildOutput(Resolution resolution)
+	{
+		foreach (var configuration in new[] { "Release", "Debug" })
+		{
+			var path = Dotnet.Properties(
+				resolution.ProjectPath,
+				["TargetPath"],
+				$"TargetFramework={resolution.TargetFramework}",
+				$"Configuration={configuration}"
+			)["TargetPath"];
+			if (File.Exists(path))
+				return path;
+		}
+		return null;
 	}
 
 	/// <summary>The lib/ folder of the first assembly the target compiles against, or null for none.</summary>

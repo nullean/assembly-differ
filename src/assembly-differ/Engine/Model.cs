@@ -44,6 +44,7 @@ internal sealed record TypeModel(
 internal readonly record struct Display(string Name, string? Type);
 
 internal sealed record MethodModel(
+	string Name,
 	string Signature,
 	MethodAttributes Flags,
 	string ReturnTypeFullName,
@@ -257,6 +258,7 @@ internal sealed class ModelReader
 		display.Append('(').Append(string.Join(", ", signature.ParameterTypes.Select(p => p.DisplayName))).Append(')');
 
 		return new MethodModel(
+			name,
 			declaringType.FullName + "::" + name + "(" + string.Join(",", signature.ParameterTypes.Select(p => p.FullName)) + ")",
 			method.Attributes,
 			signature.ReturnType.FullName,
