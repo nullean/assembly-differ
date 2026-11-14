@@ -134,6 +134,10 @@ method you call, not the hundred you don't. It reads that from your build output
 shows every change, with a warning, and `--all` always does. Members match by name, and a constant you use does not show,
 because the compiler copies its value into your code.
 
+Packages download into NuGet's global packages folder, as `dotnet restore` does, so a second run downloads nothing.
+What the tool unpacks and copies to compare goes into a scratch folder of the run's own, under the system's temporary
+folder, and is deleted when the run ends; set `ASSEMBLY_DIFFER_KEEP_SCRATCH=1` to keep it.
+
 A single assembly on each side is compared whatever its file name. With more, assemblies pair by file name, and one
 only a side has is printed; it counts as removed or added API when `--target` names it.
 

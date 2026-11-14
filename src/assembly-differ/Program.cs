@@ -13,4 +13,11 @@ app.Map<Differ.Projects.UpgradesCommand>();
 app.Map<DiffCommands>();
 app.MapAndRootAlias<Differ.Projects.ProjectsCommand>();
 
-return await app.RunAsync(args);
+try
+{
+	return await app.RunAsync(args);
+}
+finally
+{
+	Scratch.Delete();
+}

@@ -32,7 +32,7 @@ public class GitHubAssemblyProvider : IAssemblyProvider
 
 	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		var tempDir = Path.Combine(_command.TempDir, "differ", "github");
+		var tempDir = Scratch.Folder("github");
 		if (!Directory.Exists(tempDir))
 			Directory.CreateDirectory(tempDir);
 
