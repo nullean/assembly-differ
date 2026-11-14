@@ -650,7 +650,8 @@ public static class ApiComparison
 			{
 				var o = oldParameters[i];
 				var n = newParameters[i];
-				var label = $"parameter {n.Name}";
+				// by position, which both versions share; a renamed parameter has a name of its own on each side
+				var label = $"parameter {i + 1}";
 				if (o.Name != n.Name)
 					changed($"parameter {i + 1} name", o.Name, n.Name, ApiAudience.Callers, ApiCompatibility.Source, "callers that pass it by name");
 				TypeOf(label, o.Type, n.Type, oldType, newType, changed);
