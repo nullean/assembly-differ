@@ -20,7 +20,7 @@ public sealed class GeneratedLibrary
 	private string _namespace = "Lib";
 
 	// what the type being written already has, which a second one of would clash
-	private bool _hasConstructor, _hasOperator, _hasIndexer, _hasExtra;
+	private bool _hasConstructor, _hasOperator, _hasIndexer, _hasExtra, _inheritsStaticAbstract;
 
 	private GeneratedLibrary(uint[] choices) => _choices = choices;
 
@@ -83,6 +83,8 @@ public sealed class GeneratedLibrary
 				Type();
 			if (n == 0 && Chance(2))
 				Extensions();
+			if (Chance(2))
+				GenericMath();
 			_source.AppendLine("}");
 		}
 	}
@@ -100,7 +102,7 @@ public sealed class GeneratedLibrary
 		if (!marker)
 			typeParameters = typeParameters.Select(p => p with { Variance = "" }).ToList();
 		var info = new TypeInfo(_namespace, name, kind, typeParameters, marker, false);
-		_hasConstructor = _hasOperator = _hasIndexer = _hasExtra = false;
+		_hasConstructor = _hasOperator = _hasIndexer = _hasExtra = _inheritsStaticAbstract = false;
 		var context = new Context(typeParameters, [], kind);
 
 		var attributes = Chance(6) ? "[Obsolete(\"use another\")] " : "";
@@ -141,7 +143,7 @@ public sealed class GeneratedLibrary
 		_source.AppendLine($"  {attributes}public {keyword} {name}{TypeParameterList(typeParameters)}{primary}{bases}{Constraints(typeParameters)}").AppendLine(
 			"  {"
 		);
-		var hasStaticAbstract = false;
+		var hasStaticAbstract = _inheritsStaticAbstract;
 		if (!marker)
 		{
 			if (kind is Kind.Class or Kind.AbstractClass or Kind.SealedClass)
@@ -229,7 +231,12 @@ public sealed class GeneratedLibrary
 			// a marker interface stays one: it only extends markers
 			var candidates = _types.Where(t => t.Kind == Kind.Interface && (t.Marker || !self.Marker)).ToList();
 			if (candidates.Count > 0)
-				bases.Add(Closed(candidates[Next(candidates.Count)]));
+			{
+				var chosen = candidates[Next(candidates.Count)];
+				bases.Add(Closed(chosen));
+				// static abstract members are inherited, and keep this interface out of type arguments too
+				_inheritsStaticAbstract = chosen.HasStaticAbstract;
+			}
 		}
 		if (kind is Kind.Class or Kind.SealedClass or Kind.Struct or Kind.ReadOnlyStruct or Kind.Record && Chance(2))
 		{
@@ -288,6 +295,15 @@ public sealed class GeneratedLibrary
 			case 1 or 2:
 				{
 					var type = Type(context, valueOnly: false);
+					if (inInterface && Chance(2))
+					{
+						// a property with a default body, or a static abstract one
+						var staticAbstract = Chance(2);
+						_source.AppendLine(
+							staticAbstract ? $"    static abstract {type} {Name("P")} {{ get; }}" : $"    {type} {Name("P")} {{ get => throw null!; }}"
+						);
+						return staticAbstract;
+					}
 					var modifier = isStatic ? "static " : canBeVirtual && Chance(3) ? (kind == Kind.AbstractClass && Chance(2) ? "abstract " : "virtual ") : "";
 					string accessors;
 					if (inInterface || isStatic)
@@ -318,15 +334,25 @@ public sealed class GeneratedLibrary
 					var staticAbstract = false;
 					if (inInterface)
 					{
-						switch (Next(4))
+						// abstract, a default body, static abstract, static virtual, or sealed: what modern interfaces use
+						switch (Next(5))
 						{
 							case 1:
 								body = " { throw null!; }";
 								break;
-							case 2 when methodParameters.Count == 0:
+							case 2:
 								modifier = "static abstract ";
 								body = ";";
 								staticAbstract = true;
+								break;
+							case 3:
+								modifier = Chance(2) ? "static virtual " : "static ";
+								body = " => throw null!;";
+								staticAbstract = modifier == "static virtual ";
+								break;
+							case 4:
+								modifier = "sealed ";
+								body = " => throw null!;";
 								break;
 							default:
 								body = ";";
@@ -385,6 +411,64 @@ public sealed class GeneratedLibrary
 				);
 				return false;
 		}
+	}
+
+	/// <summary>
+	/// The generic math shape: an interface over itself with static abstract operators and properties, static virtual
+	/// and default members, a struct that implements it, and a method constrained to it.
+	/// </summary>
+	private void GenericMath()
+	{
+		var face = Name("IMath");
+		var number = Name("Number");
+		var operators = new List<string> { "+" };
+		if (Chance(2))
+			operators.Add("*");
+		var withZero = Chance(2);
+		var withCreate = Chance(2);
+		var withComparison = Chance(3);
+		var equatable = Chance(3);
+		_source.AppendLine($"  public interface {face}<TSelf> where TSelf : {face}<TSelf>{(equatable ? ", IEquatable<TSelf>" : "")}").AppendLine("  {");
+		foreach (var symbol in operators)
+			_source.AppendLine($"    static abstract TSelf operator {symbol}(TSelf left, TSelf right);");
+		if (withComparison)
+			_source.AppendLine("    static abstract bool operator >(TSelf left, TSelf right);").AppendLine(
+				"    static abstract bool operator <(TSelf left, TSelf right);"
+			);
+		if (withZero)
+			_source.AppendLine("    static abstract TSelf Zero { get; }");
+		if (withCreate)
+			_source.AppendLine("    static abstract TSelf Create(int value);");
+		if (Chance(2))
+			_source.AppendLine("    static virtual TSelf Twice(TSelf value) => value + value;");
+		if (Chance(2))
+			_source.AppendLine("    TSelf Self() => (TSelf)this;");
+		if (Chance(3))
+			_source.AppendLine("    static TSelf First(TSelf left, TSelf right) => left;");
+		_source.AppendLine("  }");
+
+		_source.AppendLine($"  public readonly struct {number} : {face}<{number}>, IEquatable<{number}>").AppendLine("  {");
+		foreach (var symbol in operators)
+			_source.AppendLine($"    public static {number} operator {symbol}({number} left, {number} right) => left;");
+		if (withComparison)
+			_source.AppendLine($"    public static bool operator >({number} left, {number} right) => false;").AppendLine(
+				$"    public static bool operator <({number} left, {number} right) => false;"
+			);
+		if (withZero)
+			_source.AppendLine($"    public static {number} Zero => default;");
+		if (withCreate)
+			_source.AppendLine(
+				Chance(2) ? $"    public static {number} Create(int value) => default;" : $"    static {number} {face}<{number}>.Create(int value) => default;"
+			);
+		_source.AppendLine($"    public bool Equals({number} other) => true;");
+		_source.AppendLine("  }");
+
+		_source.AppendLine($"  public static class {Name("Algorithms")}").AppendLine("  {");
+		_source.AppendLine($"    public static T Sum<T>(T[] values) where T : {face}<T>{(equatable ? ", IEquatable<T>" : "")} => values[0] + values[0];");
+		if (Chance(2))
+			_source.AppendLine($"    public static {number} Total(params {number}[] values) => default;");
+		_source.AppendLine("  }");
+		_types.Add(new TypeInfo(_namespace, number, Kind.ReadOnlyStruct, [], false, false));
 	}
 
 	private void Extensions()
