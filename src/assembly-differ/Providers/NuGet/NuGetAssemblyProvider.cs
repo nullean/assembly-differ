@@ -40,7 +40,7 @@ public class NuGetAssemblyProvider : IAssemblyProvider
 
 	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		var tempDir = Path.Combine(_command.TempDir, "differ", _providerName);
+		var tempDir = Scratch.Folder(_providerName);
 		if (!Directory.Exists(tempDir))
 			Directory.CreateDirectory(tempDir);
 

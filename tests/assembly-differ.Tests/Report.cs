@@ -31,6 +31,8 @@ public static class Report
 		// packages unpack under the temporary directory, which differs per machine
 		var temp = Path.GetTempPath().TrimEnd('/', '\\');
 		text = text.Replace("/private" + temp, "{temp}").Replace(temp, "{temp}");
-		return text.Replace('\\', '/');
+		// every run has a scratch folder of its own
+		text = System.Text.RegularExpressions.Regex.Replace(text.Replace('\\', '/'), "assembly-differ/[0-9a-f]{32}", "assembly-differ/{run}");
+		return text;
 	}
 }

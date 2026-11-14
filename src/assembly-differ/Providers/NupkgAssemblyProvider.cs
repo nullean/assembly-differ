@@ -23,10 +23,7 @@ public class NupkgAssemblyProvider : IAssemblyProvider
 
 	public IEnumerable<FileInfo> GetAssemblies(HashSet<string> targets)
 	{
-		var directory = Path.Combine(Path.GetTempPath(), "differ", "nupkg", Path.GetFileNameWithoutExtension(_path), _framework.GetShortFolderName());
-		if (Directory.Exists(directory))
-			Directory.Delete(directory, true);
-		Directory.CreateDirectory(directory);
+		var directory = Scratch.Folder("nupkg", Path.GetFileNameWithoutExtension(_path), _framework.GetShortFolderName());
 
 		using var reader = new PackageArchiveReader(_path);
 		var group = reader.GetLibItems().FirstOrDefault(g => g.TargetFramework.Equals(_framework));
