@@ -4,6 +4,10 @@ using interface System: IComparable<>, IDisposable, IEquatable<>
 using System.Text: StringBuilder
 
 namespace Lib.Drawing
+  public class Animal
+    public Animal()
+    public virtual Animal Clone()
+
   public sealed class Canvas
     public Canvas()
 
@@ -11,6 +15,23 @@ namespace Lib.Drawing
     Red = 0
     Green = 5
     Blue = 6
+
+  public class Dog : Animal
+    public Dog()
+    public override Dog Clone()
+
+  public sealed record Employee : Person, IEquatable<Employee>
+    public Employee(string Name, int Age, string Team)
+    public string Team { get; init; }
+    public override Employee <Clone>$()
+    public void Deconstruct(out string Name, out int Age, out string Team)
+    public bool Equals(Employee? other)
+    public sealed override bool Equals(Person? other)
+    public override bool Equals(object? obj)
+    public override int GetHashCode()
+    public override string ToString()
+    public static bool operator ==(Employee? left, Employee? right)
+    public static bool operator !=(Employee? left, Employee? right)
 
   public delegate T Factory<out T>(string name) where T : class
 
