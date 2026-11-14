@@ -462,10 +462,12 @@ public sealed class ApiReader
 		var rawType = signature.ReturnType;
 		var refKind = ApiRefKind.None;
 		var hasInModifier = false;
+		var propertyOffset = 0;
 		while (rawType is ApiModifiedType { Modifier.FullName: "System.Runtime.InteropServices.InAttribute" } readOnlyReturn)
 		{
 			hasInModifier = true;
 			rawType = readOnlyReturn.Type;
+			propertyOffset++;
 		}
 		var isByReference = rawType is ApiByReferenceType;
 		if (rawType is ApiByReferenceType reference)
@@ -477,7 +479,8 @@ public sealed class ApiReader
 				: ApiRefKind.Ref;
 		}
 		var memberContext = (getter is { } ng ? NullableContext(ng.GetCustomAttributes()) : null) ?? typeContext;
-		var propertyType = Annotate(rawType, property.GetCustomAttributes(), memberContext, isByReference ? 1 : 0);
+		// the property's type falls back to its type's context; the getter's context is for the getter's own parameters
+		var propertyType = Annotate(rawType, property.GetCustomAttributes(), typeContext, propertyOffset + (isByReference ? 1 : 0));
 
 		// an indexer's parameters are the getter's, or all but the setter's last
 		var parameters = new List<ApiParameter>();
@@ -553,11 +556,12 @@ public sealed class ApiReader
 		{
 			returnHasInModifier = true;
 			rawReturn = readOnlyReturn.Type;
+			returnOffset++;
 		}
 		if (rawReturn is ApiByReferenceType reference)
 		{
 			rawReturn = reference.ElementType;
-			returnOffset = 1;
+			returnOffset++;
 			returnRefKind = returnHasInModifier || HasAttribute(returnAttributes, CompilerServices + "IsReadOnlyAttribute")
 				? ApiRefKind.RefReadOnly
 				: ApiRefKind.Ref;
@@ -649,15 +653,17 @@ public sealed class ApiReader
 			var refKind = ApiRefKind.None;
 			var offset = 0;
 			var hasInModifier = false;
+			// a custom modifier takes a dynamic flag of its own, as the reference does
 			while (rawType is ApiModifiedType { Modifier.FullName: "System.Runtime.InteropServices.InAttribute" } readOnlyParameter)
 			{
 				hasInModifier = true;
 				rawType = readOnlyParameter.Type;
+				offset++;
 			}
 			if (rawType is ApiByReferenceType reference)
 			{
 				rawType = reference.ElementType;
-				offset = 1;
+				offset++;
 				var flags = row?.Attributes ?? ParameterAttributes.None;
 				refKind = HasAttribute(attributes, CompilerServices + "RequiresLocationAttribute")
 					? ApiRefKind.RefReadOnly
@@ -736,10 +742,7 @@ public sealed class ApiReader
 					continue;
 				constraintTypes.Add(Annotate(constraintType, constraint.GetCustomAttributes(), nullableContext));
 			}
-			if (
-				nullable == 1 && (constraints & (ApiConstraints.Class | ApiConstraints.NullableClass | ApiConstraints.Struct | ApiConstraints.Unmanaged)) ==
-					0 && constraintTypes.Count == 0
-			)
+			if (nullable == 1 && (constraints & (ApiConstraints.Class | ApiConstraints.NullableClass | ApiConstraints.Struct | ApiConstraints.Unmanaged)) == 0)
 				constraints |= ApiConstraints.NotNull;
 			parameters.Add(new ApiTypeParameter(_reader.GetString(parameter.Name), variance, constraints, constraintTypes));
 		}

@@ -278,7 +278,7 @@ public static class ApiParser
 			if (kind == ApiTypeKind.Delegate)
 			{
 				// delegate [ref [readonly]] ReturnType Name<T>(...)
-				var paren = TopLevelIndex(text, cursor.Position, '(');
+				var paren = ParameterList(text, cursor.Position);
 				var head = text.Substring(cursor.Position, paren - cursor.Position).TrimEnd();
 				var lt = head.EndsWithChar('>') ? MatchingOpen(head, head.Length - 1) : -1;
 				var nameEnd = lt >= 0 ? lt : head.Length;
