@@ -54,7 +54,9 @@ let main argv =
                    |> executes { sh $"dotnet build -c Release" }
         | Test -> command {
               requires [Build] }
-                   |> executes { sh $"dotnet test --project tests/assembly-differ.Tests -c Release --no-build" }
+                   |> executes {
+                       sh $"dotnet test --project tests/Nullean.PublicApi.Tests -c Release --no-build"
+                       sh $"dotnet test --project tests/assembly-differ.Tests -c Release --no-build" }
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
         // ci is build, test, then create, validate and diff the packages
         | Ci -> command { requires [Pack]; composes [Test] }

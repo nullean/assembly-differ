@@ -1,0 +1,85 @@
+assembly Lib
+using System: EventArgs, EventHandler<>, FlagsAttribute, IComparable<>, IDisposable, IEquatable<>, ObsoleteAttribute, Type
+using System.Text: StringBuilder
+
+namespace Lib.Drawing
+  public sealed class Canvas
+    public Canvas()
+
+  public enum Color : byte
+    Red = 0
+    Green = 5
+    Blue = 6
+
+  public delegate T Factory<out T>(string name) where T : class
+
+  public interface IShape : IDisposable
+    double Area { get; }
+    static abstract IShape Create()
+    void Draw(Canvas canvas)
+    void Scale(double factor) { … }
+
+  [Flags]
+  public enum Options
+    None = 0
+    A = 1
+    B = 2
+
+  public class Outer<T>
+    public Outer()
+    protected class Family
+      public Family()
+    public class Inner<U>
+      public Inner()
+      public T? First
+      public U? Second
+
+  public record Person : IEquatable<Person>
+    protected Person(Person original)
+    public Person(string Name, int Age)
+    public int Age { get; init; }
+    protected virtual Type EqualityContract { get; }
+    public string Name { get; init; }
+    public virtual Person <Clone>$()
+    public void Deconstruct(out string Name, out int Age)
+    public virtual bool Equals(Person? other)
+    public override bool Equals(object? obj)
+    public override int GetHashCode()
+    protected virtual bool PrintMembers(StringBuilder builder)
+    public override string ToString()
+    public static bool operator ==(Person? left, Person? right)
+    public static bool operator !=(Person? left, Person? right)
+
+  public readonly struct Point
+    public Point(int x, int y)
+    public int X { get; }
+    public int Y { get; }
+    public static Point operator +(Point a, Point b)
+    public static implicit operator Point(int value)
+
+  public abstract class Renderer
+    public abstract void Render(IShape shape)
+
+  public abstract class Shape
+    protected Shape()
+    public static readonly string Default
+    public const int MaxLayer = 10
+    public abstract double Area { get; }
+    public int Layer { get; protected set; }
+    public event EventHandler<EventArgs>? Changed
+    public virtual void Draw(Canvas canvas)
+
+  public ref struct Span2
+    public int Length
+
+  public sealed class Widget : Shape, IComparable<Widget>
+    public Widget(string name, int size = 1)
+    public override double Area { get; }
+    public required string? Name { get; init; }
+    public int CompareTo(Widget? other)
+    public sealed override void Draw(Canvas canvas)
+
+  public static class Widgets
+    [Obsolete("use Widget")]
+    public static Widget? Default { get; }
+    public static int Count(this Widget widget)

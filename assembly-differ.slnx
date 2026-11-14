@@ -22,5 +22,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/assembly-differ.Tests/assembly-differ.Tests.csproj" />
+    <Project Path="tests/Nullean.PublicApi.Tests/Nullean.PublicApi.Tests.csproj" />
   </Folder>
 </Solution>
