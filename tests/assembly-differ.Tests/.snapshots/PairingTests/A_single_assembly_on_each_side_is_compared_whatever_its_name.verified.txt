@@ -1,0 +1,11 @@
+exit code: 0
+--- stdout
+[diff] Difference found: AssemblyProvider:Lib - Copy.dll and AssemblyProvider:Lib.dll
+<Assembly Name="Lib, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" DiffType="Modified">
+  <Module Name="Lib.dll" DiffType="Modified">
+    <Type Name="Lib.Widget" DiffType="Modified">
+      <Method Name="Draw()" DiffType="Deleted" />
+    </Type>
+  </Module>
+</Assembly>[diff] Suggested version change: Major
+--- stderr

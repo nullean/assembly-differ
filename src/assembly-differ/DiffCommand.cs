@@ -85,6 +85,8 @@ internal sealed class DiffCommands
 			var firstAssemblies = firstProvider.GetAssemblies(targets).ToList();
 			var secondAssemblies = secondProvider.GetAssemblies(targets).ToList();
 			var pairs = CreateAssemblyPairs(firstAssemblies, secondAssemblies).ToList();
+			var onlyInFirst = Unpaired(firstAssemblies, pairs.Select(p => p.First));
+			var onlyInSecond = Unpaired(secondAssemblies, pairs.Select(p => p.Second));
 
 			if (!pairs.Any())
 			{
@@ -104,7 +106,17 @@ internal sealed class DiffCommands
 				return 1;
 			}
 
-			var result = new AllComparisonResults(pairs, preventChangeValue);
+			foreach (var assembly in onlyInFirst)
+				Console.WriteLine($"[diff] Only in the old version: {assembly.Name}");
+			foreach (var assembly in onlyInSecond)
+				Console.WriteLine($"[diff] Only in the new version: {assembly.Name}");
+
+			// without targets, an assembly only one side has is as likely a dependency as API, so it only counts when named
+			var result = new AllComparisonResults(pairs, preventChangeValue)
+			{
+				Removed = targets.Count > 0 ? onlyInFirst : [],
+				Added = targets.Count > 0 ? onlyInSecond : [],
+			};
 			foreach (var assemblyPair in pairs)
 			{
 				assemblyPair.Diff = ApiDiff.Compare(assemblyPair.First.FullName, assemblyPair.Second.FullName);
@@ -141,6 +153,18 @@ internal sealed class DiffCommands
 		return 0;
 	}
 
-	private static IEnumerable<AssemblyComparison> CreateAssemblyPairs(IEnumerable<FileInfo> first, IEnumerable<FileInfo> second) =>
-		first.Join(second, f => f.Name.ToUpperInvariant(), f => f.Name.ToUpperInvariant(), (f1, f2) => new AssemblyComparison(f1, f2));
+	/// <summary>
+	/// Pairs the assemblies by file name. When each side has exactly one assembly they are compared whatever their names,
+	/// such as a dll and a renamed copy of it.
+	/// </summary>
+	private static IEnumerable<AssemblyComparison> CreateAssemblyPairs(IReadOnlyList<FileInfo> first, IReadOnlyList<FileInfo> second) =>
+		first.Count == 1 && second.Count == 1
+			? [new AssemblyComparison(first[0], second[0])]
+			: first.Join(second, f => f.Name.ToUpperInvariant(), f => f.Name.ToUpperInvariant(), (f1, f2) => new AssemblyComparison(f1, f2));
+
+	private static List<FileInfo> Unpaired(IEnumerable<FileInfo> assemblies, IEnumerable<FileInfo> paired)
+	{
+		var pairedPaths = new HashSet<string>(paired.Select(p => p.FullName));
+		return assemblies.Where(a => !pairedPaths.Contains(a.FullName)).ToList();
+	}
 }

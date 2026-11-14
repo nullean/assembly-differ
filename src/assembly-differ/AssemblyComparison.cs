@@ -77,6 +77,22 @@ public class AllComparisonResults
 	public AllComparisonResults(List<AssemblyComparison> results, SuggestedVersionChange preventChange) =>
 		(Comparisons, PreventVersionChange) = (results, preventChange);
 
-	public SuggestedVersionChange SuggestedVersionChange =>
-		Comparisons.Count == 0 ? SuggestedVersionChange.None : Comparisons.Select(c => c.SuggestedVersionChange).OrderByDescending(c => c).First();
+	/// <summary>Assemblies only the old version has, which count as removed API.</summary>
+	public IReadOnlyList<FileInfo> Removed { get; init; } = [];
+
+	/// <summary>Assemblies only the new version has, which count as added API.</summary>
+	public IReadOnlyList<FileInfo> Added { get; init; } = [];
+
+	public SuggestedVersionChange SuggestedVersionChange
+	{
+		get
+		{
+			var change = Comparisons.Select(c => c.SuggestedVersionChange).DefaultIfEmpty(SuggestedVersionChange.None).Max();
+			if (Removed.Count > 0)
+				return SuggestedVersionChange.Major;
+			if (Added.Count > 0 && change < SuggestedVersionChange.Minor)
+				return SuggestedVersionChange.Minor;
+			return change;
+		}
+	}
 }

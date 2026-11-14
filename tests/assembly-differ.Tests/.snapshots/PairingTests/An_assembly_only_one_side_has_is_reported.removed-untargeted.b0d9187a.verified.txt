@@ -1,0 +1,6 @@
+exit code: 0
+--- stdout
+[diff] Only in the old version: Extra.dll
+[diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
+[diff] Suggested version change: None
+--- stderr
