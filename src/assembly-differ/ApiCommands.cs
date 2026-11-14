@@ -9,6 +9,7 @@ using Differ.Providers.GitHub;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;
 using NuGet.Frameworks;
+using NuGet.Versioning;
 using Nullean.Argh;
 
 namespace Differ;
@@ -79,15 +80,18 @@ internal sealed class ApiCommands
 			report
 		);
 
-	/// <summary>Compares a new build with the release before it on nuget.org.</summary>
+	/// <summary>Compares a new build with the release before it.</summary>
 	/// <remarks>
 	/// Give a .nupkg and the package id and version come from it; for a .dll or a directory, pass --package and --version.
-	/// The release compared with is the newest one before that version.
+	/// The release compared with is the newest stable one before that version, on the feeds your NuGet.config lists.
+	/// Without one, this is a first release: there is nothing to compare, and the command succeeds unless
+	/// --require-baseline is set.
 	/// </remarks>
 	/// <param name="path">The new build: a .nupkg, a .dll or a directory.</param>
 	/// <param name="package">The package id; read from a .nupkg when not given.</param>
 	/// <param name="version">The version being released; read from a .nupkg when not given.</param>
 	/// <param name="framework">The target framework to compare, such as net8.0. Defaults to the newest the .nupkg ships.</param>
+	/// <param name="requireBaseline">Fail when there is no earlier release to compare with.</param>
 	/// <param name="report">How to report the comparison.</param>
 	/// <example>assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major</example>
 	/// <example>assembly-differ release src/MyLib/bin/Release/net8.0 --package MyLib --version 1.3.0 -t MyLib</example>
@@ -97,9 +101,13 @@ internal sealed class ApiCommands
 		string? package = null,
 		string? version = null,
 		string? framework = null,
+		bool requireBaseline = false,
 		[AsParameters] ReportOptions? report = null
-	) =>
-		Run(
+	)
+	{
+		report ??= new ReportOptions();
+		string? baseline = null;
+		var exitCode = Run(
 			() =>
 			{
 				if (Nupkg.IsPackage(path))
@@ -111,14 +119,36 @@ internal sealed class ApiCommands
 				if (package is null || version is null)
 					throw new ArgumentException("pass --package and --version, or a .nupkg to read them from");
 
+				var previous = PreviousRelease.Find(package, NuGetVersion.Parse(version));
+				if (previous is null)
+					return null;
+				baseline = previous.ToNormalizedString();
+				Console.WriteLine($"[diff] Comparing with {package} {baseline}, the release before {version}");
+
 				var chosen = Framework(framework, path);
 				return (new DiffSide(
-					new NuGetAssemblyProvider(new PreviousNugetLocator(), Spec(package, version, chosen?.GetShortFolderName()), "previous-nuget"),
-					"previous-nuget"
+					new NuGetAssemblyProvider(new Providers.NuGet.NuGet(), Spec(package, baseline, chosen?.GetShortFolderName())),
+					"nuget"
 				), Local(path, chosen));
 			},
-			report
+			report,
+			() => baseline
 		);
+		if (exitCode is { } code)
+			return code;
+
+		// no earlier release: a first release has nothing to compare with
+		var sources = string.Join(", ", PreviousRelease.Sources().Select(s => s.Name));
+		if (requireBaseline)
+		{
+			Console.Error.WriteLine($"[diff] No release of {package} before {version} on {sources}, and --require-baseline is set");
+			return 1;
+		}
+		Console.WriteLine($"[diff] No release of {package} before {version} on {sources}: this is its first release, so there is nothing to compare");
+		DiffRunner.FirstRelease(package!, report.Format, report.Output);
+		Console.WriteLine($"[diff] Suggested version change: {SuggestedVersionChange.None}");
+		return 0;
+	}
 
 	/// <summary>Compares a new build with an older commit of a GitHub repository, built with the command you give.</summary>
 	/// <param name="repository">The repository as owner/name.</param>
@@ -146,15 +176,24 @@ internal sealed class ApiCommands
 			report
 		);
 
-	private static int Run(Func<(DiffSide Old, DiffSide New)> sides, ReportOptions? report)
+	private static int Run(Func<(DiffSide Old, DiffSide New)> sides, ReportOptions? report) =>
+		Run(() => (((DiffSide Old, DiffSide New)?)sides()), report, () => null)!.Value;
+
+	/// <summary>Compares the two sides <paramref name="sides"/> returns, or returns <c>null</c> when it returns none.</summary>
+	private static int? Run(Func<(DiffSide Old, DiffSide New)?> sides, ReportOptions? report, Func<string?> baseline)
 	{
 		report ??= new ReportOptions();
 		var targets = new HashSet<string>(report.Target ?? [], StringComparer.OrdinalIgnoreCase);
 		try
 		{
-			var (oldSide, newSide) = sides();
+			if (sides() is not var (oldSide, newSide))
+				return null;
 			var failOn = Enum.Parse<SuggestedVersionChange>(report.FailOn, ignoreCase: true);
-			return DiffRunner.Run(oldSide, newSide, new DiffSettings(targets, report.Format, report.Output, failOn, AllowEmptyPreviousNuget: false));
+			return DiffRunner.Run(
+				oldSide,
+				newSide,
+				new DiffSettings(targets, report.Format, report.Output, failOn, AllowEmptyPreviousNuget: false) { Baseline = baseline() }
+			);
 		}
 		catch (Exception e) when (e is ArgumentException or FileNotFoundException or DirectoryNotFoundException)
 		{

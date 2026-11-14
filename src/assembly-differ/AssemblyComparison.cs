@@ -78,6 +78,9 @@ public class AllComparisonResults
 	public AllComparisonResults(List<AssemblyComparison> results, SuggestedVersionChange preventChange) =>
 		(Comparisons, PreventVersionChange) = (results, preventChange);
 
+	/// <summary>The release the old version is, when a command resolved one, such as <c>1.2.0</c>.</summary>
+	public string? Baseline { get; init; }
+
 	/// <summary>Assemblies only the old version has, which count as removed API.</summary>
 	public IReadOnlyList<FileInfo> Removed { get; init; } = [];
 

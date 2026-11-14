@@ -87,7 +87,7 @@ public class CommandsTests
 		var result = await Cli.RunAsync("release", package, "-f", "json", "--fail-on", "major");
 
 		result.ExitCode.Should().Be(4, result.Out + result.Error);
-		result.Out.Should().Contain("Found previous nuget package found for Proc 0.14.0: 0.13.0").And.Contain("\"suggestedVersionChange\": \"Major\"");
+		result.Out.Should().Contain("[diff] Comparing with Proc 0.13.0, the release before 0.14.0").And.Contain("\"suggestedVersionChange\": \"Major\"");
 	}
 
 	[Test]
@@ -103,9 +103,12 @@ public class CommandsTests
 	}
 
 	/// <summary>Writes a .nupkg holding the assembly once for every framework given.</summary>
-	private static string Package(Fixture fixture, string fileName, string version, string assembly, params string[] frameworks)
+	internal static string Package(Fixture fixture, string fileName, string version, string assembly, params string[] frameworks) =>
+		Package(Path.Combine(fixture.Root, fileName), "Lib", version, assembly, frameworks);
+
+	/// <summary>Writes a .nupkg of package <paramref name="id"/> to <paramref name="path"/>, holding the assembly once for every framework given.</summary>
+	internal static string Package(string path, string id, string version, string assembly, params string[] frameworks)
 	{
-		var path = Path.Combine(fixture.Root, fileName);
 		using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
 		var nuspec = zip.CreateEntry("Lib.nuspec");
 		using (var writer = new StreamWriter(nuspec.Open()))
@@ -113,7 +116,7 @@ public class CommandsTests
 				$"""
 				<?xml version="1.0" encoding="utf-8"?>
 				<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
-				  <metadata><id>Lib</id><version>{version}</version><authors>tests</authors><description>tests</description></metadata>
+				  <metadata><id>{id}</id><version>{version}</version><authors>tests</authors><description>tests</description></metadata>
 				</package>
 				"""
 			);

@@ -1,0 +1,13 @@
+exit code: 0
+--- stdout
+[diff] No release of AssemblyDiffer.Tests.Lib before 1.0.0 on local: this is its first release, so there is nothing to compare
+{
+  "firstRelease": true,
+  "suggestedVersionChange": "None",
+  "breakingChanges": 0,
+  "assemblies": [],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}
+[diff] Suggested version change: None
+--- stderr

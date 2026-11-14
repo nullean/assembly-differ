@@ -11,11 +11,33 @@ namespace Differ;
 /// <summary>One side of a comparison: where its assemblies come from, and the provider's name.</summary>
 internal sealed record DiffSide(IAssemblyProvider Provider, string ProviderName);
 
-internal sealed record DiffSettings(HashSet<string> Targets, string Format, string? Output, SuggestedVersionChange FailOn, bool AllowEmptyPreviousNuget);
+internal sealed record DiffSettings(HashSet<string> Targets, string Format, string? Output, SuggestedVersionChange FailOn, bool AllowEmptyPreviousNuget)
+{
+	/// <summary>The release the old side is, when a command resolved one.</summary>
+	public string? Baseline { get; init; }
+}
 
 /// <summary>Compares the assemblies two sides provide, writes the report and returns the exit code.</summary>
 internal static class DiffRunner
 {
+	/// <summary>Writes the report of a first release, which has nothing to compare with, in the formats that have one.</summary>
+	public static void FirstRelease(string package, string format, string? output)
+	{
+		var writers = new OutputWriterFactory(output);
+		if (format == "json")
+		{
+			using var writer = writers.Create("api-changes.json");
+			writer.WriteLine(JsonExporter.FirstRelease());
+		}
+		else if (format == "github-comment")
+		{
+			using var writer = writers.Create("github-breaking-changes-comments.md");
+			writer.WriteLine($"### API Changes: `{package}`");
+			writer.WriteLine();
+			writer.WriteLine($"This is the first release of `{package}`: there is no earlier release to compare with.");
+		}
+	}
+
 	public static int Run(DiffSide first, DiffSide second, DiffSettings settings)
 	{
 		var exporters = new ExporterCollection(
@@ -74,6 +96,7 @@ internal static class DiffRunner
 			// without targets, an assembly only one side has is as likely a dependency as API, so it only counts when named
 			var result = new AllComparisonResults(pairs, preventChangeValue)
 			{
+				Baseline = settings.Baseline,
 				Removed = targets.Count > 0 ? onlyInFirst : [],
 				Added = targets.Count > 0 ? onlyInSecond : [],
 			};

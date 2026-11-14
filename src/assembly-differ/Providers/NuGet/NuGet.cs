@@ -28,7 +28,7 @@ public class NuGet : INuGet
 
 		var packageVersion = NuGetVersion.Parse(version);
 		var nuGetFramework = NuGetFramework.AnyFramework;
-		var settings = Settings.LoadDefaultSettings(root: null);
+		var settings = PreviousNuGet.PreviousRelease.Settings();
 		var sourceRepositoryProvider = new SourceRepositoryProvider(new PackageSourceProvider(settings), Repository.Provider.GetCoreV3());
 
 		using (var cacheContext = new SourceCacheContext())

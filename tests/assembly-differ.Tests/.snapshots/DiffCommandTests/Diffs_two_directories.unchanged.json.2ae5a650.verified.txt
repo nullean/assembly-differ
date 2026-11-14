@@ -2,6 +2,7 @@ exit code: 0
 --- stdout
 [diff] No diff between {fixture}/old/Lib.dll and {fixture}/new/Lib.dll
 {
+  "firstRelease": false,
   "suggestedVersionChange": "None",
   "breakingChanges": 0,
   "assemblies": [

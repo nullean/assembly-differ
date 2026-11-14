@@ -67,12 +67,14 @@ Compare the package you just packed with its last release on nuget.org, and fail
 assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major
 ```
 
-The package id and version come from the `.nupkg`, and the release compared with is the newest one before `1.3.0`, so
-the same command keeps working as you release.
+The package id and version come from the `.nupkg`, and the release compared with is the newest stable one before
+`1.3.0` on the feeds your NuGet.config lists, so the same command keeps working as you release. A package with no
+earlier release is a first release: there is nothing to compare, so the command says so and succeeds, unless you pass
+`--require-baseline`.
 
 | Command | Compares |
 |---|---|
-| `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it on nuget.org; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
+| `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
 | `nuget <id> <old-version> <new-version>` | two published versions, from the NuGet sources your NuGet.config lists |
 | `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a new build with an older commit, cloned and built with the command you give |

@@ -13,4 +13,4 @@ Commands:
   github   Compares a new build with an older commit of a GitHub repository,
            built with the command you give.
   nuget    Compares two published versions of a package.
-  release  Compares a new build with the release before it on nuget.org.
+  release  Compares a new build with the release before it.
