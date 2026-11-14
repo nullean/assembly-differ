@@ -267,7 +267,8 @@ public static class ApiParser
 				case "enum":
 					kind = ApiTypeKind.Enum;
 					break;
-				case "delegate":
+				// delegate* is a function pointer type, which a field or a parameter has
+				case "delegate" when cursor.PeekAfterWord() != '*':
 					kind = ApiTypeKind.Delegate;
 					break;
 				default:
@@ -340,7 +341,8 @@ public static class ApiParser
 			scope = new Scope(this, declared, []);
 			var cursor = new Cursor(line.Text, 0, line.Number, depth * 2);
 
-			var accessibility = Accessibility(cursor) ?? throw cursor.Error("expected public, protected or protected internal");
+			// public goes without saying; it is still read when written
+			var accessibility = Accessibility(cursor) ?? ApiAccessibility.Public;
 			var modifiers = ApiTypeModifiers.None;
 			while (true)
 			{
@@ -600,10 +602,7 @@ public static class ApiParser
 		)
 		{
 			var inInterface = type.Kind == ApiTypeKind.Interface;
-			var accessibility = Accessibility(cursor);
-			if (accessibility is null && !inInterface)
-				throw cursor.Error("expected public, protected or protected internal");
-			var access = accessibility ?? ApiAccessibility.Public;
+			var access = Accessibility(cursor) ?? ApiAccessibility.Public;
 
 			var modifiers = ApiMemberModifiers.None;
 			bool isConst = false, isReadOnly = false, isVolatile = false, isRequired = false, isSealedInInterface = false;

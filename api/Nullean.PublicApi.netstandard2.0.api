@@ -6,70 +6,70 @@ using System.IO: Stream
 using System.Text: StringBuilder
 
 namespace Nullean.PublicApi
-  public enum ApiAccessibility
+  enum ApiAccessibility
     Public = 0
     Protected = 1
     ProtectedInternal = 2
 
-  public sealed record ApiAccessor : IEquatable<ApiAccessor>
-    public ApiAccessor(ApiAccessibility Accessibility, bool IsInit, bool IsReadOnly)
-    public ApiAccessibility Accessibility { get; init; }
-    public bool IsInit { get; init; }
-    public bool IsReadOnly { get; init; }
-    public ApiAccessor <Clone>$()
-    public void Deconstruct(out ApiAccessibility Accessibility, out bool IsInit, out bool IsReadOnly)
-    public bool Equals(ApiAccessor? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiAccessor? left, ApiAccessor? right)
-    public static bool operator !=(ApiAccessor? left, ApiAccessor? right)
+  sealed record ApiAccessor : IEquatable<ApiAccessor>
+    ApiAccessor(ApiAccessibility Accessibility, bool IsInit, bool IsReadOnly)
+    ApiAccessibility Accessibility { get; init; }
+    bool IsInit { get; init; }
+    bool IsReadOnly { get; init; }
+    ApiAccessor <Clone>$()
+    void Deconstruct(out ApiAccessibility Accessibility, out bool IsInit, out bool IsReadOnly)
+    bool Equals(ApiAccessor? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiAccessor? left, ApiAccessor? right)
+    static bool operator !=(ApiAccessor? left, ApiAccessor? right)
 
-  public sealed record ApiArrayType : ApiTypeReference, IEquatable<ApiArrayType>
-    public ApiArrayType(ApiTypeReference ElementType, int Rank)
-    public ApiTypeReference ElementType { get; init; }
-    public int Rank { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out ApiTypeReference ElementType, out int Rank)
-    public bool Equals(ApiArrayType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiArrayType? left, ApiArrayType? right)
-    public static bool operator !=(ApiArrayType? left, ApiArrayType? right)
+  sealed record ApiArrayType : ApiTypeReference, IEquatable<ApiArrayType>
+    ApiArrayType(ApiTypeReference ElementType, int Rank)
+    ApiTypeReference ElementType { get; init; }
+    int Rank { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out ApiTypeReference ElementType, out int Rank)
+    bool Equals(ApiArrayType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiArrayType? left, ApiArrayType? right)
+    static bool operator !=(ApiArrayType? left, ApiArrayType? right)
 
-  public sealed record ApiAssembly : IEquatable<ApiAssembly>
-    public ApiAssembly(string Name, Version Version, string? PublicKeyToken, string? TargetFramework, IReadOnlyList<ApiType> Types)
-    public string Name { get; init; }
-    public string? PublicKeyToken { get; init; }
-    public string? TargetFramework { get; init; }
-    public IReadOnlyList<ApiType> Types { get; init; }
-    public Version Version { get; init; }
-    public ApiAssembly <Clone>$()
-    public void Deconstruct(out string Name, out Version Version, out string? PublicKeyToken, out string? TargetFramework, out IReadOnlyList<ApiType> Types)
-    public bool Equals(ApiAssembly? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiAssembly? left, ApiAssembly? right)
-    public static bool operator !=(ApiAssembly? left, ApiAssembly? right)
+  sealed record ApiAssembly : IEquatable<ApiAssembly>
+    ApiAssembly(string Name, Version Version, string? PublicKeyToken, string? TargetFramework, IReadOnlyList<ApiType> Types)
+    string Name { get; init; }
+    string? PublicKeyToken { get; init; }
+    string? TargetFramework { get; init; }
+    IReadOnlyList<ApiType> Types { get; init; }
+    Version Version { get; init; }
+    ApiAssembly <Clone>$()
+    void Deconstruct(out string Name, out Version Version, out string? PublicKeyToken, out string? TargetFramework, out IReadOnlyList<ApiType> Types)
+    bool Equals(ApiAssembly? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiAssembly? left, ApiAssembly? right)
+    static bool operator !=(ApiAssembly? left, ApiAssembly? right)
 
-  public sealed record ApiAttribute : IEquatable<ApiAttribute>
-    public ApiAttribute(ApiNamedType Type, IReadOnlyList<string> Arguments)
-    public IReadOnlyList<string> Arguments { get; init; }
-    public ApiNamedType Type { get; init; }
-    public ApiAttribute <Clone>$()
-    public void Deconstruct(out ApiNamedType Type, out IReadOnlyList<string> Arguments)
-    public bool Equals(ApiAttribute? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiAttribute? left, ApiAttribute? right)
-    public static bool operator !=(ApiAttribute? left, ApiAttribute? right)
+  sealed record ApiAttribute : IEquatable<ApiAttribute>
+    ApiAttribute(ApiNamedType Type, IReadOnlyList<string> Arguments)
+    IReadOnlyList<string> Arguments { get; init; }
+    ApiNamedType Type { get; init; }
+    ApiAttribute <Clone>$()
+    void Deconstruct(out ApiNamedType Type, out IReadOnlyList<string> Arguments)
+    bool Equals(ApiAttribute? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiAttribute? left, ApiAttribute? right)
+    static bool operator !=(ApiAttribute? left, ApiAttribute? right)
 
   [Flags]
-  public enum ApiConstraints
+  enum ApiConstraints
     None = 0
     Class = 1
     NullableClass = 2
@@ -79,112 +79,112 @@ namespace Nullean.PublicApi
     New = 32
     AllowsRefStruct = 64
 
-  public sealed class ApiDocument
-    public ApiAssembly Assembly { get; }
-    public int? LineOf(object node)
-    public ApiLocation? LocationOf(object node)
+  sealed class ApiDocument
+    ApiAssembly Assembly { get; }
+    int? LineOf(object node)
+    ApiLocation? LocationOf(object node)
 
-  public sealed record ApiDynamicType : ApiTypeReference, IEquatable<ApiDynamicType>
-    public ApiDynamicType()
-    public override ApiTypeReference <Clone>$()
-    public bool Equals(ApiDynamicType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiDynamicType? left, ApiDynamicType? right)
-    public static bool operator !=(ApiDynamicType? left, ApiDynamicType? right)
+  sealed record ApiDynamicType : ApiTypeReference, IEquatable<ApiDynamicType>
+    ApiDynamicType()
+    override ApiTypeReference <Clone>$()
+    bool Equals(ApiDynamicType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiDynamicType? left, ApiDynamicType? right)
+    static bool operator !=(ApiDynamicType? left, ApiDynamicType? right)
 
-  public sealed record ApiEvent : ApiMember, IEquatable<ApiEvent>
-    public ApiEvent(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMemberModifiers Modifiers, ApiTypeReference Type)
-    public ApiMemberModifiers Modifiers { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public override ApiMember <Clone>$()
-    public void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMemberModifiers Modifiers, out ApiTypeReference Type)
-    public bool Equals(ApiEvent? other)
-    public sealed override bool Equals(ApiMember? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiEvent? left, ApiEvent? right)
-    public static bool operator !=(ApiEvent? left, ApiEvent? right)
+  sealed record ApiEvent : ApiMember, IEquatable<ApiEvent>
+    ApiEvent(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMemberModifiers Modifiers, ApiTypeReference Type)
+    ApiMemberModifiers Modifiers { get; init; }
+    ApiTypeReference Type { get; init; }
+    override ApiMember <Clone>$()
+    void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMemberModifiers Modifiers, out ApiTypeReference Type)
+    bool Equals(ApiEvent? other)
+    sealed override bool Equals(ApiMember? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiEvent? left, ApiEvent? right)
+    static bool operator !=(ApiEvent? left, ApiEvent? right)
 
-  public sealed record ApiField : ApiMember, IEquatable<ApiField>
-    public ApiField(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiTypeReference Type, bool IsStatic, bool IsReadOnly, bool IsVolatile, bool IsRequired, string? Constant)
-    public string? Constant { get; init; }
-    public bool IsReadOnly { get; init; }
-    public bool IsRequired { get; init; }
-    public bool IsStatic { get; init; }
-    public bool IsVolatile { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public override ApiMember <Clone>$()
-    public void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiTypeReference Type, out bool IsStatic, out bool IsReadOnly, out bool IsVolatile, out bool IsRequired, out string? Constant)
-    public bool Equals(ApiField? other)
-    public sealed override bool Equals(ApiMember? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiField? left, ApiField? right)
-    public static bool operator !=(ApiField? left, ApiField? right)
+  sealed record ApiField : ApiMember, IEquatable<ApiField>
+    ApiField(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiTypeReference Type, bool IsStatic, bool IsReadOnly, bool IsVolatile, bool IsRequired, string? Constant)
+    string? Constant { get; init; }
+    bool IsReadOnly { get; init; }
+    bool IsRequired { get; init; }
+    bool IsStatic { get; init; }
+    bool IsVolatile { get; init; }
+    ApiTypeReference Type { get; init; }
+    override ApiMember <Clone>$()
+    void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiTypeReference Type, out bool IsStatic, out bool IsReadOnly, out bool IsVolatile, out bool IsRequired, out string? Constant)
+    bool Equals(ApiField? other)
+    sealed override bool Equals(ApiMember? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiField? left, ApiField? right)
+    static bool operator !=(ApiField? left, ApiField? right)
 
-  public sealed record ApiFile : IEquatable<ApiFile>
-    public ApiFile(string Name, string Text)
-    public string Name { get; init; }
-    public string Text { get; init; }
-    public ApiFile <Clone>$()
-    public void Deconstruct(out string Name, out string Text)
-    public bool Equals(ApiFile? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiFile? left, ApiFile? right)
-    public static bool operator !=(ApiFile? left, ApiFile? right)
+  sealed record ApiFile : IEquatable<ApiFile>
+    ApiFile(string Name, string Text)
+    string Name { get; init; }
+    string Text { get; init; }
+    ApiFile <Clone>$()
+    void Deconstruct(out string Name, out string Text)
+    bool Equals(ApiFile? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiFile? left, ApiFile? right)
+    static bool operator !=(ApiFile? left, ApiFile? right)
 
-  public sealed record ApiFunctionPointerType : ApiTypeReference, IEquatable<ApiFunctionPointerType>
-    public ApiFunctionPointerType(ApiTypeReference ReturnType, IReadOnlyList<ApiTypeReference> ParameterTypes, bool IsUnmanaged)
-    public bool IsUnmanaged { get; init; }
-    public IReadOnlyList<ApiTypeReference> ParameterTypes { get; init; }
-    public ApiTypeReference ReturnType { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out ApiTypeReference ReturnType, out IReadOnlyList<ApiTypeReference> ParameterTypes, out bool IsUnmanaged)
-    public bool Equals(ApiFunctionPointerType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiFunctionPointerType? left, ApiFunctionPointerType? right)
-    public static bool operator !=(ApiFunctionPointerType? left, ApiFunctionPointerType? right)
+  sealed record ApiFunctionPointerType : ApiTypeReference, IEquatable<ApiFunctionPointerType>
+    ApiFunctionPointerType(ApiTypeReference ReturnType, IReadOnlyList<ApiTypeReference> ParameterTypes, bool IsUnmanaged)
+    bool IsUnmanaged { get; init; }
+    IReadOnlyList<ApiTypeReference> ParameterTypes { get; init; }
+    ApiTypeReference ReturnType { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out ApiTypeReference ReturnType, out IReadOnlyList<ApiTypeReference> ParameterTypes, out bool IsUnmanaged)
+    bool Equals(ApiFunctionPointerType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiFunctionPointerType? left, ApiFunctionPointerType? right)
+    static bool operator !=(ApiFunctionPointerType? left, ApiFunctionPointerType? right)
 
-  public sealed record ApiLocation : IEquatable<ApiLocation>
-    public ApiLocation(string? File, int Line)
-    public string? File { get; init; }
-    public int Line { get; init; }
-    public ApiLocation <Clone>$()
-    public void Deconstruct(out string? File, out int Line)
-    public bool Equals(ApiLocation? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiLocation? left, ApiLocation? right)
-    public static bool operator !=(ApiLocation? left, ApiLocation? right)
+  sealed record ApiLocation : IEquatable<ApiLocation>
+    ApiLocation(string? File, int Line)
+    string? File { get; init; }
+    int Line { get; init; }
+    ApiLocation <Clone>$()
+    void Deconstruct(out string? File, out int Line)
+    bool Equals(ApiLocation? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiLocation? left, ApiLocation? right)
+    static bool operator !=(ApiLocation? left, ApiLocation? right)
 
-  public abstract record ApiMember : IEquatable<ApiMember>
+  abstract record ApiMember : IEquatable<ApiMember>
     protected ApiMember(ApiMember original)
-    public ApiAccessibility Accessibility { get; }
-    public IReadOnlyList<ApiAttribute> Attributes { get; }
+    ApiAccessibility Accessibility { get; }
+    IReadOnlyList<ApiAttribute> Attributes { get; }
     protected virtual Type EqualityContract { get; }
-    public string Name { get; }
-    public abstract ApiMember <Clone>$()
-    public virtual bool Equals(ApiMember? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
+    string Name { get; }
+    abstract ApiMember <Clone>$()
+    virtual bool Equals(ApiMember? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
     protected virtual bool PrintMembers(StringBuilder builder)
-    public override string ToString()
-    public static bool operator ==(ApiMember? left, ApiMember? right)
-    public static bool operator !=(ApiMember? left, ApiMember? right)
+    override string ToString()
+    static bool operator ==(ApiMember? left, ApiMember? right)
+    static bool operator !=(ApiMember? left, ApiMember? right)
 
   [Flags]
-  public enum ApiMemberModifiers
+  enum ApiMemberModifiers
     None = 0
     Static = 1
     Abstract = 2
@@ -193,204 +193,204 @@ namespace Nullean.PublicApi
     Sealed = 16
     ReadOnly = 32
 
-  public sealed record ApiMethod : ApiMember, IEquatable<ApiMethod>
-    public ApiMethod(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMethodKind Kind, ApiMemberModifiers Modifiers, ApiTypeReference ReturnType, ApiRefKind ReturnRefKind, IReadOnlyList<ApiAttribute> ReturnAttributes, IReadOnlyList<ApiTypeParameter> TypeParameters, IReadOnlyList<ApiParameter> Parameters, bool IsExtension)
-    public bool IsExtension { get; init; }
-    public ApiMethodKind Kind { get; init; }
-    public ApiMemberModifiers Modifiers { get; init; }
-    public IReadOnlyList<ApiParameter> Parameters { get; init; }
-    public IReadOnlyList<ApiAttribute> ReturnAttributes { get; init; }
-    public ApiRefKind ReturnRefKind { get; init; }
-    public ApiTypeReference ReturnType { get; init; }
-    public IReadOnlyList<ApiTypeParameter> TypeParameters { get; init; }
-    public override ApiMember <Clone>$()
-    public void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMethodKind Kind, out ApiMemberModifiers Modifiers, out ApiTypeReference ReturnType, out ApiRefKind ReturnRefKind, out IReadOnlyList<ApiAttribute> ReturnAttributes, out IReadOnlyList<ApiTypeParameter> TypeParameters, out IReadOnlyList<ApiParameter> Parameters, out bool IsExtension)
-    public sealed override bool Equals(ApiMember? other)
-    public bool Equals(ApiMethod? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiMethod? left, ApiMethod? right)
-    public static bool operator !=(ApiMethod? left, ApiMethod? right)
+  sealed record ApiMethod : ApiMember, IEquatable<ApiMethod>
+    ApiMethod(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMethodKind Kind, ApiMemberModifiers Modifiers, ApiTypeReference ReturnType, ApiRefKind ReturnRefKind, IReadOnlyList<ApiAttribute> ReturnAttributes, IReadOnlyList<ApiTypeParameter> TypeParameters, IReadOnlyList<ApiParameter> Parameters, bool IsExtension)
+    bool IsExtension { get; init; }
+    ApiMethodKind Kind { get; init; }
+    ApiMemberModifiers Modifiers { get; init; }
+    IReadOnlyList<ApiParameter> Parameters { get; init; }
+    IReadOnlyList<ApiAttribute> ReturnAttributes { get; init; }
+    ApiRefKind ReturnRefKind { get; init; }
+    ApiTypeReference ReturnType { get; init; }
+    IReadOnlyList<ApiTypeParameter> TypeParameters { get; init; }
+    override ApiMember <Clone>$()
+    void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMethodKind Kind, out ApiMemberModifiers Modifiers, out ApiTypeReference ReturnType, out ApiRefKind ReturnRefKind, out IReadOnlyList<ApiAttribute> ReturnAttributes, out IReadOnlyList<ApiTypeParameter> TypeParameters, out IReadOnlyList<ApiParameter> Parameters, out bool IsExtension)
+    sealed override bool Equals(ApiMember? other)
+    bool Equals(ApiMethod? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiMethod? left, ApiMethod? right)
+    static bool operator !=(ApiMethod? left, ApiMethod? right)
 
-  public enum ApiMethodKind
+  enum ApiMethodKind
     Method = 0
     Constructor = 1
     Operator = 2
     Conversion = 3
 
-  public sealed record ApiModifiedType : ApiTypeReference, IEquatable<ApiModifiedType>
-    public ApiModifiedType(ApiTypeReference Type, ApiNamedType Modifier, bool IsRequired)
-    public bool IsRequired { get; init; }
-    public ApiNamedType Modifier { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out ApiTypeReference Type, out ApiNamedType Modifier, out bool IsRequired)
-    public bool Equals(ApiModifiedType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiModifiedType? left, ApiModifiedType? right)
-    public static bool operator !=(ApiModifiedType? left, ApiModifiedType? right)
+  sealed record ApiModifiedType : ApiTypeReference, IEquatable<ApiModifiedType>
+    ApiModifiedType(ApiTypeReference Type, ApiNamedType Modifier, bool IsRequired)
+    bool IsRequired { get; init; }
+    ApiNamedType Modifier { get; init; }
+    ApiTypeReference Type { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out ApiTypeReference Type, out ApiNamedType Modifier, out bool IsRequired)
+    bool Equals(ApiModifiedType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiModifiedType? left, ApiModifiedType? right)
+    static bool operator !=(ApiModifiedType? left, ApiModifiedType? right)
 
-  public sealed record ApiNamedType : ApiTypeReference, IEquatable<ApiNamedType>
-    public ApiNamedType(string Namespace, string Name, ApiNamedType? DeclaringType, IReadOnlyList<ApiTypeReference> TypeArguments, bool IsValueType)
-    public ApiNamedType? DeclaringType { get; init; }
-    public string FullName { get; }
-    public bool IsNullableValueType { get; }
-    public bool IsValueType { get; init; }
-    public string Name { get; init; }
-    public string Namespace { get; init; }
-    public IReadOnlyList<ApiTypeReference> TypeArguments { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out string Namespace, out string Name, out ApiNamedType? DeclaringType, out IReadOnlyList<ApiTypeReference> TypeArguments, out bool IsValueType)
-    public bool Equals(ApiNamedType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiNamedType? left, ApiNamedType? right)
-    public static bool operator !=(ApiNamedType? left, ApiNamedType? right)
+  sealed record ApiNamedType : ApiTypeReference, IEquatable<ApiNamedType>
+    ApiNamedType(string Namespace, string Name, ApiNamedType? DeclaringType, IReadOnlyList<ApiTypeReference> TypeArguments, bool IsValueType)
+    ApiNamedType? DeclaringType { get; init; }
+    string FullName { get; }
+    bool IsNullableValueType { get; }
+    bool IsValueType { get; init; }
+    string Name { get; init; }
+    string Namespace { get; init; }
+    IReadOnlyList<ApiTypeReference> TypeArguments { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out string Namespace, out string Name, out ApiNamedType? DeclaringType, out IReadOnlyList<ApiTypeReference> TypeArguments, out bool IsValueType)
+    bool Equals(ApiNamedType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiNamedType? left, ApiNamedType? right)
+    static bool operator !=(ApiNamedType? left, ApiNamedType? right)
 
-  public sealed record ApiNativeIntegerType : ApiTypeReference, IEquatable<ApiNativeIntegerType>
-    public ApiNativeIntegerType(bool IsUnsigned)
-    public bool IsUnsigned { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out bool IsUnsigned)
-    public bool Equals(ApiNativeIntegerType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiNativeIntegerType? left, ApiNativeIntegerType? right)
-    public static bool operator !=(ApiNativeIntegerType? left, ApiNativeIntegerType? right)
+  sealed record ApiNativeIntegerType : ApiTypeReference, IEquatable<ApiNativeIntegerType>
+    ApiNativeIntegerType(bool IsUnsigned)
+    bool IsUnsigned { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out bool IsUnsigned)
+    bool Equals(ApiNativeIntegerType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiNativeIntegerType? left, ApiNativeIntegerType? right)
+    static bool operator !=(ApiNativeIntegerType? left, ApiNativeIntegerType? right)
 
-  public sealed record ApiParameter : IEquatable<ApiParameter>
-    public ApiParameter(string Name, ApiTypeReference Type, ApiRefKind RefKind, bool IsParams, bool IsScoped, string? DefaultValue, IReadOnlyList<ApiAttribute> Attributes)
-    public IReadOnlyList<ApiAttribute> Attributes { get; init; }
-    public string? DefaultValue { get; init; }
-    public bool IsParams { get; init; }
-    public bool IsScoped { get; init; }
-    public string Name { get; init; }
-    public ApiRefKind RefKind { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public ApiParameter <Clone>$()
-    public void Deconstruct(out string Name, out ApiTypeReference Type, out ApiRefKind RefKind, out bool IsParams, out bool IsScoped, out string? DefaultValue, out IReadOnlyList<ApiAttribute> Attributes)
-    public bool Equals(ApiParameter? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiParameter? left, ApiParameter? right)
-    public static bool operator !=(ApiParameter? left, ApiParameter? right)
+  sealed record ApiParameter : IEquatable<ApiParameter>
+    ApiParameter(string Name, ApiTypeReference Type, ApiRefKind RefKind, bool IsParams, bool IsScoped, string? DefaultValue, IReadOnlyList<ApiAttribute> Attributes)
+    IReadOnlyList<ApiAttribute> Attributes { get; init; }
+    string? DefaultValue { get; init; }
+    bool IsParams { get; init; }
+    bool IsScoped { get; init; }
+    string Name { get; init; }
+    ApiRefKind RefKind { get; init; }
+    ApiTypeReference Type { get; init; }
+    ApiParameter <Clone>$()
+    void Deconstruct(out string Name, out ApiTypeReference Type, out ApiRefKind RefKind, out bool IsParams, out bool IsScoped, out string? DefaultValue, out IReadOnlyList<ApiAttribute> Attributes)
+    bool Equals(ApiParameter? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiParameter? left, ApiParameter? right)
+    static bool operator !=(ApiParameter? left, ApiParameter? right)
 
-  public sealed class ApiParseException : FormatException
-    public ApiParseException(string message, int line, int column)
-    public int Column { get; }
-    public int Line { get; }
+  sealed class ApiParseException : FormatException
+    ApiParseException(string message, int line, int column)
+    int Column { get; }
+    int Line { get; }
 
-  public static class ApiParser
-    public static ApiDocument Parse(IEnumerable<(string? File, string Text)> files)
-    public static ApiDocument Parse(string text)
+  static class ApiParser
+    static ApiDocument Parse(IEnumerable<(string? File, string Text)> files)
+    static ApiDocument Parse(string text)
 
-  public sealed record ApiPointerType : ApiTypeReference, IEquatable<ApiPointerType>
-    public ApiPointerType(ApiTypeReference ElementType)
-    public ApiTypeReference ElementType { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out ApiTypeReference ElementType)
-    public bool Equals(ApiPointerType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiPointerType? left, ApiPointerType? right)
-    public static bool operator !=(ApiPointerType? left, ApiPointerType? right)
+  sealed record ApiPointerType : ApiTypeReference, IEquatable<ApiPointerType>
+    ApiPointerType(ApiTypeReference ElementType)
+    ApiTypeReference ElementType { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out ApiTypeReference ElementType)
+    bool Equals(ApiPointerType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiPointerType? left, ApiPointerType? right)
+    static bool operator !=(ApiPointerType? left, ApiPointerType? right)
 
-  public sealed record ApiProperty : ApiMember, IEquatable<ApiProperty>
-    public ApiProperty(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMemberModifiers Modifiers, ApiTypeReference Type, ApiRefKind RefKind, IReadOnlyList<ApiParameter> Parameters, ApiAccessor? Getter, ApiAccessor? Setter, bool IsRequired)
-    public ApiAccessor? Getter { get; init; }
-    public bool IsRequired { get; init; }
-    public ApiMemberModifiers Modifiers { get; init; }
-    public IReadOnlyList<ApiParameter> Parameters { get; init; }
-    public ApiRefKind RefKind { get; init; }
-    public ApiAccessor? Setter { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public override ApiMember <Clone>$()
-    public void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMemberModifiers Modifiers, out ApiTypeReference Type, out ApiRefKind RefKind, out IReadOnlyList<ApiParameter> Parameters, out ApiAccessor? Getter, out ApiAccessor? Setter, out bool IsRequired)
-    public sealed override bool Equals(ApiMember? other)
-    public bool Equals(ApiProperty? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiProperty? left, ApiProperty? right)
-    public static bool operator !=(ApiProperty? left, ApiProperty? right)
+  sealed record ApiProperty : ApiMember, IEquatable<ApiProperty>
+    ApiProperty(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiMemberModifiers Modifiers, ApiTypeReference Type, ApiRefKind RefKind, IReadOnlyList<ApiParameter> Parameters, ApiAccessor? Getter, ApiAccessor? Setter, bool IsRequired)
+    ApiAccessor? Getter { get; init; }
+    bool IsRequired { get; init; }
+    ApiMemberModifiers Modifiers { get; init; }
+    IReadOnlyList<ApiParameter> Parameters { get; init; }
+    ApiRefKind RefKind { get; init; }
+    ApiAccessor? Setter { get; init; }
+    ApiTypeReference Type { get; init; }
+    override ApiMember <Clone>$()
+    void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out ApiMemberModifiers Modifiers, out ApiTypeReference Type, out ApiRefKind RefKind, out IReadOnlyList<ApiParameter> Parameters, out ApiAccessor? Getter, out ApiAccessor? Setter, out bool IsRequired)
+    sealed override bool Equals(ApiMember? other)
+    bool Equals(ApiProperty? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiProperty? left, ApiProperty? right)
+    static bool operator !=(ApiProperty? left, ApiProperty? right)
 
-  public sealed class ApiReader
-    public static ApiAssembly Read(Stream stream)
-    public static ApiAssembly Read(string path)
+  sealed class ApiReader
+    static ApiAssembly Read(Stream stream)
+    static ApiAssembly Read(string path)
 
-  public enum ApiRefKind
+  enum ApiRefKind
     None = 0
     Ref = 1
     Out = 2
     In = 3
     RefReadOnly = 4
 
-  public enum ApiSplit
+  enum ApiSplit
     None = 0
     Namespace = 1
     TopLevelNamespace = 2
 
-  public sealed record ApiTupleElement : IEquatable<ApiTupleElement>
-    public ApiTupleElement(ApiTypeReference Type, string? Name)
-    public string? Name { get; init; }
-    public ApiTypeReference Type { get; init; }
-    public ApiTupleElement <Clone>$()
-    public void Deconstruct(out ApiTypeReference Type, out string? Name)
-    public bool Equals(ApiTupleElement? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiTupleElement? left, ApiTupleElement? right)
-    public static bool operator !=(ApiTupleElement? left, ApiTupleElement? right)
+  sealed record ApiTupleElement : IEquatable<ApiTupleElement>
+    ApiTupleElement(ApiTypeReference Type, string? Name)
+    string? Name { get; init; }
+    ApiTypeReference Type { get; init; }
+    ApiTupleElement <Clone>$()
+    void Deconstruct(out ApiTypeReference Type, out string? Name)
+    bool Equals(ApiTupleElement? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiTupleElement? left, ApiTupleElement? right)
+    static bool operator !=(ApiTupleElement? left, ApiTupleElement? right)
 
-  public sealed record ApiTupleType : ApiTypeReference, IEquatable<ApiTupleType>
-    public ApiTupleType(IReadOnlyList<ApiTupleElement> Elements)
-    public IReadOnlyList<ApiTupleElement> Elements { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out IReadOnlyList<ApiTupleElement> Elements)
-    public bool Equals(ApiTupleType? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiTupleType? left, ApiTupleType? right)
-    public static bool operator !=(ApiTupleType? left, ApiTupleType? right)
+  sealed record ApiTupleType : ApiTypeReference, IEquatable<ApiTupleType>
+    ApiTupleType(IReadOnlyList<ApiTupleElement> Elements)
+    IReadOnlyList<ApiTupleElement> Elements { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out IReadOnlyList<ApiTupleElement> Elements)
+    bool Equals(ApiTupleType? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiTupleType? left, ApiTupleType? right)
+    static bool operator !=(ApiTupleType? left, ApiTupleType? right)
 
-  public sealed record ApiType : IEquatable<ApiType>
-    public ApiType(string Namespace, string Name, ApiTypeKind Kind, ApiAccessibility Accessibility, ApiTypeModifiers Modifiers, IReadOnlyList<ApiTypeParameter> TypeParameters, ApiTypeReference? BaseType, IReadOnlyList<ApiTypeReference> Interfaces, IReadOnlyList<ApiAttribute> Attributes, IReadOnlyList<ApiMember> Members, IReadOnlyList<ApiType> NestedTypes, bool CanBeExtendedOutside)
-    public ApiAccessibility Accessibility { get; init; }
-    public IReadOnlyList<ApiAttribute> Attributes { get; init; }
-    public ApiTypeReference? BaseType { get; init; }
-    public bool CanBeExtendedOutside { get; init; }
-    public IReadOnlyList<ApiTypeReference> Interfaces { get; init; }
-    public ApiTypeKind Kind { get; init; }
-    public IReadOnlyList<ApiMember> Members { get; init; }
-    public ApiTypeModifiers Modifiers { get; init; }
-    public string Name { get; init; }
-    public string Namespace { get; init; }
-    public IReadOnlyList<ApiType> NestedTypes { get; init; }
-    public IReadOnlyList<ApiTypeParameter> TypeParameters { get; init; }
-    public ApiType <Clone>$()
-    public void Deconstruct(out string Namespace, out string Name, out ApiTypeKind Kind, out ApiAccessibility Accessibility, out ApiTypeModifiers Modifiers, out IReadOnlyList<ApiTypeParameter> TypeParameters, out ApiTypeReference? BaseType, out IReadOnlyList<ApiTypeReference> Interfaces, out IReadOnlyList<ApiAttribute> Attributes, out IReadOnlyList<ApiMember> Members, out IReadOnlyList<ApiType> NestedTypes, out bool CanBeExtendedOutside)
-    public bool Equals(ApiType? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiType? left, ApiType? right)
-    public static bool operator !=(ApiType? left, ApiType? right)
+  sealed record ApiType : IEquatable<ApiType>
+    ApiType(string Namespace, string Name, ApiTypeKind Kind, ApiAccessibility Accessibility, ApiTypeModifiers Modifiers, IReadOnlyList<ApiTypeParameter> TypeParameters, ApiTypeReference? BaseType, IReadOnlyList<ApiTypeReference> Interfaces, IReadOnlyList<ApiAttribute> Attributes, IReadOnlyList<ApiMember> Members, IReadOnlyList<ApiType> NestedTypes, bool CanBeExtendedOutside)
+    ApiAccessibility Accessibility { get; init; }
+    IReadOnlyList<ApiAttribute> Attributes { get; init; }
+    ApiTypeReference? BaseType { get; init; }
+    bool CanBeExtendedOutside { get; init; }
+    IReadOnlyList<ApiTypeReference> Interfaces { get; init; }
+    ApiTypeKind Kind { get; init; }
+    IReadOnlyList<ApiMember> Members { get; init; }
+    ApiTypeModifiers Modifiers { get; init; }
+    string Name { get; init; }
+    string Namespace { get; init; }
+    IReadOnlyList<ApiType> NestedTypes { get; init; }
+    IReadOnlyList<ApiTypeParameter> TypeParameters { get; init; }
+    ApiType <Clone>$()
+    void Deconstruct(out string Namespace, out string Name, out ApiTypeKind Kind, out ApiAccessibility Accessibility, out ApiTypeModifiers Modifiers, out IReadOnlyList<ApiTypeParameter> TypeParameters, out ApiTypeReference? BaseType, out IReadOnlyList<ApiTypeReference> Interfaces, out IReadOnlyList<ApiAttribute> Attributes, out IReadOnlyList<ApiMember> Members, out IReadOnlyList<ApiType> NestedTypes, out bool CanBeExtendedOutside)
+    bool Equals(ApiType? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiType? left, ApiType? right)
+    static bool operator !=(ApiType? left, ApiType? right)
 
-  public enum ApiTypeKind
+  enum ApiTypeKind
     Class = 0
     Struct = 1
     Interface = 2
@@ -398,7 +398,7 @@ namespace Nullean.PublicApi
     Delegate = 4
 
   [Flags]
-  public enum ApiTypeModifiers
+  enum ApiTypeModifiers
     None = 0
     Abstract = 1
     Sealed = 2
@@ -407,56 +407,56 @@ namespace Nullean.PublicApi
     Ref = 16
     Record = 32
 
-  public sealed record ApiTypeParameter : IEquatable<ApiTypeParameter>
-    public ApiTypeParameter(string Name, ApiVariance Variance, ApiConstraints Constraints, IReadOnlyList<ApiTypeReference> ConstraintTypes)
-    public IReadOnlyList<ApiTypeReference> ConstraintTypes { get; init; }
-    public ApiConstraints Constraints { get; init; }
-    public string Name { get; init; }
-    public ApiVariance Variance { get; init; }
-    public ApiTypeParameter <Clone>$()
-    public void Deconstruct(out string Name, out ApiVariance Variance, out ApiConstraints Constraints, out IReadOnlyList<ApiTypeReference> ConstraintTypes)
-    public bool Equals(ApiTypeParameter? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiTypeParameter? left, ApiTypeParameter? right)
-    public static bool operator !=(ApiTypeParameter? left, ApiTypeParameter? right)
+  sealed record ApiTypeParameter : IEquatable<ApiTypeParameter>
+    ApiTypeParameter(string Name, ApiVariance Variance, ApiConstraints Constraints, IReadOnlyList<ApiTypeReference> ConstraintTypes)
+    IReadOnlyList<ApiTypeReference> ConstraintTypes { get; init; }
+    ApiConstraints Constraints { get; init; }
+    string Name { get; init; }
+    ApiVariance Variance { get; init; }
+    ApiTypeParameter <Clone>$()
+    void Deconstruct(out string Name, out ApiVariance Variance, out ApiConstraints Constraints, out IReadOnlyList<ApiTypeReference> ConstraintTypes)
+    bool Equals(ApiTypeParameter? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiTypeParameter? left, ApiTypeParameter? right)
+    static bool operator !=(ApiTypeParameter? left, ApiTypeParameter? right)
 
-  public sealed record ApiTypeParameterReference : ApiTypeReference, IEquatable<ApiTypeParameterReference>
-    public ApiTypeParameterReference(string Name, bool IsMethodParameter)
-    public bool IsMethodParameter { get; init; }
-    public string Name { get; init; }
-    public override ApiTypeReference <Clone>$()
-    public void Deconstruct(out string Name, out bool IsMethodParameter)
-    public bool Equals(ApiTypeParameterReference? other)
-    public sealed override bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
-    public override string ToString()
-    public static bool operator ==(ApiTypeParameterReference? left, ApiTypeParameterReference? right)
-    public static bool operator !=(ApiTypeParameterReference? left, ApiTypeParameterReference? right)
+  sealed record ApiTypeParameterReference : ApiTypeReference, IEquatable<ApiTypeParameterReference>
+    ApiTypeParameterReference(string Name, bool IsMethodParameter)
+    bool IsMethodParameter { get; init; }
+    string Name { get; init; }
+    override ApiTypeReference <Clone>$()
+    void Deconstruct(out string Name, out bool IsMethodParameter)
+    bool Equals(ApiTypeParameterReference? other)
+    sealed override bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiTypeParameterReference? left, ApiTypeParameterReference? right)
+    static bool operator !=(ApiTypeParameterReference? left, ApiTypeParameterReference? right)
 
-  public abstract record ApiTypeReference : IEquatable<ApiTypeReference>
+  abstract record ApiTypeReference : IEquatable<ApiTypeReference>
     protected ApiTypeReference(ApiTypeReference original)
     protected virtual Type EqualityContract { get; }
-    public bool IsNullable { get; init; }
-    public abstract ApiTypeReference <Clone>$()
-    public virtual bool Equals(ApiTypeReference? other)
-    public override bool Equals(object? obj)
-    public override int GetHashCode()
+    bool IsNullable { get; init; }
+    abstract ApiTypeReference <Clone>$()
+    virtual bool Equals(ApiTypeReference? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
     protected virtual bool PrintMembers(StringBuilder builder)
-    public override string ToString()
-    public static bool operator ==(ApiTypeReference? left, ApiTypeReference? right)
-    public static bool operator !=(ApiTypeReference? left, ApiTypeReference? right)
+    override string ToString()
+    static bool operator ==(ApiTypeReference? left, ApiTypeReference? right)
+    static bool operator !=(ApiTypeReference? left, ApiTypeReference? right)
 
-  public enum ApiVariance
+  enum ApiVariance
     None = 0
     Out = 1
     In = 2
 
-  public static class ApiWriter
-    public static string Declaration(ApiMember member, ApiType declaringType)
-    public static string Declaration(ApiType type)
-    public static string Reference(ApiTypeReference type, ApiType? context = null)
-    public static IReadOnlyList<ApiFile> Write(ApiAssembly assembly, ApiSplit split)
-    public static string Write(ApiAssembly assembly)
+  static class ApiWriter
+    static string Declaration(ApiMember member, ApiType declaringType)
+    static string Declaration(ApiType type)
+    static string Reference(ApiTypeReference type, ApiType? context = null)
+    static IReadOnlyList<ApiFile> Write(ApiAssembly assembly, ApiSplit split)
+    static string Write(ApiAssembly assembly)

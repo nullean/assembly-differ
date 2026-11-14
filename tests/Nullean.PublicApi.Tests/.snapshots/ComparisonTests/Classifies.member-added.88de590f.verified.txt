@@ -1,2 +1,2 @@
-A › M()  added: - → public void M()  [Minor]
+A › M()  added: - → void M()  [Minor]
 suggested: Minor

@@ -1,2 +1,2 @@
-B  removed: public class B → -  [Major, breaks Callers Binary, Source]
+B  removed: class B → -  [Major, breaks Callers Binary, Source]
 suggested: Major

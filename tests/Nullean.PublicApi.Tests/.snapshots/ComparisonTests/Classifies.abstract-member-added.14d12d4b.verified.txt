@@ -1,2 +1,2 @@
-A › N()  added: - → public abstract void N()  [Major, breaks Inheritors Binary, Source]
+A › N()  added: - → abstract void N()  [Major, breaks Inheritors Binary, Source]
 suggested: Major

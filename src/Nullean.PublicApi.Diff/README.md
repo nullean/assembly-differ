@@ -28,7 +28,7 @@ Console.WriteLine(result.Suggest(baseline: new Version(1, 4, 0)));
 ```
 
 ```
-Lib › Widget › Draw(Canvas)  Removed   public void Draw(Canvas canvas) →   Major
+Lib › Widget › Draw(Canvas)  Removed   void Draw(Canvas canvas) →   Major
 Lib › IShape › Resize(double)  Added    → void Resize(double factor)  Major
 Lib › A › M(int)  Changed parameter 1 name  count → total  Major
 Lib › Widget  Changed base type  Shape → Mid  Minor

@@ -1,2 +1,2 @@
-A › N()  added: - → public abstract void N()  [Minor]
+A › N()  added: - → abstract void N()  [Minor]
 suggested: Minor

@@ -3,12 +3,12 @@ exit code: 0
 assembly Lib
 
 namespace Lib
-  public interface IShape
+  interface IShape
     double Area()
 
-  public class Widget
-    public Widget()
-    public int Size { get; set; }
-    public void Draw()
-    public string Name(int index)
+  class Widget
+    Widget()
+    int Size { get; set; }
+    void Draw()
+    string Name(int index)
 --- stderr

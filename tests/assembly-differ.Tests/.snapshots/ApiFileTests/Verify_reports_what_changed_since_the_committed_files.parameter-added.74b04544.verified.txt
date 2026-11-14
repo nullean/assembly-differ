@@ -1,8 +1,8 @@
 exit code: 5
 --- stdout
 [api] Lib: 2 changes since the committed files, suggested version change: Major
-  {fixture}/api/Lib.api:7  Lib › Widget › Name(int, bool)  added public string Name(int index, bool upper)  [minor]
-  {fixture}/api/Lib.api:11  Lib › Widget › Name(int)  removed public string Name(int index)  [major: breaks callers, compiled code and source]
+  {fixture}/api/Lib.api:7  Lib › Widget › Name(int, bool)  added string Name(int index, bool upper)  [minor]
+  {fixture}/api/Lib.api:11  Lib › Widget › Name(int)  removed string Name(int index)  [major: breaks callers, compiled code and source]
 [api] {fixture}/api does not match the build. Suggested version change: Major
 [api] Update the files with: assembly-differ api {fixture}/new -o {fixture}/api
 --- stderr

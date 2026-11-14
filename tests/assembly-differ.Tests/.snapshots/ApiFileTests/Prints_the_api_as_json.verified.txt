@@ -6,7 +6,7 @@ exit code: 0
     "version": "0.0.0.0",
     "types": [
       {
-        "declaration": "public interface IShape",
+        "declaration": "interface IShape",
         "namespace": "Lib",
         "name": "IShape",
         "kind": "interface",
@@ -35,7 +35,7 @@ exit code: 0
         "nestedTypes": []
       },
       {
-        "declaration": "public class Widget",
+        "declaration": "class Widget",
         "namespace": "Lib",
         "name": "Widget",
         "kind": "class",
@@ -47,7 +47,7 @@ exit code: 0
         "attributes": [],
         "members": [
           {
-            "declaration": "public Widget()",
+            "declaration": "Widget()",
             "name": ".ctor",
             "accessibility": "public",
             "kind": "constructor",
@@ -59,7 +59,7 @@ exit code: 0
             "attributes": []
           },
           {
-            "declaration": "public int Size { get; set; }",
+            "declaration": "int Size { get; set; }",
             "name": "Size",
             "accessibility": "public",
             "kind": "property",
@@ -72,7 +72,7 @@ exit code: 0
             "attributes": []
           },
           {
-            "declaration": "public void Draw()",
+            "declaration": "void Draw()",
             "name": "Draw",
             "accessibility": "public",
             "kind": "method",
@@ -84,7 +84,7 @@ exit code: 0
             "attributes": []
           },
           {
-            "declaration": "public string Name(int index)",
+            "declaration": "string Name(int index)",
             "name": "Name",
             "accessibility": "public",
             "kind": "method",

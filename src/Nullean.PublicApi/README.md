@@ -19,20 +19,20 @@ using System: ObsoleteAttribute
 using interface System: IComparable<>, IDisposable
 
 namespace MyLib.Drawing
-  public interface IShape : IDisposable
+  interface IShape : IDisposable
     double Area { get; }
     void Scale(double factor) { … }
 
-  public sealed class Widget : Shape, IComparable<Widget>
-    public Widget(string name, int size = 1)
-    public required string? Name { get; init; }
+  sealed class Widget : Shape, IComparable<Widget>
+    Widget(string name, int size = 1)
+    required string? Name { get; init; }
     [Obsolete("use Draw(Canvas)")]
-    public void Draw()
+    void Draw()
 ```
 
 The model holds what a declaration says: base types and interfaces, type parameter constraints and variance,
 nullability, tuple element names, `ref`, `out`, `in` and `params`, default and constant values, `required`, `init`,
-and the attributes that are about the API rather than the compiler's bookkeeping.
+and the attributes that are about the API rather than the compiler's bookkeeping. Everything in the file is visible from outside, so `public` goes without saying and only `protected` is written.
 
 The header names every type from another assembly the API uses, namespace by namespace, so declarations use short
 names; a name two namespaces share is written in full. `using struct` lists the value types, so `DateTime?` reads back

@@ -252,7 +252,8 @@ with two provider specs in the container image, as the action did before.
 ### Public API files
 
 `assembly-differ api` writes a library's public API as `.api` files: C#, one declaration per line, in a tree of
-namespaces, types and members, with base types, interfaces, constraints, nullability and default values. Commit them,
+namespaces, types and members, with base types, interfaces, constraints, nullability and default values. `public` goes
+without saying, so only `protected` members say how visible they are. Commit them,
 and a change to the API shows in the pull request as a diff of the file, next to the code that caused it:
 
 ```sh
@@ -266,13 +267,13 @@ using System: ObsoleteAttribute
 using interface System: IComparable<>, IDisposable
 
 namespace MyLib.Drawing
-  public interface IShape : IDisposable
+  interface IShape : IDisposable
     double Area { get; }
     void Scale(double factor) { … }
 
-  public sealed class Widget : Shape, IComparable<Widget>
-    public Widget(string name, int size = 1)
-    public required string? Name { get; init; }
+  sealed class Widget : Shape, IComparable<Widget>
+    Widget(string name, int size = 1)
+    required string? Name { get; init; }
 ```
 
 `--verify` says what changed since the committed files, by path and line, who each change breaks (callers,
@@ -281,7 +282,7 @@ implementers or inheritors), whether it breaks compiled code, source or both, an
 ```
 [api] MyLib: 2 changes since the committed files, suggested version change: Major
   api/MyLib.api:4  MyLib.Drawing › IShape › Resize(double)  added void Resize(double factor)  [major: breaks implementers, compiled code and source]
-  api/MyLib.api:9  MyLib.Drawing › Widget › Draw()  removed public void Draw()  [major: breaks callers, compiled code and source]
+  api/MyLib.api:9  MyLib.Drawing › Widget › Draw()  removed void Draw()  [major: breaks callers, compiled code and source]
 [api] api does not match the build. Suggested version change: Major
 [api] Update the files with: assembly-differ api -o api
 ```
