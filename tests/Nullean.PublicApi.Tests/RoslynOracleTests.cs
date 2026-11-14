@@ -31,7 +31,7 @@ public class RoslynOracleTests
 		Compare(stream.ToArray());
 	}
 
-	private static void Compare(byte[] image)
+	internal static void Compare(byte[] image)
 	{
 		var assembly = ApiReader.Read(new MemoryStream(image));
 		var ours = Ours(assembly);

@@ -130,11 +130,18 @@ public static class ApiComparison
 			Flag(oldModifiers, newModifiers, ApiTypeModifiers.Sealed, "sealed", ApiAudience.Inheritors, ApiAudience.None, Changed);
 			Flag(oldModifiers, newModifiers, ApiTypeModifiers.ReadOnly, "readonly", ApiAudience.None, ApiAudience.None, Changed);
 			Flag(oldModifiers, newModifiers, ApiTypeModifiers.Ref, "ref", ApiAudience.Callers, ApiAudience.Callers, Changed);
+			// whether code outside can derive from a class that stays one, and is not sealed or static, either side
+			const ApiTypeModifiers closed = ApiTypeModifiers.Sealed | ApiTypeModifiers.Static;
 			if (
-				oldType.CanBeExtendedOutside && !newType.CanBeExtendedOutside && oldType.Kind == ApiTypeKind.Class && (newModifiers &
-					(ApiTypeModifiers.Sealed | ApiTypeModifiers.Static)) == 0
+				oldType.Kind == ApiTypeKind.Class && newType.Kind == ApiTypeKind.Class && (oldModifiers & closed) == 0 && (newModifiers & closed) ==
+					0 && oldType.CanBeExtendedOutside != newType.CanBeExtendedOutside
 			)
-				Changed("constructors", "public or protected", "none", ApiAudience.Inheritors, Both);
+			{
+				if (oldType.CanBeExtendedOutside)
+					Changed("constructors", "public or protected", "none", ApiAudience.Inheritors, Both);
+				else
+					Changed("constructors", "none", "public or protected", ApiAudience.None, ApiCompatibility.None);
+			}
 
 			TypeParameters(oldType.TypeParameters, newType.TypeParameters, oldType, newType, Changed);
 			Bases(oldType, newType, Changed);
@@ -169,6 +176,9 @@ public static class ApiComparison
 
 		private void Bases(ApiType oldType, ApiType newType, Action<string, string?, string?, ApiAudience, ApiCompatibility, string?> changed)
 		{
+			// a type that became or stopped being an enum has its kind change; its bases are not comparable
+			if ((oldType.Kind == ApiTypeKind.Enum) != (newType.Kind == ApiTypeKind.Enum))
+				return;
 			if (oldType.Kind == ApiTypeKind.Enum)
 			{
 				var oldUnderlying = oldType.BaseType is null ? "int" : ApiWriter.Reference(oldType.BaseType, oldType);
@@ -567,24 +577,25 @@ public static class ApiComparison
 					Both,
 					null
 				);
+			// whether it can be overridden, and whether it has to be, each the same part whichever way it changes
 			var overridable = ApiMemberModifiers.Virtual | ApiMemberModifiers.Abstract | ApiMemberModifiers.Override;
 			var wasOverridable = (old & overridable) != 0 && !Has(old, ApiMemberModifiers.Sealed);
 			var isOverridable = (@new & overridable) != 0 && !Has(@new, ApiMemberModifiers.Sealed);
-			if (wasOverridable && !isOverridable)
-				changed("virtual", Describe(old), Describe(@new), ApiAudience.Inheritors, Both, null);
-			if (!Has(old, ApiMemberModifiers.Abstract) && Has(@new, ApiMemberModifiers.Abstract))
+			if (wasOverridable != isOverridable)
 				changed(
-					"abstract",
+					"virtual",
 					Describe(old),
 					Describe(@new),
-					type.Kind == ApiTypeKind.Interface ? ApiAudience.Implementers : ApiAudience.Inheritors,
-					Both,
+					wasOverridable ? ApiAudience.Inheritors : ApiAudience.None,
+					wasOverridable ? Both : ApiCompatibility.None,
 					null
 				);
-			else if (Has(old, ApiMemberModifiers.Abstract) && !Has(@new, ApiMemberModifiers.Abstract) && isOverridable)
-				changed("abstract", Describe(old), Describe(@new), ApiAudience.None, ApiCompatibility.None, null);
-			else if (!wasOverridable && isOverridable)
-				changed("virtual", Describe(old), Describe(@new), ApiAudience.None, ApiCompatibility.None, null);
+			if (Has(old, ApiMemberModifiers.Abstract) != Has(@new, ApiMemberModifiers.Abstract))
+			{
+				var added = Has(@new, ApiMemberModifiers.Abstract);
+				var breaks = !added ? ApiAudience.None : type.Kind == ApiTypeKind.Interface ? ApiAudience.Implementers : ApiAudience.Inheritors;
+				changed("abstract", Describe(old), Describe(@new), breaks, added ? Both : ApiCompatibility.None, null);
+			}
 		}
 
 		private static bool Has(ApiMemberModifiers modifiers, ApiMemberModifiers flag) => (modifiers & flag) != 0;
