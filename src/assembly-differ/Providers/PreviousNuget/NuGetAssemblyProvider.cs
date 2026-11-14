@@ -9,5 +9,5 @@ public class PreviousNuGetAssemblyProviderFactory : NuGetAssemblyProviderFactory
 
 	public override string Name { get; } = "previous-nuget";
 
-	public override IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command);
+	public override IAssemblyProvider Create(string[] command) => new NuGetAssemblyProvider(Installer, command, Name);
 }
