@@ -18,6 +18,8 @@ public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 		var breakingComparisons = results.Comparisons.Where(c => c.Diff != null && c.SuggestedVersionChange >= prevent).ToList();
 
 		var breakingChanges = new List<IDiffItem>();
+		var assembliesWithBreakingChanges = new HashSet<AssemblyComparison>();
+		var differences = new Dictionary<AssemblyComparison, int>();
 		int deleted = 0, modified = 0, introduced = 0;
 		foreach (var b in breakingComparisons)
 		{
@@ -29,6 +31,8 @@ public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 					modified++;
 				if (item.DiffType == DiffType.New)
 					introduced++;
+				if (item.DiffType == DiffType.Deleted || item.DiffType == DiffType.New || depth > 2 && item.DiffType == DiffType.Modified)
+					differences[b] = differences.GetValueOrDefault(b) + 1;
 
 				//TODO make this configurable, don't count assembly reference changes as breaking
 				if (item is AssemblyReferenceDiffItem)
@@ -41,8 +45,13 @@ public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 				if (changedType)
 					return;
 
-				if (IncludeDiffType(prevent, item))
+				// a modified member is breaking because of a change inside it, which is counted on its own
+				var breaking = AssemblyComparison.Classify(item) == SuggestedVersionChange.Major;
+				if (breaking && item is not IMetadataDiffItem { DiffType: DiffType.Modified })
+				{
 					breakingChanges.Add(item);
+					assembliesWithBreakingChanges.Add(b);
+				}
 			});
 		}
 
@@ -58,8 +67,8 @@ public class GitHubActionCommentExporter : IAllComparisonResultsExporter
 			writer.WriteLine(
 				$@"
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
-- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {breakingComparisons.Count} assemblies(s)"
+Scanned: 📑 {Assemblies(results.Comparisons.Count)}, Suggested change in version: {versionChange}
+- ⚠️  {breakingChanges.Count} breaking change(s) detected in 📑 {Assemblies(assembliesWithBreakingChanges.Count)}"
 			);
 		}
 		else
@@ -67,7 +76,7 @@ Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 			writer.WriteLine(
 				$@"
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
+Scanned: 📑 {Assemblies(results.Comparisons.Count)}, Suggested change in version: {versionChange}
 + {breakingChanges.Count} breaking change(s) detected."
 			);
 		}
@@ -117,7 +126,7 @@ Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 
 <details>
 <summary><b>📑 {c.First.Name}
-</b> <pre><b> Click here to see the {introduced+deleted+modified} differences </b>
+</b> <pre><b> Click here to see the {differences.GetValueOrDefault(c)} differences </b>
 </summary>
 
 ```diff
@@ -147,18 +156,5 @@ Scanned: 📑 1 assemblies(s), Suggested change in version: {versionChange}
 		}
 	}
 
-	private static bool IncludeDiffType(SuggestedVersionChange prevent, IDiffItem change)
-	{
-		switch (prevent)
-		{
-			case SuggestedVersionChange.Major:
-				return change.IsBreakingChange;
-			case SuggestedVersionChange.Minor:
-				return change.IsBreakingChange || change.DiffType == DiffType.New;
-			case SuggestedVersionChange.Patch:
-				return true;
-			default:
-				return false;
-		}
-	}
+	private static string Assemblies(int count) => count == 1 ? "1 assembly" : $"{count} assemblies";
 }

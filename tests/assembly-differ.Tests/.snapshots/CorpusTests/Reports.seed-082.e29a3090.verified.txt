@@ -74,8 +74,8 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
-+ 0 breaking change(s) detected.
+Scanned: 📑 1 assembly, Suggested change in version: Major
+- ⚠️  3 breaking change(s) detected in 📑 1 assembly
 
 + 🌟 0 new additions
 - 🔴 2 removals
