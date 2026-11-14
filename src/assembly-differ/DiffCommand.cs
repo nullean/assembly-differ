@@ -37,7 +37,6 @@ internal sealed class DiffCommands
 	/// <param name="allowEmptyPreviousNuget">
 	/// -a, --allow-empty-previous-nuget, Don't fail when no previous nuget package could be found to diff against.
 	/// </param>
-	[DefaultCommand]
 	[CommandName("diff")]
 	[Hidden]
 	public int Diff(
@@ -67,6 +66,12 @@ internal sealed class DiffCommands
 			foreach (var part in t.Split(',', '|'))
 				if (!string.IsNullOrEmpty(part))
 					targets.Add(part);
+
+		if (first.StartsWith("github|", StringComparison.Ordinal) || second.StartsWith("github|", StringComparison.Ordinal))
+			Console.Error.WriteLine(
+				"[diff] warning: the github provider is deprecated. Check out and build the old version yourself, for example with " +
+					"git worktree add ../old <ref>, then compare the two builds with: assembly-differ files <old> <new>"
+			);
 
 		try
 		{

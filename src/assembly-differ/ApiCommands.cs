@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using Differ.Engine;
 using Differ.Providers;
-using Differ.Providers.GitHub;
 using Differ.Providers.NuGet;
 using Differ.Providers.PreviousNuGet;
 using NuGet.Frameworks;
@@ -149,32 +148,6 @@ internal sealed class ApiCommands
 		Console.WriteLine($"[diff] Suggested version change: {SuggestedVersionChange.None}");
 		return 0;
 	}
-
-	/// <summary>Compares a new build with an older commit of a GitHub repository, built with the command you give.</summary>
-	/// <param name="repository">The repository as owner/name.</param>
-	/// <param name="commit">The commit, branch or tag to build as the old version.</param>
-	/// <param name="path">The new build: a .dll or a directory.</param>
-	/// <param name="build">The command that builds the old commit, run in its checkout.</param>
-	/// <param name="artifacts">Where the build leaves the assemblies, relative to the checkout.</param>
-	/// <param name="report">How to report the comparison.</param>
-	/// <example>assembly-differ github nullean/proc 0.13.0 src/Proc/bin/Release/netstandard2.0 --build "dotnet build -c Release" --artifacts src/Proc/bin/Release/netstandard2.0</example>
-	[CommandName("github")]
-	public int GitHub(
-		[Argument] string repository,
-		[Argument] string commit,
-		[Argument] string path,
-		string build,
-		string artifacts,
-		[AsParameters] ReportOptions? report = null
-	) =>
-		Run(
-			() =>
-				(new DiffSide(
-					new GitHubAssemblyProviderFactory(new Git(Environment.GetEnvironmentVariable("GIT"))).Create([repository, commit, build, artifacts]),
-					"github"
-				), Local(path, null)),
-			report
-		);
 
 	private static int Run(Func<(DiffSide Old, DiffSide New)> sides, ReportOptions? report) =>
 		Run(() => (((DiffSide Old, DiffSide New)?)sides()), report, () => null)!.Value;

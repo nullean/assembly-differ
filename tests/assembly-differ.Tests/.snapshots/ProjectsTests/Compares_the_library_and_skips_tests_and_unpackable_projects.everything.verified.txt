@@ -1,0 +1,12 @@
+exit code: 0
+--- stdout
+[diff] Internal has no release yet: nothing to compare
+[diff] Lib.Tests has no release yet: nothing to compare
+[diff] Comparing Lib (net11.0) with AssemblyDiffer.Tests.Projects.Lib 1.0.0
+[diff] Difference found: CompositeAssemblyProvider:Lib.dll and CompositeAssemblyProvider:Lib.dll
+## API Changes: `Lib`
+
+## `Lib.Widget`
+### `Draw()` is deleted
+[diff] Suggested version change: Major
+--- stderr

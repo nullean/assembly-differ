@@ -64,10 +64,14 @@ public static class Nupkg
 	public static IReadOnlyList<NuGetFramework> Frameworks(string path)
 	{
 		using var reader = new PackageArchiveReader(path);
-		return reader
-			.GetLibItems()
-			.Where(g => g.Items.Any(i => i.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
-			.Select(g => g.TargetFramework)
+		return Order(reader.GetLibItems().Where(g => g.Items.Any(i => i.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))).Select(g => g.TargetFramework));
+	}
+
+	/// <summary>The framework <see cref="Frameworks"/> would list first.</summary>
+	public static NuGetFramework Newest(IEnumerable<NuGetFramework> frameworks) => Order(frameworks)[0];
+
+	private static List<NuGetFramework> Order(IEnumerable<NuGetFramework> frameworks) =>
+		frameworks
 			.OrderByDescending(
 				f =>
 					f.Framework switch
@@ -80,5 +84,4 @@ public static class Nupkg
 			)
 			.ThenByDescending(f => f.Version)
 			.ToList();
-	}
 }

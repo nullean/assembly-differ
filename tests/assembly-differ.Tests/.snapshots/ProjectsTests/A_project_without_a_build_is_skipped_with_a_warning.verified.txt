@@ -1,0 +1,7 @@
+exit code: 0
+--- stdout
+[diff] Skipping Internal: IsPackable is false (--include-unpackable compares it)
+[diff] Skipping Lib.Tests: a test project (--include-tests compares it)
+[diff] Suggested version change: None
+--- stderr
+[diff] warning: skipping Lib, which has no build output at {fixture}/repo/Lib/bin/Release/net11.0/Lib.dll; build it first with: dotnet build -c Release

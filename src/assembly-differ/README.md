@@ -19,6 +19,13 @@ the `assembly-differ` package itself, not those.
 
 ## Quick start
 
+In a repository, build it, then run the tool without a command to compare every library project with its latest
+release:
+
+```sh
+dotnet build -c Release && assembly-differ
+```
+
 Compare the package you just packed with its last release on nuget.org, and fail on a breaking change:
 
 ```sh
@@ -40,7 +47,7 @@ overloads, ends with:
 | `release <path>` | a `.nupkg`, `.dll` or directory with the release before it on your NuGet.config feeds; a first release succeeds |
 | `files <old> <new>` | two local builds: `.dll`s, directories or `.nupkg`s |
 | `nuget <id> <old-version> <new-version>` | two published versions |
-| `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a build with an older commit, built with your command |
+| `projects` | every library project in the directory against its latest release; what runs without a command |
 
 | Option | What |
 |---|---|

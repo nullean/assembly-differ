@@ -61,7 +61,18 @@ runtime installed.
 
 ## Quick start
 
-Compare the package you just packed with its last release on nuget.org, and fail the build on a breaking change:
+In a repository, build it, then run the tool without a command. It compares every library project with the latest
+release of its package:
+
+```sh
+dotnet build -c Release && assembly-differ
+```
+
+It reads the one solution in the directory, or else the project files in it, and skips test projects and projects with
+`IsPackable` set to `false` (`--include-tests` and `--include-unpackable` compare them, and `--project` picks
+projects). It does not build: a project without Release output is skipped with a warning.
+
+Compare the package you just packed with its last release, and fail the build on a breaking change:
 
 ```sh
 assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major
@@ -77,7 +88,7 @@ earlier release is a first release: there is nothing to compare, so the command 
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
 | `nuget <id> <old-version> <new-version>` | two published versions, from the NuGet sources your NuGet.config lists |
-| `github <owner/repo> <commit> <path> --build <command> --artifacts <path>` | a new build with an older commit, cloned and built with the command you give |
+| `projects` | every library project in the directory against its latest release; what runs without a command |
 
 Every command takes the same options:
 
@@ -88,6 +99,13 @@ Every command takes the same options:
 | `-o`, `--output` | a directory or file to write the report to, besides the console |
 | `--fail-on` | exit with `4` when the suggested change is at least `patch`, `minor` or `major`; `none` (the default) never fails |
 | `--framework` | the target framework to compare, such as `net8.0` (`files`, `nuget` and `release`); defaults to the newest the packages share |
+
+To compare with an older commit, check it out and build it next to your working copy, then compare the two builds:
+
+```sh
+git worktree add ../old v1.2.0 && dotnet build ../old -c Release
+assembly-differ files ../old/src/MyLib/bin/Release/net8.0 src/MyLib/bin/Release/net8.0
+```
 
 A single assembly on each side is compared whatever its file name. With more, assemblies pair by file name, and one
 only a side has is printed; it counts as removed or added API when `--target` names it.
@@ -132,7 +150,8 @@ Without write access, as on a pull request from a fork, it writes the job summar
 Before it had a command per source, the tool took two provider specs, and `diff` still does, unchanged, for the builds
 that call it: `assembly-differ diff "previous-nuget|MyLib|1.3.0|net8.0" "directory|bin" -t MyLib -p major`. A spec is
 `assembly|<path>`, `directory|<path>`, `nuget|<id>|<version>|[tfm]`, `previous-nuget|<id>|<version>|[tfm]` or
-`github|<owner/repo>|<commit>|<build command>|<relative output path>`. Its options are `-t`, `-o`, `-f` (default
+`github|<owner/repo>|<commit>|<build command>|<relative output path>`; `github` is deprecated in favour of the `git
+worktree` recipe above. Its options are `-t`, `-o`, `-f` (default
 `xml`), `-p`/`--prevent-change` in place of `--fail-on`, and `-a`/`--allow-empty-previous-nuget`, which succeeds when
 `previous-nuget` finds no earlier release.
 

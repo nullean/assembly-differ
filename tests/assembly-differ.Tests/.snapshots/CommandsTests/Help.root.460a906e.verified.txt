@@ -1,7 +1,13 @@
 Usage: assembly-differ <namespace|command> [options]
 
  (default command)
-   Compares the public API of two versions of a library and suggests the version change it calls for. Pick a command for where the versions come from; diff with provider specs, such as nuget|Proc|0.13.0, still works for existing builds.
+   Compares every library project in the current directory with the latest release of its package. Runs when no command is given.
+
+   It reads the one solution in the directory, or else the project files in it, and skips test projects and projects
+   with IsPackable set to false. It compares each project's Release build, for its newest target framework, with the
+   latest stable release of its package on the feeds your NuGet.config lists. It does not build: run
+   dotnet build -c Release first, and a project without build output is skipped with a warning. A project whose
+   package has no release yet is reported and skipped. It needs the .NET SDK, to read the projects.
 
 Global options:
   -h, --help  Show help.
@@ -10,9 +16,9 @@ Global options:
 Commands:
   files         Compares two local builds: dlls, directories of dlls, or .nupkg
                 files.
-  github        Compares a new build with an older commit of a GitHub
-                repository, built with the command you give.
   nuget         Compares two published versions of a package.
+  projects      Compares every library project in the current directory with the
+                latest release of its package. Runs when no command is given.
   pull-request  Puts a report on the pull request a GitHub Actions run is for:
                 the job summary, one comment kept up to date, and the release
                 label for the suggested version change.

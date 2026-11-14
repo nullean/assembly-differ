@@ -1,0 +1,7 @@
+exit code: 0
+--- stdout
+[diff] Skipping Internal: IsPackable is false (--include-unpackable compares it)
+[diff] Skipping Lib.Tests: a test project (--include-tests compares it)
+[diff] AssemblyDiffer.Tests.Projects.Lib has no release yet: nothing to compare
+[diff] Suggested version change: None
+--- stderr
