@@ -19,9 +19,11 @@
   </ItemGroup>
 
   <!-- The tests run the tool the way its users do, as a process: the CLI is the contract (AGENTS.md). Building
-       the tool first is all the reference is for; the tests find its net11.0 output through ToolPath. -->
+       the tool first is all the reference is for; the tests find its net11.0 output through ToolPath. No global
+       properties on the reference: with one, MSBuild builds the tool as a second instance next to the solution's,
+       and the two race to write its deps.json. -->
   <ItemGroup>
-    <ProjectReference Include="../../src/assembly-differ/assembly-differ.csproj" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=net11.0" />
+    <ProjectReference Include="../../src/assembly-differ/assembly-differ.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
