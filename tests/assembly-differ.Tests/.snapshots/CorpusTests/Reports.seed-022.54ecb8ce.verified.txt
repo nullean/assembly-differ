@@ -21,7 +21,7 @@ exit code: 0
       </Method>
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -34,7 +34,7 @@ exit code: 0
 ## `Lib.C0`
 ### `C0(SByte)` is added
 ### `G0<U>(U, Boolean)` is added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -44,7 +44,7 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 == Breaking changes for Lib
 
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -55,7 +55,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 2 new additions
@@ -85,5 +85,5 @@ Lib.C0
 + 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr

@@ -5,7 +5,7 @@ exit code: 0
 
 ## `Lib.Widget`
 ### `Erase()` is added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 --- files

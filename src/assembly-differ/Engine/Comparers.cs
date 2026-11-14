@@ -238,7 +238,8 @@ internal sealed class MethodComparer : Comparer<MethodModel>
 
 	protected override IDiffItem Missing(MethodModel element) => new MemberDiffItem(MetadataType.Method, true, false, element.Display.Name, null, null);
 
-	protected override IDiffItem Added(MethodModel element) => new MemberDiffItem(MetadataType.Method, false, true, element.Display.Name, null, null);
+	protected override IDiffItem Added(MethodModel element) =>
+		new MemberDiffItem(MetadataType.Method, false, true, element.Display.Name, null, null) { AddsObligation = element.IsAbstract };
 
 	protected override IDiffItem? Changed(MethodModel oldElement, MethodModel newElement)
 	{
@@ -298,7 +299,8 @@ internal sealed class FieldComparer : Comparer<FieldModel>
 
 	protected override IDiffItem Missing(FieldModel element) => new MemberDiffItem(MetadataType.Field, true, false, element.Display.Name, null, null);
 
-	protected override IDiffItem Added(FieldModel element) => new MemberDiffItem(MetadataType.Field, false, true, element.Display.Name, null, null);
+	protected override IDiffItem Added(FieldModel element) =>
+		new MemberDiffItem(MetadataType.Field, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
 
 	protected override IDiffItem? Changed(FieldModel oldElement, FieldModel newElement)
 	{
@@ -326,7 +328,8 @@ internal sealed class PropertyComparer : Comparer<PropertyModel>
 
 	protected override IDiffItem Missing(PropertyModel element) => new MemberDiffItem(MetadataType.Property, true, false, element.Display.Name, null, null);
 
-	protected override IDiffItem Added(PropertyModel element) => new MemberDiffItem(MetadataType.Property, false, true, element.Display.Name, null, null);
+	protected override IDiffItem Added(PropertyModel element) =>
+		new MemberDiffItem(MetadataType.Property, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
 
 	protected override IDiffItem? Changed(PropertyModel oldElement, PropertyModel newElement)
 	{
@@ -354,7 +357,8 @@ internal sealed class EventComparer : Comparer<EventModel>
 
 	protected override IDiffItem Missing(EventModel element) => new MemberDiffItem(MetadataType.Event, true, false, element.Display.Name, null, null);
 
-	protected override IDiffItem Added(EventModel element) => new MemberDiffItem(MetadataType.Event, false, true, element.Display.Name, null, null);
+	protected override IDiffItem Added(EventModel element) =>
+		new MemberDiffItem(MetadataType.Event, false, true, element.Display.Name, null, null) { AddsObligation = element.AddsObligation };
 
 	protected override IDiffItem? Changed(EventModel oldElement, EventModel newElement)
 	{

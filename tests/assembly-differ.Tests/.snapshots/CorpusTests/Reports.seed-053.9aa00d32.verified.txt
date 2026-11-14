@@ -11,7 +11,7 @@ exit code: 0
       <Type Name=".N3" DiffType="New" />
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -22,7 +22,7 @@ exit code: 0
 ## API Changes: `Lib`
 
 ## `.N3` is new
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -38,7 +38,7 @@ exit code: 0
 
 [horizontal]
 type:: added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr
 
 
@@ -49,7 +49,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 1 new additions
@@ -75,5 +75,5 @@ Lib.C2<T>
 + 🌟 .N3 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Minor
 --- stderr

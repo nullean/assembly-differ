@@ -249,6 +249,12 @@ public sealed class MemberDiffItem(
 ) : MetadataDiffItem(hasOld, hasNew, name, declarationDiffs, childrenDiffs)
 {
 	public override MetadataType MetadataType { get; } = metadataType;
+
+	/// <summary>
+	/// A new member that existing code has to act on: an abstract one, such as an interface member without a default
+	/// implementation, which every implementer must add, or a required one, which every object initializer must set.
+	/// </summary>
+	public bool AddsObligation { get; init; }
 }
 
 /// <summary>An assembly reference the new module no longer has. Reports do not count these as API changes.</summary>

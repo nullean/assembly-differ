@@ -59,6 +59,8 @@ internal sealed record MethodModel(
 	public bool IsVirtual => (Flags & MethodAttributes.Virtual) != 0;
 
 	public bool IsStatic => (Flags & MethodAttributes.Static) != 0;
+
+	public bool IsAbstract => (Flags & MethodAttributes.Abstract) != 0;
 }
 
 internal sealed record FieldModel(string Name, FieldAttributes Flags, string TypeFullName, Display Display, IReadOnlyList<AttributeModel> Attributes)
@@ -68,6 +70,8 @@ internal sealed record FieldModel(string Name, FieldAttributes Flags, string Typ
 	public bool IsApi => Access is FieldAttributes.Public or FieldAttributes.FamORAssem or FieldAttributes.Family;
 
 	public bool IsStatic => (Flags & FieldAttributes.Static) != 0;
+
+	public bool AddsObligation => Attributes.Any(Obligations.IsRequired);
 }
 
 internal sealed record PropertyModel(
@@ -77,9 +81,20 @@ internal sealed record PropertyModel(
 	IReadOnlyList<AttributeModel> Attributes,
 	MethodModel? Get,
 	MethodModel? Set
-);
+)
+{
+	public bool AddsObligation => Get is { IsAbstract: true } || Set is { IsAbstract: true } || Attributes.Any(Obligations.IsRequired);
+}
 
-internal sealed record EventModel(string Name, Display Display, IReadOnlyList<AttributeModel> Attributes, MethodModel? Add, MethodModel? Remove);
+internal static class Obligations
+{
+	public static bool IsRequired(AttributeModel attribute) => attribute.Signature == "System.Runtime.CompilerServices.RequiredMemberAttribute::.ctor()";
+}
+
+internal sealed record EventModel(string Name, Display Display, IReadOnlyList<AttributeModel> Attributes, MethodModel? Add, MethodModel? Remove)
+{
+	public bool AddsObligation => Add is { IsAbstract: true } || Remove is { IsAbstract: true };
+}
 
 /// <summary>Reads the parts of an assembly the comparison looks at, in the order the metadata tables hold them.</summary>
 internal sealed class ModelReader

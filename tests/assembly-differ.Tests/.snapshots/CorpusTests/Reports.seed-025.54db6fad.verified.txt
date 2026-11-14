@@ -37,7 +37,7 @@ exit code: 0
       </Event>
     </Type>
   </Module>
-</Assembly>[diff] Suggested version change: Major
+</Assembly>[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -51,7 +51,7 @@ exit code: 0
 ### `C0(Dictionary<String, List<Int32>>, ValueTuple<Int32, String>, Char)` is added
 ### `M5(ValueTuple<Int32, String>&, Func<Int32, String>)` is added
 ### `op_Modulus(C0, C0)` is added
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -61,7 +61,7 @@ exit code: 0
 [diff] Difference found: AssemblyProvider:Lib.dll and AssemblyProvider:Lib.dll
 == Breaking changes for Lib
 
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr
 
 
@@ -72,7 +72,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Major
+Scanned: 📑 1 assemblies(s), Suggested change in version: Patch
 + 0 breaking change(s) detected.
 
 + 🌟 3 new additions
@@ -108,5 +108,5 @@ Lib.C0
 + 🌟 System.Runtime.CompilerServices.NullableContextAttribute::.ctor(System.Byte) 
 ```
 </details>
-[diff] Suggested version change: Major
+[diff] Suggested version change: Patch
 --- stderr
