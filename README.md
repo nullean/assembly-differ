@@ -56,7 +56,7 @@ dotnet tool install --global assembly-differ
 ```
 
 On Linux (x64, arm64), Windows (x64, arm64) and macOS (arm64) this installs a self-contained native-AOT executable: no
-shared .NET runtime, no JIT warm-up. Everywhere else it falls back to a framework-dependent build, which needs the .NET
+shared .NET runtime, no JIT warm-up. Everywhere else it falls back to a framework-dependent build, which needs the .NET 11
 runtime installed.
 
 ## Quick start
@@ -188,7 +188,7 @@ The tool ships as one package per platform. Install the root package; the .NET S
 |---|---|---|
 | [`assembly-differ`](src/assembly-differ/README.md) | the tool; points the SDK at the package for your platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ?style=flat-square)](https://www.nuget.org/packages/assembly-differ) |
 | `assembly-differ.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-differ.linux-x64) |
-| `assembly-differ.any` | the framework-dependent fallback (net10.0, net11.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.any?style=flat-square)](https://www.nuget.org/packages/assembly-differ.any) |
+| `assembly-differ.any` | the framework-dependent fallback (net11.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-differ.any?style=flat-square)](https://www.nuget.org/packages/assembly-differ.any) |
 
 ## Learn more
 

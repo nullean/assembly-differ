@@ -9,7 +9,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 
 | Path | What |
 |---|---|
-| `src/assembly-differ` | the tool (net10.0 and net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
+| `src/assembly-differ` | the tool (net11.0), a `Nullean.Argh` CLI; `DiffCommand.cs` is the `diff` command |
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
 | `src/assembly-differ/Engine` | the comparison: reads both assemblies with System.Reflection.Metadata and reports what differs |
