@@ -26,7 +26,8 @@ public class AssemblyComparison
 	/// </summary>
 	public SuggestedVersionChange SuggestedVersionChange => Diff == null ? SuggestedVersionChange.None : Classify(Diff);
 
-	private static SuggestedVersionChange Classify(IDiffItem item)
+	/// <summary>The version change one difference calls for on its own; the comment counts the <c>Major</c> ones as breaking.</summary>
+	internal static SuggestedVersionChange Classify(IDiffItem item)
 	{
 		switch (item)
 		{

@@ -79,7 +79,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Patch
+Scanned: 📑 1 assembly, Suggested change in version: Patch
 + 0 breaking change(s) detected.
 
 + 🌟 3 new additions

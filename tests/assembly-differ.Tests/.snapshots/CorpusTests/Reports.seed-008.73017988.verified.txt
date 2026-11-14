@@ -54,7 +54,7 @@ exit code: 0
 ### API Changes: `Lib`
 
 ```diff
-Scanned: 📑 1 assemblies(s), Suggested change in version: Minor
+Scanned: 📑 1 assembly, Suggested change in version: Minor
 + 0 breaking change(s) detected.
 
 + 🌟 2 new additions
