@@ -13,9 +13,9 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ/Providers` | where each side's assemblies come from, one factory per provider prefix |
 | `src/assembly-differ/Exporters` | one exporter per `--format` |
 | `src/assembly-differ.skills` | the `assembly-differ.skills` package: the agent skill (`skills/assembly-differ/SKILL.md`), content only. Keep it in step with the CLI |
-| `src/Nullean.PublicApi` | the `Nullean.PublicApi` package (netstandard2.0, net10.0): `ApiReader` reads an assembly's public API with System.Reflection.Metadata into the rich model (base types, interfaces, constraints, nullability, tuple names, defaults, attributes), `ApiWriter` writes it as a `.api` file |
+| `src/Nullean.PublicApi` | the `Nullean.PublicApi` package (netstandard2.0, net10.0): `ApiReader` reads an assembly's public API with System.Reflection.Metadata into the rich model (base types, interfaces, constraints, nullability, tuple names, defaults, attributes), `ApiWriter` writes it as a `.api` file and `ApiParser` reads one back |
 | `src/Nullean.PublicApi.Diff` | the `Nullean.PublicApi.Diff` package (netstandard2.0, net10.0): `ApiDiff` compares two assemblies, `VersionChange` classifies, `UsageFilter` narrows to what code uses; `JustAssembly/` holds the internal model those reports are built on |
-| `tests/Nullean.PublicApi.Tests` | TUnit tests of the reader and writer: `.api` snapshots of C# samples, and `RoslynOracleTests`, which checks every visible signature of framework assemblies against Roslyn's reading of them |
+| `tests/Nullean.PublicApi.Tests` | TUnit tests of the reader, writer and parser: `.api` snapshots of C# samples; `RoslynOracleTests`, which checks every visible signature of framework assemblies against Roslyn's reading of them; `ParserTests`, which parse each `.api` file back and require the same text and the same model, field by field (`ModelDump`) |
 | `tests/assembly-differ.Tests` | TUnit tests that run the built tool as a process on assemblies Roslyn compiles from C# source |
 | `build/scripts` | the F# build ([Runna.Fs](https://www.nuget.org/packages/Runna.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's and the libraries' assemblies are signed with |

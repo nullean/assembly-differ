@@ -1,6 +1,8 @@
 assembly Lib
+using struct System: Range
 using System.Collections.Generic: Dictionary<,>
 using System.IO: Stream
+using System.Threading.Tasks: Task
 
 namespace global
   public class InGlobal

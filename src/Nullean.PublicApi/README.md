@@ -8,11 +8,15 @@ using Nullean.PublicApi;
 
 var api = ApiReader.Read("bin/Release/net10.0/MyLib.dll");
 File.WriteAllText("MyLib.api", ApiWriter.Write(api));
+
+// and back: the same model, with the line each type and member is on
+var document = ApiParser.Parse(File.ReadAllText("MyLib.api"));
 ```
 
 ```
 assembly MyLib
-using System: IComparable<>, IDisposable, ObsoleteAttribute
+using System: ObsoleteAttribute
+using interface System: IComparable<>, IDisposable
 
 namespace MyLib.Drawing
   public interface IShape : IDisposable
@@ -28,7 +32,12 @@ namespace MyLib.Drawing
 
 The model holds what a declaration says: base types and interfaces, type parameter constraints and variance,
 nullability, tuple element names, `ref`, `out`, `in` and `params`, default and constant values, `required`, `init`,
-and the attributes that are about the API rather than the compiler's bookkeeping. The header names the types from
-other assemblies the API uses, so declarations use short names; a name two namespaces share is written in full.
+and the attributes that are about the API rather than the compiler's bookkeeping.
+
+The header names every type from another assembly the API uses, namespace by namespace, so declarations use short
+names; a name two namespaces share is written in full. `using struct` lists the value types, so `DateTime?` reads back
+as a nullable value type and `string?` as an annotated reference, and `using interface` the interfaces a base list
+names, so a reader can tell a base class from an interface without the other assembly. `ApiParser` reads the file back
+into the same model the reader produced from the assembly.
 
 Targets netstandard2.0 and net10.0. It is the reader behind [assembly-differ](https://github.com/nullean/assembly-differ).

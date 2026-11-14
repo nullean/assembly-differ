@@ -1,5 +1,6 @@
 assembly Lib
-using System: EventArgs, EventHandler<>, FlagsAttribute, IComparable<>, IDisposable, IEquatable<>, ObsoleteAttribute, Type
+using System: EventArgs, EventHandler<>, FlagsAttribute, ObsoleteAttribute, Type
+using interface System: IComparable<>, IDisposable, IEquatable<>
 using System.Text: StringBuilder
 
 namespace Lib.Drawing
