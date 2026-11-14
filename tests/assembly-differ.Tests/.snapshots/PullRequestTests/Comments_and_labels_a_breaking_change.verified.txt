@@ -1,0 +1,12 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels: breaking -->
+### API changes: suggested version change **Major**
+
+⚠️ 1 breaking change.
+
+<details><summary><b>Lib.dll</b>: Major, 1 breaking change</summary>
+
+- 🔷 type `Lib.Widget`
+  - 🔴 method `Draw()` 💥
+
+</details>

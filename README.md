@@ -111,6 +111,22 @@ assembly-differ nuget Proc 0.13.0 0.14.0 -t proc
 assembly-differ release src/MyLib/bin/Release/net8.0 --package MyLib --version 1.3.0 -t MyLib
 ```
 
+### On a pull request
+
+`pull-request` puts a report on the pull request a GitHub Actions run is for. Write the report with `--format json`
+first:
+
+```sh
+assembly-differ release build/output/MyLib.1.3.0.nupkg -f json -o build/output
+assembly-differ pull-request build/output/api-changes.json
+```
+
+It writes the job summary, keeps one comment on the pull request up to date, and sets the release label the suggested
+change calls for: `breaking` for `Major` and `feature` for `Minor`, the labels release-drafter turns into the next
+version (`--major-label`, `--minor-label` and `--patch-label` rename them). It records the labels it set in its comment,
+and a later run removes only those, never a label a person added. It needs `GITHUB_TOKEN` with `pull-requests: write`.
+Without write access, as on a pull request from a fork, it writes the job summary, warns and succeeds.
+
 ### Provider specs
 
 Before it had a command per source, the tool took two provider specs, and `diff` still does, unchanged, for the builds
