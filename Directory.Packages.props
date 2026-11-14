@@ -35,9 +35,9 @@
 
   <!-- build/scripts -->
   <ItemGroup>
-    <!-- under CPM the F# SDK adds no implicit FSharp.Core; Nullean.Make.Fs needs 11.0.100 or later -->
+    <!-- under CPM the F# SDK adds no implicit FSharp.Core; Runna.Fs needs 11.0.100 or later -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
     <!-- brings its own Proc and Proc.Fs -->
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.30.0" />
+    <PackageVersion Include="Runna.Fs" Version="0.2.0" />
   </ItemGroup>
 </Project>

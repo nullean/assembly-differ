@@ -15,7 +15,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `src/assembly-differ.skills` | the `assembly-differ.skills` package: the agent skill (`skills/assembly-differ/SKILL.md`), content only. Keep it in step with the CLI |
 | `src/assembly-differ/Engine` | the comparison: reads both assemblies with System.Reflection.Metadata and reports what differs |
 | `tests/assembly-differ.Tests` | TUnit tests that run the built tool as a process on assemblies Roslyn compiles from C# source |
-| `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks and CI call |
+| `build/scripts` | the F# build ([Runna.Fs](https://www.nuget.org/packages/Runna.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's own assembly is signed with |
 | `action.yml` | the GitHub Action: runs the `edge` container image |
 
@@ -86,6 +86,6 @@ one release label.
   Removing or renaming any of it is a breaking change. `ApiCommands.cs` holds the commands, `DiffRunner.cs` the
   comparison they share with `diff`.
 - The build diffs this tool against its own previous release (`generateapichanges`), so a broken diff fails its own CI.
-- Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
+- Build targets are Runna.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
   lines; values come from `text` inside `shell { }` (`Versions.fs`). Do not call the C# `ProcNet` API from the build.
   CI calls targets by name (`./build.sh generatepackages -s`): keep multi-word case names as one word.
