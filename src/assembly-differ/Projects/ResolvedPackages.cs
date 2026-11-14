@@ -12,6 +12,53 @@ internal sealed record Resolution(string Project, string ProjectPath, string Tar
 /// <summary>Reads which version of a package the projects in a directory resolve, from their project.assets.json.</summary>
 internal static class ResolvedPackages
 {
+	/// <summary>The packages the projects in a directory reference directly, as each target framework resolves them.</summary>
+	public static IReadOnlyList<(string PackageId, Resolution Resolution)> Direct(string directory)
+	{
+		var direct = new List<(string, Resolution)>();
+		var unrestored = new List<string>();
+		foreach (var project in ProjectComparison.Candidates(directory, []))
+		{
+			var assets = Dotnet.Properties(project, ["ProjectAssetsFile"])["ProjectAssetsFile"];
+			var name = Path.GetFileNameWithoutExtension(project);
+			if (!File.Exists(assets))
+			{
+				unrestored.Add(name);
+				continue;
+			}
+			using var document = JsonDocument.Parse(File.ReadAllText(assets));
+			var root = document.RootElement;
+			foreach (var framework in root.GetProperty("project").GetProperty("frameworks").EnumerateObject())
+			{
+				if (!framework.Value.TryGetProperty("dependencies", out var dependencies))
+					continue;
+				var target = root.GetProperty("targets").EnumerateObject().FirstOrDefault(t => !t.Name.Contains('/') && SameFramework(t.Name, framework.Name));
+				if (target.Value.ValueKind != JsonValueKind.Object)
+					continue;
+				foreach (var dependency in dependencies.EnumerateObject())
+				{
+					var library = target
+						.Value
+						.EnumerateObject()
+						.FirstOrDefault(l => l.Name.StartsWith(dependency.Name + "/", StringComparison.OrdinalIgnoreCase));
+					if (library.Value.ValueKind != JsonValueKind.Object)
+						continue;
+					var version = library.Name[(library.Name.IndexOf('/') + 1)..];
+					direct.Add(
+						(library.Name[..library.Name.IndexOf('/')], new Resolution(name, project, target.Name, version, LibFolder(library.Value) ?? ""))
+					);
+				}
+			}
+		}
+		if (unrestored.Count > 0)
+			Console.Error.WriteLine($"[diff] warning: not restored, so not read: {string.Join(", ", unrestored)}; run dotnet restore first");
+		return direct;
+	}
+
+	/// <summary>Whether a targets key, such as net8.0, and a project framework alias name the same framework.</summary>
+	private static bool SameFramework(string target, string alias) =>
+		NuGet.Frameworks.NuGetFramework.Parse(target).Equals(NuGet.Frameworks.NuGetFramework.Parse(alias));
+
 	public static IReadOnlyList<Resolution> Find(string directory, string packageId)
 	{
 		var resolutions = new List<Resolution>();

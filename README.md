@@ -108,6 +108,7 @@ earlier release is a first release: there is nothing to compare, so the command 
 |---|---|
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
+| `upgrades` | in a solution, every package it references directly that has a newer release, and what updating each breaks in your code |
 | `nuget <id> [<version>] [<new-version>]` | in a solution, the version your projects resolve with the latest release, or with `<version>`: what updating would change; anywhere, two published versions |
 | `projects` | every library project in the directory against its latest release; what runs without a command |
 

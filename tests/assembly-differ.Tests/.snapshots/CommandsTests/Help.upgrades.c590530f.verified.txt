@@ -1,0 +1,23 @@
+Usage: assembly-differ upgrades [options]
+
+   Lists the packages a solution references that have a newer release, and what updating each would break.
+
+Global options:
+  -h, --help             Show help.
+
+Options:
+  --all                  Count every change, not only the ones to API your built projects use.
+  -f, --format <string>  markdown, a table, or json. [default: markdown] [allowed: markdown|json]
+  -o, --output <string>  A directory or file to write the report to, besides the console. [default: null]
+  --fail-on <enum>       Exit with code 4 when an update's change to the API your code uses is at least this; none never fails. [default: none]
+                         One of: <none|patch|minor|major>
+
+Notes:
+
+  It reads the packages every project in the directory references directly, as obj/project.assets.json resolves them,
+  so restore first. Each one with a newer stable release on your NuGet.config feeds is compared with it, the way
+  nuget X is: only the changes to API your built projects use count, unless --all is set, so build first. Use
+  assembly-differ nuget X to see one package's changes in full.
+
+Examples:
+  dotnet build && assembly-differ upgrades
