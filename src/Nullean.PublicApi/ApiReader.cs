@@ -65,7 +65,47 @@ public sealed class ApiReader
 	private ApiReader(MetadataReader reader)
 	{
 		_reader = reader;
-		_types = new TypeReferenceProvider(reader);
+		_types = new TypeReferenceProvider(reader, NumericIntPtr(reader));
+	}
+
+	/// <summary>
+	/// Whether the assembly was built for a runtime where IntPtr is nint: one targeting .NET 7 or later, or a core
+	/// library that declares RuntimeFeature.NumericIntPtr itself.
+	/// </summary>
+	private static bool NumericIntPtr(MetadataReader reader)
+	{
+		foreach (var handle in reader.TypeDefinitions)
+		{
+			var type = reader.GetTypeDefinition(handle);
+			if (reader.StringComparer.Equals(type.Name, "RuntimeFeature") && reader.StringComparer.Equals(type.Namespace, "System.Runtime.CompilerServices"))
+				return type.GetFields().Any(f => reader.StringComparer.Equals(reader.GetFieldDefinition(f).Name, "NumericIntPtr"));
+		}
+		var probe = new TypeReferenceProvider(reader);
+		foreach (var handle in reader.GetAssemblyDefinition().GetCustomAttributes())
+		{
+			var attribute = reader.GetCustomAttribute(handle);
+			if (attribute.Constructor.Kind != HandleKind.MemberReference)
+				continue;
+			var parent = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent;
+			if (parent.Kind != HandleKind.TypeReference || probe.FullName(parent) != "System.Runtime.Versioning.TargetFrameworkAttribute")
+				continue;
+			var value = attribute.DecodeValue(probe);
+			if (value.FixedArguments is [{ Value: string framework }, ..])
+				return IsNet7OrLater(framework);
+		}
+		return false;
+	}
+
+	/// <summary><c>.NETCoreApp,Version=v8.0</c> and the like.</summary>
+	private static bool IsNet7OrLater(string framework)
+	{
+		const string prefix = ".NETCoreApp,Version=v";
+#pragma warning disable CA1846 // netstandard2.0 cannot parse a span
+		return framework.StartsWith(prefix, StringComparison.Ordinal) && Version.TryParse(
+			framework.Substring(prefix.Length),
+			out var version
+		) && version.Major >= 7;
+#pragma warning restore CA1846
 	}
 
 	/// <summary>Reads the assembly at <paramref name="path"/>.</summary>

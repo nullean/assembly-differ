@@ -18,13 +18,23 @@ internal readonly record struct TypeContext(ImmutableArray<string> TypeParameter
 }
 
 /// <summary>Decodes signatures and attribute blobs into <see cref="ApiTypeReference"/>s.</summary>
+/// <param name="reader">The assembly's metadata.</param>
+/// <param name="numericIntPtr">
+/// Whether IntPtr is nint: since C# 11, on a runtime that says so (.NET 7 and later), they are the same type and the
+/// compiler no longer marks which one a signature meant.
+/// </param>
 internal sealed class TypeReferenceProvider(
-	MetadataReader reader
+	MetadataReader reader,
+	bool numericIntPtr = false
 ) : ISignatureTypeProvider<ApiTypeReference, TypeContext>, ICustomAttributeTypeProvider<ApiTypeReference>
 {
 	private readonly Dictionary<EntityHandle, ApiNamedType> _named = [];
 
-	public ApiTypeReference GetPrimitiveType(PrimitiveTypeCode typeCode) => Primitive(typeCode);
+	private static readonly ApiNativeIntegerType Nint = new(false);
+	private static readonly ApiNativeIntegerType Nuint = new(true);
+
+	public ApiTypeReference GetPrimitiveType(PrimitiveTypeCode typeCode) =>
+		numericIntPtr && typeCode is PrimitiveTypeCode.IntPtr ? Nint : numericIntPtr && typeCode is PrimitiveTypeCode.UIntPtr ? Nuint : Primitive(typeCode);
 
 	// the records are immutable, so every reference to int or string shares one, made once
 	private static readonly ApiNamedType?[] Primitives = BuildPrimitives();
