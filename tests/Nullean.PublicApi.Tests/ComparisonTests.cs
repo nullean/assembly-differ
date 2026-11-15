@@ -64,6 +64,14 @@ public class ComparisonTests
 	}
 
 	[Test]
+	public void IntPtr_read_as_nint_is_no_change()
+	{
+		const string source = "public class A { public System.IntPtr M(System.UIntPtr value) => default; }";
+		var result = Compare(source, "[assembly: System.Runtime.Versioning.TargetFramework(\".NETCoreApp,Version=v11.0\")]\n" + source);
+		result.Changes.Should().BeEmpty();
+	}
+
+	[Test]
 	public void A_break_below_one_asks_for_a_minor_version()
 	{
 		var result = Compare("public class A { public void M() { } }", "public class A { }");

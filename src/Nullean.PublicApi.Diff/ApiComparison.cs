@@ -822,6 +822,12 @@ public static class ApiComparison
 				a = Runtime(a);
 				b = Runtime(b);
 			}
+			else
+			{
+				// nint and IntPtr are one type to C# as well, since C# 11: only how a file spelled it differs
+				a = a is ApiNativeIntegerType ? Runtime(a) with { IsNullable = a.IsNullable } : a;
+				b = b is ApiNativeIntegerType ? Runtime(b) with { IsNullable = b.IsNullable } : b;
+			}
 			switch (a, b)
 			{
 				case (ApiNamedType x, ApiNamedType y):
