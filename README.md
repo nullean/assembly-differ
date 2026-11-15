@@ -297,8 +297,10 @@ declaration as a field.
 
 An enum default is written by name, `Formatting formatting = Formatting.Indented`, which needs the assembly that
 declares the enum. A project's come from its restore, `obj/project.assets.json`, and the framework's from the
-installed runtime. A `.dll` or `.nupkg` read on its own finds only what sits next to it: pass the folders that hold
-its dependencies with `-r`, or the value is written as a cast, `(Formatting)1`.
+installed runtime. A `.nupkg` finds its dependencies, and theirs, in the packages folder restore fills
+(`~/.nuget/packages`, or `NUGET_PACKAGES`), at the version restore would pick; nothing is downloaded. A `.dll` read on
+its own finds only what sits next to it: pass the folders that hold its dependencies with `-r`. An enum that is not
+found is written as a cast, `(Formatting)1`.
 
 Check them on every pull request with the `verify-api` action. Checkout and the build are your steps, before it:
 

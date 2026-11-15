@@ -18,7 +18,7 @@ Options:
   --project <values>        [repeatable] Read this project file, whatever kind it is. Repeat it for more than one. [default: null]
   --include-tests           Read test projects too.
   --include-unpackable      Read projects with IsPackable set to false too.
-  -r, --reference <values>  [repeatable] Look in this directory for the assemblies an API refers to, such as a package's dependencies, so an enum default is written by name. Repeat it for more than one. Projects find their packages without it. [default: null]
+  -r, --reference <values>  [repeatable] Look in this directory for the assemblies an API refers to, such as a package's dependencies, so an enum default is written by name. Repeat it for more than one. Projects, and packages already in the packages folder, are found without it. [default: null]
 
 Notes:
 

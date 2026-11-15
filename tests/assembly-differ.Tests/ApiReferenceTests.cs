@@ -62,14 +62,16 @@ public class ApiReferenceTests
 
 		private Dictionary<string, string> Environment => new() { ["NUGET_PACKAGES"] = Packages, ["MSBUILDDISABLENODEREUSE"] = "1" };
 
-		public void Build()
+		public string Package => Path.Combine(Fixture.Root, "out", "Uses.1.0.0.nupkg");
+
+		public void Build() => Dotnet("build", "-c", "Release", "-v", "q");
+
+		/// <summary>Packs the project into <see cref="Package"/>; its nuspec says it depends on the package with the enum.</summary>
+		public void Pack() => Dotnet("pack", "-c", "Release", "-v", "q", "-o", Path.GetDirectoryName(Package)!);
+
+		private void Dotnet(params string[] args)
 		{
-			var start = new ProcessStartInfo("dotnet", ["build", "-c", "Release", "-v", "q"])
-			{
-				WorkingDirectory = Directory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-			};
+			var start = new ProcessStartInfo("dotnet", args) { WorkingDirectory = Directory, RedirectStandardOutput = true, RedirectStandardError = true, };
 			foreach (var (name, value) in Environment)
 				start.Environment[name] = value;
 			using var process = Process.Start(start)!;
@@ -81,6 +83,10 @@ public class ApiReferenceTests
 		}
 
 		public async Task<CliResult> Run(params string[] args) => await Cli.RunInAsync(Directory, Environment, args);
+
+		/// <summary>Runs with a packages folder of its own instead of the one restore filled.</summary>
+		public async Task<CliResult> RunWithPackages(string packages, params string[] args) =>
+			await Cli.RunInAsync(Directory, new Dictionary<string, string>(Environment) { ["NUGET_PACKAGES"] = packages }, args);
 
 		public void Dispose() => Fixture.Dispose();
 	}
@@ -122,4 +128,88 @@ public class ApiReferenceTests
 		result.ExitCode.Should().Be(1);
 		result.Error.Should().Contain("which --reference names");
 	}
+
+	[Test]
+	public async Task A_package_finds_its_dependencies_in_the_packages_folder()
+	{
+		using var repository = new Repository();
+		repository.Pack();
+		var empty = System.IO.Directory.CreateDirectory(Path.Combine(repository.Fixture.Root, "empty")).FullName;
+
+		var restored = await repository.Run("api", repository.Package);
+		var missing = await repository.RunWithPackages(empty, "api", repository.Package);
+
+		restored.ExitCode.Should().Be(0, restored.Error);
+		restored.Out.Should().Contain("void Run(Mode mode = Mode.Auto)");
+		// nothing is downloaded: a dependency that is not there leaves the value a cast
+		missing.ExitCode.Should().Be(0, missing.Error);
+		missing.Out.Should().Contain("void Run(Mode mode = (Mode)5)");
+	}
+
+	/// <summary>
+	/// A package that depends on Middle, which depends on Modes [1.1.0, ). The packages folder holds Modes 1.0.0, below
+	/// the range, 1.1.0 half restored, 1.2.0 and 2.0.0; each declares value 5 under its own name, so the name written
+	/// says which one was read: the lowest the range allows that restore finished, as restore picks.
+	/// </summary>
+	[Test]
+	public async Task A_package_takes_the_version_restore_would_through_its_dependencies_dependencies()
+	{
+		using var repository = new Repository();
+		repository.Build();
+		var root = repository.Fixture.Root;
+		var packages = System.IO.Directory.CreateDirectory(Path.Combine(root, "synthetic")).FullName;
+		Installed(packages, "Modes", "1.0.0", root, "Below", finished: true);
+		Installed(packages, "Modes", "1.1.0", root, "Unfinished", finished: false);
+		Installed(packages, "Modes", "1.2.0", root, "Chosen", finished: true);
+		Installed(packages, "Modes", "2.0.0", root, "Higher", finished: true);
+		Installed(packages, "Middle", "1.0.0", root, null, finished: true, dependency: ("Modes", "1.1.0"));
+		var package = Path.Combine(root, "Uses.nupkg");
+		Nupkg(package, "Uses", "1.0.0", ("Middle", "1.0.0"), repository.Assembly);
+
+		var result = await repository.RunWithPackages(packages, "api", package);
+
+		result.ExitCode.Should().Be(0, result.Error);
+		result.Out.Should().Contain("void Run(Mode mode = Mode.Chosen)");
+	}
+
+	private static void Installed(
+		string packages,
+		string id,
+		string version,
+		string root,
+		string? name,
+		bool finished,
+		(string Id, string Version)? dependency = null
+	)
+	{
+		var directory = System.IO.Directory.CreateDirectory(Path.Combine(packages, id.ToLowerInvariant(), version)).FullName;
+		File.WriteAllText(Path.Combine(directory, id.ToLowerInvariant() + ".nuspec"), Nuspec(id, version, dependency));
+		if (finished)
+			File.WriteAllText(Path.Combine(directory, ".nupkg.metadata"), "{}");
+		if (name is null)
+			return;
+		var lib = System.IO.Directory.CreateDirectory(Path.Combine(directory, "lib", "net11.0")).FullName;
+		Fixture.Compile($"namespace Dep {{ public enum Mode {{ Off, On, {name} = 5 }} }}", Path.Combine(lib, "Lib.dll"), referenceAssemblies: true);
+	}
+
+	private static void Nupkg(string path, string id, string version, (string Id, string Version) dependency, string assembly)
+	{
+		using var zip = System.IO.Compression.ZipFile.Open(path, System.IO.Compression.ZipArchiveMode.Create);
+		using (var writer = new StreamWriter(zip.CreateEntry(id + ".nuspec").Open()))
+			writer.Write(Nuspec(id, version, dependency));
+		System.IO.Compression.ZipFileExtensions.CreateEntryFromFile(zip, assembly, "lib/net11.0/" + Path.GetFileName(assembly));
+	}
+
+	private static string Nuspec(string id, string version, (string Id, string Version)? dependency) =>
+		$"""
+		<?xml version="1.0" encoding="utf-8"?>
+		<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+		  <metadata>
+		    <id>{id}</id><version>{version}</version><authors>tests</authors><description>tests</description>
+		    <dependencies>
+		      <group targetFramework="net11.0">{(dependency is { } d ? $"<dependency id=\"{d.Id}\" version=\"{d.Version}\" />" : "")}</group>
+		    </dependencies>
+		  </metadata>
+		</package>
+		""";
 }

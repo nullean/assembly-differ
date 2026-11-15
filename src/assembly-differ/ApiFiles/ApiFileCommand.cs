@@ -37,7 +37,7 @@ internal sealed class ApiFileCommand
 	/// <param name="project">Read this project file, whatever kind it is. Repeat it for more than one.</param>
 	/// <param name="includeTests">Read test projects too.</param>
 	/// <param name="includeUnpackable">Read projects with IsPackable set to false too.</param>
-	/// <param name="reference">-r, Look in this directory for the assemblies an API refers to, such as a package's dependencies, so an enum default is written by name. Repeat it for more than one. Projects find their packages without it.</param>
+	/// <param name="reference">-r, Look in this directory for the assemblies an API refers to, such as a package's dependencies, so an enum default is written by name. Repeat it for more than one. Projects, and packages already in the packages folder, are found without it.</param>
 	/// <example>dotnet build -c Release &amp;&amp; assembly-differ api -o api</example>
 	/// <example>assembly-differ api --verify api</example>
 	/// <example>assembly-differ api bin/Release/net8.0/MyLib.dll</example>
@@ -172,11 +172,16 @@ internal sealed class ApiFileCommand
 		if (Nupkg.IsPackage(path))
 		{
 			var frameworks = chosen is null ? Nupkg.Frameworks(path) : [chosen];
-			return frameworks.SelectMany(
-				f => new NupkgAssemblyProvider(path, f)
+			// the package's dependencies, where restore left them
+			return frameworks.SelectMany(f =>
+			{
+				var dependencies = PackageDependencies.Directories(path, f);
+				return new NupkgAssemblyProvider(path, f)
 					.GetAssemblies(targets)
-					.Select(a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), f.GetShortFolderName(), a.FullName, references))
-			).ToList();
+					.Select(
+						a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), f.GetShortFolderName(), a.FullName, [.. references, .. dependencies])
+					);
+			}).ToList();
 		}
 		if (Directory.Exists(path))
 			return new DirectoryAssemblyProvider(path)
