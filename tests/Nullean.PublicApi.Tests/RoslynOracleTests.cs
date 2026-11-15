@@ -131,9 +131,9 @@ public class RoslynOracleTests
 					if (property.IsRequired)
 						facts.Add("required");
 					if (property.Getter is { } get)
-						facts.Add("get:" + Access(get.Accessibility));
+						facts.Add("get:" + Access(get.Accessibility) + (get.IsReadOnly ? ":readonly" : ""));
 					if (property.Setter is { } set)
-						facts.Add((set.IsInit ? "init:" : "set:") + Access(set.Accessibility));
+						facts.Add((set.IsInit ? "init:" : "set:") + Access(set.Accessibility) + (set.IsReadOnly ? ":readonly" : ""));
 					result[name + "::" + property.Name + Key(property.Parameters.Select(p => p.Type))] = string.Join(" ", facts) + " " + RefKind(
 						property.RefKind
 					) + Render(property.Type) + Parameters(property.Parameters);
@@ -147,9 +147,9 @@ public class RoslynOracleTests
 					method.Parameters.Select(p => p.Type),
 					method.Parameters.Select(p => p.RefKind)
 				)] = Access(method.Accessibility) + " " + (IsFinalizer(method) ? "[finalizer]" : Modifiers(method.Modifiers)) +
-					(method.IsExtension ? " extension" : "") + TypeParameters(method.TypeParameters) + " " + RefKind(method.ReturnRefKind) + Render(
-					method.ReturnType
-				) + Parameters(method.Parameters);
+					((method.Modifiers & ApiMemberModifiers.ReadOnly) != 0 ? " readonly" : "") + (method.IsExtension ? " extension" : "") + TypeParameters(
+					method.TypeParameters
+				) + " " + RefKind(method.ReturnRefKind) + Render(method.ReturnType) + Parameters(method.Parameters);
 				break;
 		}
 	}
@@ -402,9 +402,9 @@ public class RoslynOracleTests
 					if (property.IsRequired)
 						facts.Add("required");
 					if (get is not null)
-						facts.Add("get:" + Access(get.DeclaredAccessibility));
+						facts.Add("get:" + Access(get.DeclaredAccessibility) + (Readonly(get) ? ":readonly" : ""));
 					if (set is not null)
-						facts.Add((set.IsInitOnly ? "init:" : "set:") + Access(set.DeclaredAccessibility));
+						facts.Add((set.IsInitOnly ? "init:" : "set:") + Access(set.DeclaredAccessibility) + (Readonly(set) ? ":readonly" : ""));
 					result[name + "::" + property.MetadataName + Key(property.Parameters)] = string.Join(" ", facts) + " " +
 						(property.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(property.RefKind)) + Render(
 						property.Type,
@@ -425,7 +425,7 @@ public class RoslynOracleTests
 				result[name + "::" + method.MetadataName + "`" + method.TypeParameters.Length + Key(method.Parameters)] =
 				// Roslyn shows a finalizer as a destructor, which is never virtual; metadata says it is
 				Access(method.DeclaredAccessibility) + " " + (method.MethodKind == MethodKind.Destructor ? "[finalizer]" : Modifiers(method)) +
-					(method.IsExtensionMethod ? " extension" : "") + TypeParameters(method.TypeParameters) + " " +
+					(Readonly(method) ? " readonly" : "") + (method.IsExtensionMethod ? " extension" : "") + TypeParameters(method.TypeParameters) + " " +
 					(method.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(method.RefKind)) + Render(
 					method.ReturnType,
 					method.ReturnNullableAnnotation
@@ -433,6 +433,10 @@ public class RoslynOracleTests
 				break;
 		}
 	}
+
+	/// <summary>A struct member declared or made readonly: in a readonly struct every member is, so none says so.</summary>
+	private static bool Readonly(IMethodSymbol method) =>
+		method.IsReadOnly && method.ContainingType is { TypeKind: TypeKind.Struct, IsReadOnly: false } && !method.IsStatic;
 
 	private static bool PublicAllTheWay(INamedTypeSymbol type) =>
 		type.DeclaredAccessibility == Accessibility.Public && (type.ContainingType is not { } containing || PublicAllTheWay(containing));
@@ -447,7 +451,7 @@ public class RoslynOracleTests
 			", ",
 			parameters.Select(
 				p => (p.IsParams ? "params " : "") +
-					(p.ScopedKind != ScopedKind.None && p.RefKind != Microsoft.CodeAnalysis.RefKind.Out && !p.IsThis ? "scoped " : "") + RefKind(
+					(p.ScopedKind != ScopedKind.None && p.RefKind != Microsoft.CodeAnalysis.RefKind.Out && !p.IsThis && !p.IsParams ? "scoped " : "") + RefKind(
 					p.RefKind
 				) + Render(p.Type, p.NullableAnnotation) + " " + p.MetadataName + (p.IsOptional ? " = ?" : "")
 			)

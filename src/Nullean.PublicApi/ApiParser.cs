@@ -728,6 +728,11 @@ public static class ApiParser
 			{
 				var conversion = cursor.Word() == "implicit" ? "op_Implicit" : "op_Explicit";
 				cursor.ExpectWord("operator");
+				if (conversion == "op_Explicit" && cursor.PeekWord() == "checked")
+				{
+					cursor.Word();
+					conversion = "op_CheckedExplicit";
+				}
 				var conversionType = scope.Type(cursor);
 				var conversionParameters = Parameters(cursor, scope, '(', ')', out _);
 				var conversionBody = Body(cursor);
@@ -977,6 +982,12 @@ public static class ApiParser
 			}
 			var hasBody = Body(cursor);
 			cursor.End();
+			// a readonly property's accessors are all readonly
+			if ((modifiers & ApiMemberModifiers.ReadOnly) != 0)
+			{
+				getter = getter is null ? null : getter with { IsReadOnly = true };
+				setter = setter is null ? null : setter with { IsReadOnly = true };
+			}
 			return new ApiProperty(
 				name,
 				access,
@@ -1021,17 +1032,18 @@ public static class ApiParser
 					cursor.Word();
 					isExtension = true;
 				}
-				var isScoped = false;
-				if (cursor.PeekWord() == "scoped")
-				{
-					cursor.Word();
-					isScoped = true;
-				}
+				// params scoped, as C# writes it, and scoped alone
 				var isParams = false;
 				if (cursor.PeekWord() == "params")
 				{
 					cursor.Word();
 					isParams = true;
+				}
+				var isScoped = false;
+				if (cursor.PeekWord() == "scoped")
+				{
+					cursor.Word();
+					isScoped = true;
 				}
 				var refKind = cursor.PeekWord() switch
 				{
@@ -1103,20 +1115,32 @@ public static class ApiParser
 				">=" => "op_GreaterThanOrEqual",
 				"!" => "op_LogicalNot",
 				"~" => "op_OnesComplement",
-				"++" => "op_Increment",
-				"--" => "op_Decrement",
+				// without a parameter, the instance operator that changes the value it is called on
+				"++" => parameters == 0 ? "op_IncrementAssignment" : "op_Increment",
+				"--" => parameters == 0 ? "op_DecrementAssignment" : "op_Decrement",
 				"true" => "op_True",
 				"false" => "op_False",
 				"checked +" => "op_CheckedAddition",
 				"checked -" => unary ? "op_CheckedUnaryNegation" : "op_CheckedSubtraction",
 				"checked *" => "op_CheckedMultiply",
 				"checked /" => "op_CheckedDivision",
-				"checked ++" => "op_CheckedIncrement",
-				"checked --" => "op_CheckedDecrement",
+				"checked ++" => parameters == 0 ? "op_CheckedIncrementAssignment" : "op_CheckedIncrement",
+				"checked --" => parameters == 0 ? "op_CheckedDecrementAssignment" : "op_CheckedDecrement",
 				"+=" => "op_AdditionAssignment",
 				"-=" => "op_SubtractionAssignment",
 				"*=" => "op_MultiplicationAssignment",
 				"/=" => "op_DivisionAssignment",
+				"%=" => "op_ModulusAssignment",
+				"&=" => "op_BitwiseAndAssignment",
+				"|=" => "op_BitwiseOrAssignment",
+				"^=" => "op_ExclusiveOrAssignment",
+				"<<=" => "op_LeftShiftAssignment",
+				">>=" => "op_RightShiftAssignment",
+				">>>=" => "op_UnsignedRightShiftAssignment",
+				"checked +=" => "op_CheckedAdditionAssignment",
+				"checked -=" => "op_CheckedSubtractionAssignment",
+				"checked *=" => "op_CheckedMultiplicationAssignment",
+				"checked /=" => "op_CheckedDivisionAssignment",
 				_ when symbol.StartsWith("op_", StringComparison.Ordinal) => symbol,
 				_ => null,
 			};

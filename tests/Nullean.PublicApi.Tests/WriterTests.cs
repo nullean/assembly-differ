@@ -149,6 +149,59 @@ public class WriterTests
 				}
 			}
 			""");
+		yield return ("modern", """
+			using System;
+			using System.Collections.Generic;
+			using System.Diagnostics.CodeAnalysis;
+			using System.Runtime.CompilerServices;
+			namespace Lib;
+			public struct Money
+			{
+				public decimal Amount;
+				public static Money operator +(Money a, Money b) => a;
+				public static Money operator checked +(Money a, Money b) => a;
+				public void operator +=(Money other) { }
+				public void operator checked +=(Money other) { }
+				public void operator %=(Money other) { }
+				public void operator >>>=(int count) { }
+				public void operator ++() { }
+				public void operator --() { }
+				public void operator checked --() { }
+				public static Money operator ++(Money m) => m;
+				public static explicit operator int(Money m) => 0;
+				public static explicit operator checked int(Money m) => 0;
+				public int Auto { get; set; }
+				public int Setter { get => 0; readonly set { } }
+				public readonly int Whole { get => 0; set { } }
+				public int Mutating { get => 0; set { } }
+				public readonly int Sum() => 0;
+			}
+			[InlineArray(4)]
+			public struct Buffer4 { private int _element; }
+			public ref struct Cursor : IDisposable { public void Dispose() { } }
+			public class Api
+			{
+				public void Log(params ReadOnlySpan<string> parts) { }
+				public void Keep(scoped ReadOnlySpan<string> parts) { }
+				public void Add(params IEnumerable<int> values) { }
+				public void Take<T>(T value) where T : allows ref struct { }
+				[OverloadResolutionPriority(1)] public void Prefer(ReadOnlySpan<char> s) { }
+				public void Prefer(string s) { }
+				[Experimental("LIB001")] public void Trial() { }
+				public ref readonly int Peek(ref readonly int value) => ref value;
+				public int Field { get => field; set => field = value; }
+			}
+			public partial class Parts
+			{
+				public partial int Size { get; }
+				public partial int Size { get => 0; }
+				public partial event Action? Changed;
+				public partial event Action? Changed { add { } remove { } }
+			}
+			public interface ICounter { static abstract int Zero { get; } static virtual int One => 1; static int Two() => 2; void Tick() { } }
+			public record struct Point(int X, int Y);
+			public class Primary(int seed) { public int Seed => seed; }
+			""");
 		yield return ("names", """
 			namespace Lib.A { public class Range { } public class Task { } }
 			namespace Lib.B

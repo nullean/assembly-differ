@@ -1,0 +1,75 @@
+assembly Lib
+using System: Action
+using struct System: ReadOnlySpan<>
+using interface System: IDisposable, IEquatable<>
+using System.Collections.Generic: IEnumerable<>
+using System.Diagnostics.CodeAnalysis: ExperimentalAttribute
+using System.Runtime.CompilerServices: InlineArrayAttribute, OverloadResolutionPriorityAttribute
+
+namespace Lib
+  class Api
+    Api()
+    int Field { get; set; }
+    void Add(params IEnumerable<int> values)
+    void Keep(scoped ReadOnlySpan<string> parts)
+    void Log(params ReadOnlySpan<string> parts)
+    ref readonly int Peek(ref readonly int value)
+    [OverloadResolutionPriority(1)]
+    void Prefer(ReadOnlySpan<char> s)
+    void Prefer(string s)
+    void Take<T>(T value) where T : allows ref struct
+    [Experimental("LIB001")]
+    void Trial()
+
+  [InlineArray(4)]
+  struct Buffer4
+
+  ref struct Cursor : IDisposable
+    void Dispose()
+
+  interface ICounter
+    static int One { get; } { … }
+    static abstract int Zero { get; }
+    void Tick() { … }
+    static int Two()
+
+  struct Money
+    decimal Amount
+    int Auto { readonly get; set; }
+    int Mutating { get; set; }
+    int Setter { get; readonly set; }
+    readonly int Whole { get; set; }
+    readonly int Sum()
+    static Money operator +(Money a, Money b)
+    void operator +=(Money other)
+    static Money operator checked +(Money a, Money b)
+    void operator checked +=(Money other)
+    void operator checked --()
+    void operator --()
+    static Money operator ++(Money m)
+    void operator ++()
+    void operator %=(Money other)
+    void operator >>>=(int count)
+    static explicit operator checked int(Money m)
+    static explicit operator int(Money m)
+
+  class Parts
+    Parts()
+    int Size { get; }
+    event Action? Changed
+
+  struct Point : IEquatable<Point>
+    Point(int X, int Y)
+    int X { readonly get; set; }
+    int Y { readonly get; set; }
+    readonly void Deconstruct(out int X, out int Y)
+    readonly bool Equals(Point other)
+    override readonly bool Equals(object obj)
+    override readonly int GetHashCode()
+    override readonly string ToString()
+    static bool operator ==(Point left, Point right)
+    static bool operator !=(Point left, Point right)
+
+  class Primary
+    Primary(int seed)
+    int Seed { get; }
