@@ -9,7 +9,7 @@ namespace Lib
     delegate*<int, void> Callback
     volatile int Flag
     int this[int index, string key] { get; set; }
-    void Defaults(string s = "a\"b", char c = 'x', double d = 1.5d, decimal m = 2.5m, DayOfWeek day = (DayOfWeek)1, object? o = null, DateTime when = default)
+    void Defaults(string s = "a\"b", char c = 'x', double d = 1.5d, decimal m = 2.5m, DayOfWeek day = DayOfWeek.Monday, object? o = null, DateTime when = default)
     dynamic Dynamic(List<dynamic> list)
     override bool Equals(object? obj)
     T Generic<T, U>(U value) where T : struct, IComparable<T> where U : class?, new()

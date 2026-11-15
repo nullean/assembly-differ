@@ -29,6 +29,16 @@ internal sealed class TypeReferenceProvider(
 ) : ISignatureTypeProvider<ApiTypeReference, TypeContext>, ICustomAttributeTypeProvider<ApiTypeReference>
 {
 	private readonly Dictionary<EntityHandle, ApiNamedType> _named = [];
+	// the assembly each referenced type comes from, by full name
+	private readonly Dictionary<string, string> _assemblies = new(StringComparer.Ordinal);
+
+	/// <summary>The assembly a referenced type comes from; null for one this assembly defines.</summary>
+	internal string? AssemblyOf(ApiNamedType type)
+	{
+		while (type.DeclaringType is not null)
+			type = type.DeclaringType;
+		return _assemblies.TryGetValue(type.FullName, out var assembly) ? assembly : null;
+	}
 
 	private static readonly ApiNativeIntegerType Nint = new(false);
 	private static readonly ApiNativeIntegerType Nuint = new(true);
@@ -142,7 +152,16 @@ internal sealed class TypeReferenceProvider(
 		var reference = reader.GetTypeReference(handle);
 		var scope = reference.ResolutionScope;
 		var declaring = scope.Kind == HandleKind.TypeReference ? Reference((TypeReferenceHandle)scope, false) : null;
-		return new ApiNamedType(declaring?.Namespace ?? reader.GetString(reference.Namespace), reader.GetString(reference.Name), declaring, [], isValueType);
+		var named = new ApiNamedType(
+			declaring?.Namespace ?? reader.GetString(reference.Namespace),
+			reader.GetString(reference.Name),
+			declaring,
+			[],
+			isValueType
+		);
+		if (scope.Kind == HandleKind.AssemblyReference)
+			_assemblies[named.FullName] = reader.GetString(reader.GetAssemblyReference((AssemblyReferenceHandle)scope).Name);
+		return named;
 	}
 
 	public ApiTypeReference GetTypeFromSpecification(MetadataReader metadata, TypeContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind) =>
@@ -224,41 +243,10 @@ internal sealed class TypeReferenceProvider(
 		return named;
 	}
 
-	private Dictionary<string, PrimitiveTypeCode>? _enumTypes;
+	/// <summary>Finds enums for attribute arguments; set by the reader.</summary>
+	internal EnumCatalog? Catalog { get; set; }
 
-	public PrimitiveTypeCode GetUnderlyingEnumType(ApiTypeReference type)
-	{
-		// an enum this assembly defines says; one from elsewhere is assumed to be an int, which nearly all are
-		if (_enumTypes is null)
-		{
-			_enumTypes = new Dictionary<string, PrimitiveTypeCode>(StringComparer.Ordinal);
-			foreach (var handle in reader.TypeDefinitions)
-				if (Definition(handle) is { IsValueType: true } definition)
-					foreach (var fieldHandle in reader.GetTypeDefinition(handle).GetFields())
-					{
-						var field = reader.GetFieldDefinition(fieldHandle);
-						if (
-							(field.Attributes & System.Reflection.FieldAttributes.Static) == 0 &&
-							field.DecodeSignature(this, TypeContext.None) is ApiNamedType { Namespace: "System" } underlying
-						)
-						{
-							_enumTypes[definition.FullName] = underlying.Name switch
-							{
-								"Byte" => PrimitiveTypeCode.Byte,
-								"SByte" => PrimitiveTypeCode.SByte,
-								"Int16" => PrimitiveTypeCode.Int16,
-								"UInt16" => PrimitiveTypeCode.UInt16,
-								"UInt32" => PrimitiveTypeCode.UInt32,
-								"Int64" => PrimitiveTypeCode.Int64,
-								"UInt64" => PrimitiveTypeCode.UInt64,
-								"Char" => PrimitiveTypeCode.Char,
-								"Boolean" => PrimitiveTypeCode.Boolean,
-								_ => PrimitiveTypeCode.Int32,
-							};
-							break;
-						}
-					}
-		}
-		return type is ApiNamedType named && _enumTypes.TryGetValue(named.FullName, out var code) ? code : PrimitiveTypeCode.Int32;
-	}
+	public PrimitiveTypeCode GetUnderlyingEnumType(ApiTypeReference type) =>
+		// the enum says, where it can be found; one that cannot is assumed to be an int, as nearly all are
+		type is ApiNamedType named && Catalog?.Find(named) is { } info ? info.Underlying : PrimitiveTypeCode.Int32;
 }

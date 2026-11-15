@@ -572,7 +572,7 @@ public static class ApiComparison
 			TypeOf("type", o.Type, n.Type, oldType, newType, changed);
 			if (o.IsStatic != n.IsStatic)
 				changed("static", o.IsStatic ? "static" : "instance", n.IsStatic ? "static" : "instance", ApiAudience.Callers, Both, null);
-			if (o.Constant != n.Constant)
+			if (!SameLiteral(o.Constant, n.Constant))
 			{
 				// compiled code holds the old value
 				if (o.Constant is not null && n.Constant is not null)
@@ -746,7 +746,7 @@ public static class ApiComparison
 						ApiCompatibility.Source,
 						null
 					);
-				if (o.DefaultValue != n.DefaultValue)
+				if (!SameLiteral(o.DefaultValue, n.DefaultValue))
 				{
 					if (o.DefaultValue is null)
 						changed(label + " default", null, n.DefaultValue, ApiAudience.None, ApiCompatibility.None, null);
@@ -957,7 +957,10 @@ public static class ApiComparison
 			{
 				var o = oldByName.TryGetValue(name, out var oldTexts) ? string.Join(", ", oldTexts) : null;
 				var n = newByName.TryGetValue(name, out var newTexts) ? string.Join(", ", newTexts) : null;
-				if (o == n)
+				if (
+					o == n ||
+					(o is not null && n is not null && oldTexts!.Count == newTexts!.Count && oldTexts.Zip(newTexts, SameAttributeText).All(same => same))
+				)
 					continue;
 				var isError = name == Obsolete && IsError(@new) && !IsError(old);
 				changed("attribute", o, n, isError ? ApiAudience.Callers : ApiAudience.None, isError ? ApiCompatibility.Source : ApiCompatibility.None);
@@ -972,10 +975,47 @@ public static class ApiComparison
 				if (!Same(a.Type, b.Type, Sameness.Exact) || a.Arguments.Count != b.Arguments.Count)
 					return false;
 				for (var j = 0; j < a.Arguments.Count; j++)
-					if (a.Arguments[j] != b.Arguments[j])
+					if (!SameLiteral(a.Arguments[j], b.Arguments[j]))
 						return false;
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// Whether two literals say the same value. An enum value is written by name where the reader found the enum, and
+		/// as a cast of its number where it did not, so <c>(StringComparison)4</c> and <c>StringComparison.Ordinal</c>
+		/// cannot be told apart and count as the same.
+		/// </summary>
+		private static bool SameLiteral(string? a, string? b) => a == b || (a is not null && b is not null && (CastOfNamed(a, b) || CastOfNamed(b, a)));
+
+		/// <summary>Whether <paramref name="cast"/> is <c>(Type)number</c> and <paramref name="named"/> names members of that type.</summary>
+		private static bool CastOfNamed(string cast, string named)
+		{
+			var close = cast.IndexOf(')');
+			if (cast.Length < 4 || cast[0] != '(' || close < 2 || close == cast.Length - 1)
+				return false;
+			var number = cast.Substring(close + 1);
+			if (!number.TrimStart('-').All(char.IsDigit) || number.TrimStart('-').Length == 0)
+				return false;
+#pragma warning disable CA1845 // netstandard2.0 has no span Concat
+			var prefix = cast.Substring(1, close - 1) + ".";
+#pragma warning restore CA1845
+			return named.Split('|').All(part => part.Trim().StartsWith(prefix, StringComparison.Ordinal));
+		}
+
+		private static readonly string[] ArgumentSeparator = [", "];
+
+		/// <summary>Two attributes as written, their arguments compared as literals.</summary>
+		private static bool SameAttributeText(string a, string b)
+		{
+			if (a == b)
+				return true;
+			var open = a.IndexOf('(');
+			if (open < 0 || open != b.IndexOf('(') || string.CompareOrdinal(a, 0, b, 0, open) != 0)
+				return false;
+			var left = a.Substring(open + 1, a.Length - open - 3).Split(ArgumentSeparator, StringSplitOptions.None);
+			var right = b.Substring(open + 1, b.Length - open - 3).Split(ArgumentSeparator, StringSplitOptions.None);
+			return left.Length == right.Length && left.Zip(right, SameLiteral).All(same => same);
 		}
 
 		private static bool IsError(IReadOnlyList<ApiAttribute> attributes) =>

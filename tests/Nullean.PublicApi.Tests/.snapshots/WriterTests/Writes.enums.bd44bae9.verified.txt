@@ -1,0 +1,31 @@
+assembly Lib
+using System: Attribute, AttributeUsageAttribute, FlagsAttribute
+using struct System: StringComparison
+using System.ComponentModel: EditorBrowsableAttribute
+using struct System.IO: FileShare
+
+namespace Lib
+  [Flags]
+  enum Access
+    None = 0
+    Read = 1
+    Write = 2
+    Execute = 4
+    ReadWrite = 3
+
+  class Files
+    Files()
+    const Access Default = Access.Read
+    [Sized(Size.Large)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    void Hidden()
+    void Open(FileShare share = FileShare.Read | FileShare.Delete, StringComparison comparison = StringComparison.OrdinalIgnoreCase, Size size = Size.Large, Access access = Access.ReadWrite | Access.Execute, Access none = Access.None, Access odd = (Access)64, Size? maybe = Size.Small)
+
+  enum Size : byte
+    Small = 1
+    Large = 200
+
+  [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
+  sealed class SizedAttribute : Attribute
+    SizedAttribute(Size size)
+    Size Size { get; }

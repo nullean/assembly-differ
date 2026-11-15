@@ -64,6 +64,18 @@ public class ComparisonTests
 	}
 
 	[Test]
+	public void An_enum_by_name_and_by_number_is_no_change()
+	{
+		const string source = "namespace Lib; public class A { public void M(System.StringComparison c = System.StringComparison.Ordinal) { } }";
+		using var stream = Compiler.Compile(source);
+		var image = stream.ToArray();
+		var named = ApiReader.Read(new MemoryStream(image));
+		var cast = ApiReader.Read(new MemoryStream(image), new ApiReaderOptions { SearchRuntime = false });
+		ApiComparison.Compare(cast, named).Changes.Should().BeEmpty();
+		ApiComparison.Compare(named, cast).Changes.Should().BeEmpty();
+	}
+
+	[Test]
 	public void IntPtr_read_as_nint_is_no_change()
 	{
 		const string source = "public class A { public System.IntPtr M(System.UIntPtr value) => default; }";
