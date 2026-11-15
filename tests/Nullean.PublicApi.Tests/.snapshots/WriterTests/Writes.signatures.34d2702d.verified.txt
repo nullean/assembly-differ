@@ -1,6 +1,6 @@
 assembly Lib
 using System: IComparable<>
-using struct System: DateTime, DayOfWeek, IntPtr, UIntPtr
+using struct System: DateTime, DayOfWeek
 using System.Collections.Generic: Dictionary<,>, List<>
 
 namespace Lib
@@ -14,7 +14,7 @@ namespace Lib
     override bool Equals(object? obj)
     T Generic<T, U>(U value) where T : struct, IComparable<T> where U : class?, new()
     override int GetHashCode()
-    IntPtr Native(UIntPtr value)
+    nint Native(nuint value)
     List<(int a, (string b, int c) inner)> NestedTuples()
     void NotNull<T>(T value) where T : notnull
     void Nullability(string? a, List<string?> b, Dictionary<string, List<int?>?> c, string?[]? d, int[][,] jagged)

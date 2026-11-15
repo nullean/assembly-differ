@@ -74,6 +74,8 @@ public class WriterTests
 		yield return ("signatures", """
 			using System;
 			using System.Collections.Generic;
+			// built for .NET 11, where IntPtr is nint, as the SDK says in every build
+			[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v11.0")]
 			namespace Lib;
 			public class Signatures
 			{
