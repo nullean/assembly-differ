@@ -332,8 +332,15 @@ namespace Nullean.PublicApi
     static bool operator !=(ApiProperty? left, ApiProperty? right)
 
   sealed class ApiReader
+    static ApiAssembly Read(Stream stream, ApiReaderOptions options)
     static ApiAssembly Read(Stream stream)
+    static ApiAssembly Read(string path, ApiReaderOptions options)
     static ApiAssembly Read(string path)
+
+  sealed class ApiReaderOptions
+    ApiReaderOptions()
+    IReadOnlyList<string> ReferenceDirectories { get; init; }
+    bool SearchRuntime { get; init; }
 
   enum ApiRefKind
     None = 0

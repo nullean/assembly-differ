@@ -62,10 +62,14 @@ public sealed class ApiReader
 	private readonly MetadataReader _reader;
 	private readonly TypeReferenceProvider _types;
 
-	private ApiReader(MetadataReader reader)
+	// owned by Read, which disposes it once the assembly is read
+	private readonly EnumCatalog _catalog;
+
+	private ApiReader(MetadataReader reader, TypeReferenceProvider types, EnumCatalog catalog)
 	{
 		_reader = reader;
-		_types = new TypeReferenceProvider(reader, NumericIntPtr(reader));
+		_types = types;
+		_catalog = catalog;
 	}
 
 	/// <summary>
@@ -108,18 +112,78 @@ public sealed class ApiReader
 #pragma warning restore CA1846
 	}
 
-	/// <summary>Reads the assembly at <paramref name="path"/>.</summary>
-	public static ApiAssembly Read(string path)
+	/// <summary>
+	/// Reads the assembly at <paramref name="path"/>, looking in its folder and the installed .NET runtime for the enums
+	/// it refers to.
+	/// </summary>
+	public static ApiAssembly Read(string path) => Read(path, new ApiReaderOptions());
+
+	/// <summary>Reads the assembly at <paramref name="path"/>, looking for the assemblies it references as <paramref name="options"/> say.</summary>
+	public static ApiAssembly Read(string path, ApiReaderOptions options)
 	{
 		using var stream = File.OpenRead(path);
-		return Read(stream);
+		var directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path));
+		return Read(stream, options, directory is null ? [] : [directory]);
 	}
 
-	/// <summary>Reads an assembly from <paramref name="stream"/>, which must be seekable.</summary>
-	public static ApiAssembly Read(Stream stream)
+	/// <summary>Reads an assembly from <paramref name="stream"/>, which must be seekable, looking in the installed .NET runtime for the enums it refers to.</summary>
+	public static ApiAssembly Read(Stream stream) => Read(stream, new ApiReaderOptions());
+
+	/// <summary>Reads an assembly from <paramref name="stream"/>, which must be seekable, looking for the assemblies it references as <paramref name="options"/> say.</summary>
+	public static ApiAssembly Read(Stream stream, ApiReaderOptions options) => Read(stream, options, []);
+
+	private static ApiAssembly Read(Stream stream, ApiReaderOptions options, IReadOnlyList<string> own)
 	{
+#pragma warning disable CA1510 // netstandard2.0 has no ThrowIfNull
+		if (options is null)
+			throw new ArgumentNullException(nameof(options));
+#pragma warning restore CA1510
 		using var pe = new PEReader(stream, PEStreamOptions.LeaveOpen);
-		return new ApiReader(pe.GetMetadataReader()).ReadAssembly();
+		var metadata = pe.GetMetadataReader();
+		var directories = own.Concat(options.ReferenceDirectories).Concat(options.SearchRuntime ? RuntimeDirectories() : []).ToList();
+		var types = new TypeReferenceProvider(metadata, NumericIntPtr(metadata));
+		using var catalog = new EnumCatalog(metadata, types, directories);
+		types.Catalog = catalog;
+		return new ApiReader(metadata, types, catalog).ReadAssembly();
+	}
+
+	/// <summary>
+	/// Where the .NET runtime's assemblies are: the running one's, or, in a native build that has none to point at, the
+	/// newest shared runtime of the installed SDK.
+	/// </summary>
+	private static IEnumerable<string> RuntimeDirectories()
+	{
+#pragma warning disable IL3000 // empty in a native or single-file build, which the fallback below covers
+		var running = typeof(object).Assembly.Location;
+#pragma warning restore IL3000
+		if (!string.IsNullOrEmpty(running))
+		{
+			yield return System.IO.Path.GetDirectoryName(running)!;
+			yield break;
+		}
+		var roots = new List<string?> { Environment.GetEnvironmentVariable("DOTNET_ROOT") };
+		foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(System.IO.Path.PathSeparator))
+			if (
+				directory.Length > 0 &&
+				(File.Exists(System.IO.Path.Combine(directory, "dotnet")) || File.Exists(System.IO.Path.Combine(directory, "dotnet.exe")))
+			)
+				roots.Add(directory);
+		foreach (var root in roots.Where(r => !string.IsNullOrEmpty(r)))
+		{
+			var shared = System.IO.Path.Combine(root!, "shared", "Microsoft.NETCore.App");
+			if (!Directory.Exists(shared))
+				continue;
+			var newest = Directory
+				.GetDirectories(shared)
+				.Select(d => (Path: d, Version: Version.TryParse(System.IO.Path.GetFileName(d).Split('-')[0], out var v) ? v : new Version()))
+				.OrderByDescending(d => d.Version)
+				.FirstOrDefault();
+			if (newest.Path is not null)
+			{
+				yield return newest.Path;
+				yield break;
+			}
+		}
 	}
 
 	private ApiAssembly ReadAssembly()
@@ -372,7 +436,9 @@ public sealed class ApiReader
 				rawType = modified.Type;
 			}
 			var fieldType = Annotate(rawType, field.GetCustomAttributes(), typeContext);
-			var constant = (field.Attributes & FieldAttributes.Literal) != 0 ? Constant(field.GetDefaultValue()) : DecimalConstant(field.GetCustomAttributes());
+			var constant = (field.Attributes & FieldAttributes.Literal) != 0
+				? EnumConstant(rawType, field.GetDefaultValue())
+				: DecimalConstant(field.GetCustomAttributes());
 			members.Add(
 				new ApiField(
 					_reader.GetString(field.Name),
@@ -735,10 +801,15 @@ public sealed class ApiReader
 		{
 			var constant = Constant(parameter.GetDefaultValue());
 			if (type is ApiNamedType { IsValueType: true } valueType && !IsBuiltIn(valueType) && valueType.FullName != "System.Decimal")
-				// a struct's default is written as null; an enum's value is its number
-				return constant is null or "null"
-					? "default"
-					: valueType.IsNullableValueType ? constant : "(" + ApiWriter.NonGeneric(valueType.Name) + ")" + constant;
+			{
+				// a struct's default is written as null; an enum's value by its name
+				if (constant is null or "null")
+					return "default";
+				if (valueType.IsNullableValueType)
+					return valueType.TypeArguments[0] is ApiNamedType { IsValueType: true } inner && !IsBuiltIn(inner) &&
+						RawConstant(parameter.GetDefaultValue()) is { } wrapped ? _catalog.Render(inner, wrapped) : constant;
+				return RawConstant(parameter.GetDefaultValue()) is { } raw ? _catalog.Render(valueType, raw) : constant;
+			}
 			return constant ?? "default";
 		}
 		if ((parameter.Attributes & ParameterAttributes.Optional) == 0)
@@ -970,13 +1041,13 @@ public sealed class ApiReader
 		};
 	}
 
-	private static string Literal(CustomAttributeTypedArgument<ApiTypeReference> argument) => argument.Value switch
+	private string Literal(CustomAttributeTypedArgument<ApiTypeReference> argument) => argument.Value switch
 	{
 		null => "null",
 		ImmutableArray<CustomAttributeTypedArgument<ApiTypeReference>> items => "new[] { " + string.Join(", ", items.Select(Literal)) + " }",
 		ApiTypeReference type => "typeof(" + TypeKey(type) + ")",
-		// an enum's value is written as a cast of its number
-		var value when argument.Type is ApiNamedType named && !IsBuiltIn(named) => "(" + named.Name + ")" + Constant(value),
+		// an enum's value by its name, where the enum can be found
+		var value when argument.Type is ApiNamedType named && !IsBuiltIn(named) => _catalog.Render(named, value),
 		var value => Constant(value) ?? "null",
 	};
 
@@ -990,10 +1061,10 @@ public sealed class ApiReader
 
 	// constants
 
-	private string? Constant(ConstantHandle handle)
+	private string? Constant(ConstantHandle handle) => handle.IsNil ? null : Constant(RawConstant(handle));
+
+	private object? RawConstant(ConstantHandle handle)
 	{
-		if (handle.IsNil)
-			return null;
 		var constant = _reader.GetConstant(handle);
 		var blob = _reader.GetBlobReader(constant.Value);
 		object? value = constant.TypeCode switch
@@ -1013,8 +1084,16 @@ public sealed class ApiReader
 			ConstantTypeCode.String => blob.ReadUTF16(blob.Length),
 			_ => null,
 		};
-		return Constant(value);
+		return value;
 	}
+
+	/// <summary>A constant of an enum type by name, where the enum can be found; the number otherwise.</summary>
+	private string? EnumConstant(ApiTypeReference type, ConstantHandle handle) =>
+		handle.IsNil
+			? null
+			: type is ApiNamedType { IsValueType: true } named && !IsBuiltIn(named) && named.FullName != "System.Decimal" && RawConstant(handle) is { } value
+				? _catalog.Render(named, value)
+				: Constant(handle);
 
 	private string? DecimalConstant(IEnumerable<CustomAttributeHandle> attributes)
 	{

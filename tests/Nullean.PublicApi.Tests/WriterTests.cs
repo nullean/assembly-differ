@@ -101,6 +101,22 @@ public class WriterTests
 				public override int GetHashCode() => 0;
 			}
 			""");
+		yield return ("enums", """
+			using System;
+			using System.ComponentModel;
+			using System.IO;
+			namespace Lib;
+			public enum Size : byte { Small = 1, Large = 200 }
+			[Flags] public enum Access { None = 0, Read = 1, Write = 2, Execute = 4, ReadWrite = Read | Write }
+			[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
+			public sealed class SizedAttribute(Size size) : Attribute { public Size Size { get; } = size; }
+			public class Files
+			{
+				public void Open(FileShare share = FileShare.Read | FileShare.Delete, StringComparison comparison = StringComparison.OrdinalIgnoreCase, Size size = Size.Large, Access access = Access.ReadWrite | Access.Execute, Access none = Access.None, Access odd = (Access)64, Size? maybe = Size.Small) { }
+				public const Access Default = Access.Read;
+				[EditorBrowsable(EditorBrowsableState.Never)] [Sized(Size.Large)] public void Hidden() { }
+			}
+			""");
 		yield return ("names", """
 			namespace Lib.A { public class Range { } public class Task { } }
 			namespace Lib.B
@@ -121,6 +137,13 @@ public class WriterTests
 	[Test]
 	[MethodDataSource(nameof(Cases))]
 	public void Writes(string name, string source) => Compiler.Api(source).Should().MatchSnapshot(name: name);
+
+	[Test]
+	public void An_enum_that_cannot_be_found_is_a_cast()
+	{
+		using var stream = Compiler.Compile("namespace Lib; public class A { public void M(System.StringComparison c = System.StringComparison.Ordinal) { } }");
+		ApiWriter.Write(ApiReader.Read(stream, new ApiReaderOptions { SearchRuntime = false })).Should().Contain("StringComparison c = (StringComparison)4");
+	}
 
 	[Test]
 	public void Without_nullable_annotations() =>
