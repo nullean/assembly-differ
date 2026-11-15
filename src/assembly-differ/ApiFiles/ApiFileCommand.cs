@@ -37,6 +37,7 @@ internal sealed class ApiFileCommand
 	/// <param name="project">Read this project file, whatever kind it is. Repeat it for more than one.</param>
 	/// <param name="includeTests">Read test projects too.</param>
 	/// <param name="includeUnpackable">Read projects with IsPackable set to false too.</param>
+	/// <param name="reference">-r, Look in this directory for the assemblies an API refers to, such as a package's dependencies, so an enum default is written by name. Repeat it for more than one. Projects find their packages without it.</param>
 	/// <example>dotnet build -c Release &amp;&amp; assembly-differ api -o api</example>
 	/// <example>assembly-differ api --verify api</example>
 	/// <example>assembly-differ api bin/Release/net8.0/MyLib.dll</example>
@@ -52,7 +53,8 @@ internal sealed class ApiFileCommand
 		string? framework = null,
 		List<string>? project = null,
 		bool includeTests = false,
-		bool includeUnpackable = false
+		bool includeUnpackable = false,
+		List<string>? reference = null
 	)
 	{
 		var splitting = split switch
@@ -69,7 +71,10 @@ internal sealed class ApiFileCommand
 				throw new ArgumentException("pass -o to write the files, or --verify to check them, not both");
 
 			var targets = new HashSet<string>(target ?? [], StringComparer.OrdinalIgnoreCase);
-			var builds = Builds(path, framework, targets, new ProjectComparison.Options(project ?? [], includeTests, includeUnpackable));
+			var references = (reference ?? []).Select(Path.GetFullPath).ToList();
+			foreach (var directory in references.Where(d => !Directory.Exists(d)))
+				throw new DirectoryNotFoundException($"no directory at {directory}, which --reference names");
+			var builds = Builds(path, framework, targets, new ProjectComparison.Options(project ?? [], includeTests, includeUnpackable), references);
 			if (builds.Count == 0)
 			{
 				Console.Error.WriteLine("[api] no assembly to read");
@@ -85,7 +90,12 @@ internal sealed class ApiFileCommand
 
 			var files = Files(assemblies, splitting);
 			if (verify is not null)
-				return Verify.Run(verify, files, assemblies, UpdateCommand(path, split, target, framework, project, includeTests, includeUnpackable, verify));
+				return Verify.Run(
+					verify,
+					files,
+					assemblies,
+					UpdateCommand(path, split, target, framework, project, includeTests, includeUnpackable, reference, verify)
+				);
 			if (output is not null)
 			{
 				Write(output, files);
@@ -106,13 +116,19 @@ internal sealed class ApiFileCommand
 		}
 	}
 
-	/// <summary>An assembly to read, for a framework if it is known.</summary>
-	internal sealed record Build(string AssemblyName, string? Framework, string Path);
+	/// <summary>An assembly to read, for a framework if it is known, and the directories that hold what it refers to.</summary>
+	internal sealed record Build(string AssemblyName, string? Framework, string Path, IReadOnlyList<string> References);
 
 	/// <summary>An assembly's API, for each framework that has it, under the file name it is written to.</summary>
 	internal sealed record Assembly(string FileName, Nullean.PublicApi.ApiAssembly Api);
 
-	private static List<Build> Builds(string? path, string? framework, HashSet<string> targets, ProjectComparison.Options options)
+	private static List<Build> Builds(
+		string? path,
+		string? framework,
+		HashSet<string> targets,
+		ProjectComparison.Options options,
+		IReadOnlyList<string> references
+	)
 	{
 		bool Wanted(string name) => targets.Count == 0 || targets.Contains(name);
 
@@ -131,12 +147,13 @@ internal sealed class ApiFileCommand
 					continue;
 				foreach (var tfm in library.Frameworks.Where(f => chosen is null || f.Equals(chosen)))
 				{
-					var targetPath = Dotnet.Properties(
+					var properties = Dotnet.Properties(
 						library.Path,
-						["TargetPath"],
+						["TargetPath", "ProjectAssetsFile"],
 						$"TargetFramework={tfm.GetShortFolderName()}",
 						"Configuration=Release"
-					)["TargetPath"];
+					);
+					var targetPath = properties["TargetPath"];
 					if (!File.Exists(targetPath))
 					{
 						Console.Error.WriteLine(
@@ -144,7 +161,9 @@ internal sealed class ApiFileCommand
 						);
 						continue;
 					}
-					builds.Add(new Build(library.AssemblyName, tfm.GetShortFolderName(), targetPath));
+					// the packages restore put in the packages folder, which a library's build output does not copy
+					var packages = ProjectAssets.Directories(properties.GetValueOrDefault("ProjectAssetsFile"), tfm);
+					builds.Add(new Build(library.AssemblyName, tfm.GetShortFolderName(), targetPath, [.. references, .. packages]));
 				}
 			}
 			return builds;
@@ -156,17 +175,17 @@ internal sealed class ApiFileCommand
 			return frameworks.SelectMany(
 				f => new NupkgAssemblyProvider(path, f)
 					.GetAssemblies(targets)
-					.Select(a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), f.GetShortFolderName(), a.FullName))
+					.Select(a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), f.GetShortFolderName(), a.FullName, references))
 			).ToList();
 		}
 		if (Directory.Exists(path))
 			return new DirectoryAssemblyProvider(path)
 				.GetAssemblies(targets)
-				.Select(a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), framework, a.FullName))
+				.Select(a => new Build(System.IO.Path.GetFileNameWithoutExtension(a.Name), framework, a.FullName, references))
 				.ToList();
 		if (!File.Exists(path))
 			throw new FileNotFoundException($"no .dll, directory or .nupkg at {path}");
-		return [new Build(System.IO.Path.GetFileNameWithoutExtension(path), framework, path)];
+		return [new Build(System.IO.Path.GetFileNameWithoutExtension(path), framework, path, references)];
 	}
 
 	/// <summary>
@@ -183,7 +202,7 @@ internal sealed class ApiFileCommand
 			{
 				try
 				{
-					var api = Nullean.PublicApi.ApiReader.Read(build.Path);
+					var api = Nullean.PublicApi.ApiReader.Read(build.Path, new Nullean.PublicApi.ApiReaderOptions { ReferenceDirectories = build.References });
 					read.Add((build, api, Nullean.PublicApi.ApiWriter.Write(api)));
 				}
 				catch (Exception e) when (e is BadImageFormatException or InvalidOperationException)
@@ -260,6 +279,7 @@ internal sealed class ApiFileCommand
 		List<string>? project,
 		bool includeTests,
 		bool includeUnpackable,
+		List<string>? reference,
 		string directory
 	)
 	{
@@ -278,6 +298,8 @@ internal sealed class ApiFileCommand
 			command.Append(" --include-tests");
 		if (includeUnpackable)
 			command.Append(" --include-unpackable");
+		foreach (var folder in reference ?? [])
+			command.Append(" -r ").Append(folder);
 		return command.Append(" -o ").Append(directory).ToString();
 	}
 }

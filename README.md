@@ -295,6 +295,11 @@ directory or a `.nupkg` instead of the solution, `--split namespace` or
 `--split top-level-namespace` for a file per namespace in a large assembly, and `-f json` to print every part of each
 declaration as a field.
 
+An enum default is written by name, `Formatting formatting = Formatting.Indented`, which needs the assembly that
+declares the enum. A project's come from its restore, `obj/project.assets.json`, and the framework's from the
+installed runtime. A `.dll` or `.nupkg` read on its own finds only what sits next to it: pass the folders that hold
+its dependencies with `-r`, or the value is written as a cast, `(Formatting)1`.
+
 Check them on every pull request with the `verify-api` action. Checkout and the build are your steps, before it:
 
 ```yaml
