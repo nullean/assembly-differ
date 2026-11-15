@@ -1,0 +1,2 @@
+E › extension(string) › A() › receiver name  changed: s → text  [Major, breaks Callers Source] (callers that pass it by name)
+suggested: Major

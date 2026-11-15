@@ -1,0 +1,2 @@
+E › extension(string) › B()  removed: static int B() → -  [Major, breaks Callers Binary, Source]
+suggested: Major

@@ -1,0 +1,2 @@
+E › extension<T>(T[]) › First() › type parameter T constraint  changed: - → struct  [Major, breaks Callers Binary, Source]
+suggested: Major

@@ -117,6 +117,38 @@ public class WriterTests
 				[EditorBrowsable(EditorBrowsableState.Never)] [Sized(Size.Large)] public void Hidden() { }
 			}
 			""");
+		yield return ("extensions", """
+			using System.Collections.Generic;
+			namespace Lib;
+			public static class TextExtensions
+			{
+				public static int Old(this string s) => 0;
+				extension(string self)
+				{
+					public bool IsBlank => self.Length == 0;
+					public int WordCount() => 0;
+					public static string Make(int n) => "";
+					public static string Empty2 => "";
+				}
+				extension(string? maybe)
+				{
+					public bool IsMissing => maybe is null;
+				}
+				extension(string)
+				{
+					public static string Twice(string value) => value + value;
+				}
+				extension<T>(List<T> list) where T : struct
+				{
+					public T? FirstOrNone() => null;
+					public int Size { get => 0; set { } }
+				}
+				extension(ref int value)
+				{
+					public void Bump() => value++;
+				}
+			}
+			""");
 		yield return ("names", """
 			namespace Lib.A { public class Range { } public class Task { } }
 			namespace Lib.B

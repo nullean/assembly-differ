@@ -1,0 +1,20 @@
+assembly Lib
+using System.Collections.Generic: List<>
+
+namespace Lib
+  static class TextExtensions
+    static int Old(this string s)
+    extension<T>(List<T> list) where T : struct
+      int Size { get; set; }
+      T? FirstOrNone()
+    extension(ref int value)
+      void Bump()
+    extension(string self)
+      static string Empty2 { get; }
+      bool IsBlank { get; }
+      static string Make(int n)
+      int WordCount()
+    extension(string? maybe)
+      bool IsMissing { get; }
+    extension(string)
+      static string Twice(string value)

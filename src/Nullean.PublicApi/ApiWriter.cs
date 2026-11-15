@@ -187,35 +187,45 @@ public static class ApiWriter
 			foreach (var parameter in type.TypeParameters)
 				Collect(parameter, used);
 			foreach (var member in type.Members)
-			{
-				foreach (var attribute in member.Attributes)
-					Collect(attribute.Type, used);
-				switch (member)
-				{
-					case ApiField field:
-						Collect(field.Type, used);
-						break;
-					case ApiProperty property:
-						Collect(property.Type, used);
-						foreach (var parameter in property.Parameters)
-							Collect(parameter, used);
-						break;
-					case ApiEvent @event:
-						Collect(@event.Type, used);
-						break;
-					case ApiMethod method:
-						Collect(method.ReturnType, used);
-						foreach (var attribute in method.ReturnAttributes)
-							Collect(attribute.Type, used);
-						foreach (var parameter in method.TypeParameters)
-							Collect(parameter, used);
-						foreach (var parameter in method.Parameters)
-							Collect(parameter, used);
-						break;
-				}
-			}
+				Collect(member, used);
 			foreach (var nested in type.NestedTypes)
 				Collect(nested, used);
+		}
+
+		private void Collect(ApiMember member, HashSet<(string, string)> used)
+		{
+			foreach (var attribute in member.Attributes)
+				Collect(attribute.Type, used);
+			switch (member)
+			{
+				case ApiExtension extension:
+					Collect(extension.Receiver, used);
+					foreach (var parameter in extension.TypeParameters)
+						Collect(parameter, used);
+					foreach (var inner in extension.Members)
+						Collect(inner, used);
+					break;
+				case ApiField field:
+					Collect(field.Type, used);
+					break;
+				case ApiProperty property:
+					Collect(property.Type, used);
+					foreach (var parameter in property.Parameters)
+						Collect(parameter, used);
+					break;
+				case ApiEvent @event:
+					Collect(@event.Type, used);
+					break;
+				case ApiMethod method:
+					Collect(method.ReturnType, used);
+					foreach (var attribute in method.ReturnAttributes)
+						Collect(attribute.Type, used);
+					foreach (var parameter in method.TypeParameters)
+						Collect(parameter, used);
+					foreach (var parameter in method.Parameters)
+						Collect(parameter, used);
+					break;
+			}
 		}
 
 		private void Collect(ApiTypeParameter parameter, HashSet<(string, string)> used)
@@ -354,6 +364,11 @@ public static class ApiWriter
 
 		public void Member(ApiMember member, ApiType type, int depth)
 		{
+			if (member is ApiExtension extension)
+			{
+				Extension(extension, type, depth);
+				return;
+			}
 			if (member is ApiMethod { ReturnAttributes: var returnAttributes })
 				Attributes(returnAttributes, depth, "return");
 			// metadata names an indexer by the attribute that renamed it in source
@@ -468,6 +483,24 @@ public static class ApiWriter
 				builder.Append("readonly ");
 		}
 
+		/// <summary>
+		/// A C# 14 extension block: <c>extension&lt;T&gt;(List&lt;T&gt; list) where T : struct</c>, its members indented
+		/// under it as a type's are.
+		/// </summary>
+		private void Extension(ApiExtension extension, ApiType type, int depth)
+		{
+			Attributes(extension.Attributes, depth, null);
+			Line(depth);
+			builder.Append("extension");
+			TypeParameters(extension.TypeParameters);
+			Parameters([extension.Receiver], false);
+			Constraints(extension.TypeParameters);
+			builder.Append('\n');
+			var block = type with { Name = "extension", Kind = ApiTypeKind.Class, Modifiers = ApiTypeModifiers.Sealed, CanBeExtendedOutside = false };
+			foreach (var member in extension.Members)
+				Member(member, block, depth + 1);
+		}
+
 		/// <summary>An interface member with a default implementation: virtual, or sealed, which is neither virtual nor abstract.</summary>
 		private static bool HasBody(ApiMemberModifiers modifiers) =>
 			(modifiers & ApiMemberModifiers.Virtual) != 0 || (modifiers & (ApiMemberModifiers.Static | ApiMemberModifiers.Abstract)) == 0;
@@ -514,7 +547,9 @@ public static class ApiWriter
 					ApiRefKind.RefReadOnly => "ref readonly ",
 					_ => string.Empty,
 				});
-				builder.Append(Reference(parameter.Type)).Append(' ').Append(parameter.Name);
+				builder.Append(Reference(parameter.Type));
+				if (parameter.Name.Length > 0)
+					builder.Append(' ').Append(parameter.Name);
 				if (parameter.DefaultValue is not null)
 					builder.Append(" = ").Append(parameter.DefaultValue);
 			}
@@ -760,11 +795,12 @@ public sealed class ApiDeclarationWriter
 		return ApiWriter.LastLine(builder);
 	}
 
-	/// <summary>A member's declaration line: <c>void Draw(Canvas canvas)</c>.</summary>
+	/// <summary>A member's declaration line: <c>void Draw(Canvas canvas)</c>; an extension block's, <c>extension(string self)</c>.</summary>
 	public string Declaration(ApiMember member)
 	{
 		var builder = new StringBuilder();
-		new ApiWriter.Writer(builder, _names).Member(member, _type, 0);
+		// a block's own line, not the last of its members
+		new ApiWriter.Writer(builder, _names).Member(member is ApiExtension extension ? extension with { Members = [] } : member, _type, 0);
 		return ApiWriter.LastLine(builder);
 	}
 

@@ -353,3 +353,23 @@ public sealed record ApiEvent(
 	ApiMemberModifiers Modifiers,
 	ApiTypeReference Type
 ) : ApiMember(Name, Accessibility, Attributes);
+
+/// <summary>
+/// A C# 14 extension block in a static class: members that extend a receiver, as <c>extension(string self)</c> declares
+/// them. Its <see cref="ApiMember.Name"/> is always <c>extension</c>; the receiver tells blocks apart. The static methods the
+/// compiler implements the members with are part of it, not of the class.
+/// </summary>
+/// <param name="Name">Always <c>extension</c>.</param>
+/// <param name="Accessibility">Public: an extension block has no accessibility of its own.</param>
+/// <param name="Attributes">The attributes on the block.</param>
+/// <param name="TypeParameters">The block's type parameters, which its receiver and members use: <c>extension&lt;T&gt;(List&lt;T&gt; list)</c>.</param>
+/// <param name="Receiver">What the block extends: the receiver parameter, its type, name and ref kind.</param>
+/// <param name="Members">The members: methods and properties, instance ones on the receiver and static ones on its type.</param>
+public sealed record ApiExtension(
+	string Name,
+	ApiAccessibility Accessibility,
+	IReadOnlyList<ApiAttribute> Attributes,
+	IReadOnlyList<ApiTypeParameter> TypeParameters,
+	ApiParameter Receiver,
+	IReadOnlyList<ApiMember> Members
+) : ApiMember(Name, Accessibility, Attributes);

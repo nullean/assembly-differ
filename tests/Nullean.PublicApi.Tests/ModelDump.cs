@@ -38,6 +38,8 @@ public static class ModelDump
 		ApiEvent e => $"event {e.Name} {e.Accessibility} {e.Modifiers} {Ref(e.Type)} {Attributes(e.Attributes)}",
 		ApiMethod m =>
 			$"method {m.Name} {m.Accessibility} {m.Kind} {m.Modifiers} {m.ReturnRefKind} {Ref(m.ReturnType)} return={Attributes(m.ReturnAttributes)} tps={TypeParameters(m.TypeParameters)} {Parameters(m.Parameters)} extension={m.IsExtension} {Attributes(m.Attributes)}",
+		ApiExtension x =>
+			$"extension tps={TypeParameters(x.TypeParameters)} receiver={Parameters([x.Receiver])} {Attributes(x.Attributes)} {{ {string.Join(" ; ", x.Members.Select(Member))} }}",
 		_ => member.ToString()!,
 	};
 

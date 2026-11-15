@@ -40,4 +40,17 @@ as a nullable value type and `string?` as an annotated reference, and `using int
 names, so a reader can tell a base class from an interface without the other assembly. `ApiParser` reads the file back
 into the same model the reader produced from the assembly.
 
+C# 14 extension blocks are written as the source declares them, with their members under the receiver; the static
+methods the compiler writes for those members are left out, since they are the block's and not the class's:
+
+```
+  static class TextExtensions
+    static int Old(this string s)
+    extension<T>(List<T> list) where T : struct
+      T? FirstOrNone()
+    extension(string self)
+      bool IsBlank { get; }
+      static string Make(int n)
+```
+
 Targets netstandard2.0 and net10.0. It is the reader behind [assembly-differ](https://github.com/nullean/assembly-differ).
