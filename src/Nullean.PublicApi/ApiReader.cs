@@ -776,7 +776,7 @@ public sealed class ApiReader
 				return null;
 			var isInit = isSetter &&
 				m.DecodeSignature(_types, context).ReturnType is ApiModifiedType { Modifier.FullName: CompilerServices + "IsExternalInit" };
-			var isReadOnly = isStruct && !isSetter && HasAttribute(m.GetCustomAttributes(), CompilerServices + "IsReadOnlyAttribute");
+			var isReadOnly = isStruct && HasAttribute(m.GetCustomAttributes(), CompilerServices + "IsReadOnlyAttribute");
 			return new ApiAccessor(access.Value, isInit, isReadOnly);
 		}
 
@@ -784,7 +784,7 @@ public sealed class ApiReader
 			_reader.GetString(property.Name),
 			accessibility,
 			Attributes(property.GetCustomAttributes()),
-			Modifiers(primary, declaring),
+			PropertyModifiers(Modifiers(primary, declaring), getter, setter, isStruct),
 			propertyType,
 			refKind,
 			parameters,
@@ -793,6 +793,17 @@ public sealed class ApiReader
 			HasAttribute(property.GetCustomAttributes(), CompilerServices + "RequiredMemberAttribute")
 		);
 	}
+
+	/// <summary>A property is readonly when every accessor is: the getter alone being readonly is the getter's.</summary>
+	private ApiMemberModifiers PropertyModifiers(ApiMemberModifiers modifiers, MethodDefinition? getter, MethodDefinition? setter, bool isStruct)
+	{
+		bool ReadOnly(MethodDefinition? accessor) => accessor is not { } m || HasAttribute(m.GetCustomAttributes(), CompilerServices + "IsReadOnlyAttribute");
+
+		return isStruct && ReadOnly(getter) && ReadOnly(setter) ? modifiers | ApiMemberModifiers.ReadOnly : modifiers & ~ApiMemberModifiers.ReadOnly;
+	}
+
+	private bool IsParams(IEnumerable<CustomAttributeHandle> attributes) =>
+		HasAttribute(attributes, "System.ParamArrayAttribute") || HasAttribute(attributes, CompilerServices + "ParamCollectionAttribute");
 
 	private static ApiAccessibility Most(ApiAccessibility? first, ApiAccessibility? second)
 	{
@@ -822,7 +833,7 @@ public sealed class ApiReader
 		var special = (method.Attributes & MethodAttributes.SpecialName) != 0;
 		var kind = name == ".ctor"
 			? ApiMethodKind.Constructor
-			: special && name is "op_Implicit" or "op_Explicit"
+			: special && name is "op_Implicit" or "op_Explicit" or "op_CheckedExplicit"
 				? ApiMethodKind.Conversion
 				: special && name.StartsWith("op_", StringComparison.Ordinal) ? ApiMethodKind.Operator : ApiMethodKind.Method;
 
@@ -961,8 +972,9 @@ public sealed class ApiReader
 					row is { } named ? _reader.GetString(named.Name) : "arg" + i,
 					Annotate(rawType, attributes, methodContext, offset),
 					refKind,
-					HasAttribute(attributes, "System.ParamArrayAttribute") || HasAttribute(attributes, CompilerServices + "ParamCollectionAttribute"),
-					HasAttribute(attributes, CompilerServices + "ScopedRefAttribute"),
+					IsParams(attributes),
+					// a params span is scoped without saying so; only a scoped the source wrote is the API's
+					HasAttribute(attributes, CompilerServices + "ScopedRefAttribute") && !IsParams(attributes),
 					row is { } optional ? DefaultValue(optional, rawType) : null,
 					Attributes(attributes)
 				)

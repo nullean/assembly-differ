@@ -415,8 +415,9 @@ public static class ApiWriter
 					else
 						builder.Append(property.Name);
 					builder.Append(" {");
-					Accessor(property.Getter, property.Accessibility, "get");
-					Accessor(property.Setter, property.Accessibility, property.Setter is { IsInit: true } ? "init" : "set");
+					var allReadOnly = (property.Modifiers & ApiMemberModifiers.ReadOnly) != 0;
+					Accessor(property.Getter, property.Accessibility, "get", allReadOnly);
+					Accessor(property.Setter, property.Accessibility, property.Setter is { IsInit: true } ? "init" : "set", allReadOnly);
 					builder.Append(" }");
 					if (inInterface && HasBody(property.Modifiers))
 						builder.Append(" { … }");
@@ -437,7 +438,12 @@ public static class ApiWriter
 					switch (method.Kind)
 					{
 						case ApiMethodKind.Conversion:
-							builder.Append(method.Name == "op_Implicit" ? "implicit" : "explicit").Append(" operator ").Append(returnType);
+							builder.Append(method.Name switch
+							{
+								"op_Implicit" => "implicit operator ",
+								"op_CheckedExplicit" => "explicit operator checked ",
+								_ => "explicit operator ",
+							}).Append(returnType);
 							break;
 						case ApiMethodKind.Operator:
 							builder.Append(returnType).Append(" operator ").Append(Operator(method.Name));
@@ -505,14 +511,14 @@ public static class ApiWriter
 		private static bool HasBody(ApiMemberModifiers modifiers) =>
 			(modifiers & ApiMemberModifiers.Virtual) != 0 || (modifiers & (ApiMemberModifiers.Static | ApiMemberModifiers.Abstract)) == 0;
 
-		private void Accessor(ApiAccessor? accessor, ApiAccessibility propertyAccessibility, string keyword)
+		private void Accessor(ApiAccessor? accessor, ApiAccessibility propertyAccessibility, string keyword, bool propertyReadOnly)
 		{
 			if (accessor is null)
 				return;
 			builder.Append(' ');
 			if (accessor.Accessibility != propertyAccessibility)
 				builder.Append(Access(accessor.Accessibility)).Append(' ');
-			if (accessor.IsReadOnly)
+			if (accessor.IsReadOnly && !propertyReadOnly)
 				builder.Append("readonly ");
 			builder.Append(keyword).Append(';');
 		}
@@ -535,10 +541,11 @@ public static class ApiWriter
 					builder.Append(Attribute(attribute, null)).Append(' ');
 				if (i == 0 && isExtension)
 					builder.Append("this ");
-				if (parameter.IsScoped)
-					builder.Append("scoped ");
+				// params comes first: C# rejects scoped params
 				if (parameter.IsParams)
 					builder.Append("params ");
+				if (parameter.IsScoped)
+					builder.Append("scoped ");
 				builder.Append(parameter.RefKind switch
 				{
 					ApiRefKind.Ref => "ref ",
@@ -748,6 +755,22 @@ public static class ApiWriter
 			"op_SubtractionAssignment" => "-=",
 			"op_MultiplicationAssignment" => "*=",
 			"op_DivisionAssignment" => "/=",
+			"op_ModulusAssignment" => "%=",
+			"op_BitwiseAndAssignment" => "&=",
+			"op_BitwiseOrAssignment" => "|=",
+			"op_ExclusiveOrAssignment" => "^=",
+			"op_LeftShiftAssignment" => "<<=",
+			"op_RightShiftAssignment" => ">>=",
+			"op_UnsignedRightShiftAssignment" => ">>>=",
+			// an instance ++ changes the value it is called on: void operator ++()
+			"op_IncrementAssignment" => "++",
+			"op_DecrementAssignment" => "--",
+			"op_CheckedAdditionAssignment" => "checked +=",
+			"op_CheckedSubtractionAssignment" => "checked -=",
+			"op_CheckedMultiplicationAssignment" => "checked *=",
+			"op_CheckedDivisionAssignment" => "checked /=",
+			"op_CheckedIncrementAssignment" => "checked ++",
+			"op_CheckedDecrementAssignment" => "checked --",
 			_ => name,
 		};
 	}
