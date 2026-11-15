@@ -483,6 +483,48 @@ public sealed class GeneratedLibrary
 				target = "string";
 			_source.AppendLine($"    public static {ReturnType(new Context([], [], Kind.StaticClass))} {Name("X")}(this {target} self) => throw null!;");
 		}
+		// C# 14 extension blocks: instance and static members over a receiver, generic blocks, and a receiver without a name
+		var blocks = Next(3);
+		for (var i = 0; i < blocks; i++)
+		{
+			var context = new Context([], [], Kind.StaticClass);
+			var generic = Chance(3);
+			var named = !Chance(4);
+			var receiver = Next(5) switch
+			{
+				_ when generic => Chance(2) ? "System.Collections.Generic.List<T>" : "T[]",
+				1 when named => "ref int",
+				2 => "string?",
+				_ => Type(context, valueOnly: false),
+			};
+			if (receiver.StartsWith("dynamic", StringComparison.Ordinal))
+				receiver = "string";
+			var constraint = generic
+				? Next(3) switch
+				{
+					1 => " where T : struct",
+					2 => " where T : class",
+					_ => ""
+				}
+				: "";
+			_source.AppendLine($"    extension{(generic ? "<T>" : "")}({receiver}{(named ? " self" : "")}){constraint}").AppendLine("    {");
+			var members = 1 + Next(3);
+			for (var m = 0; m < members; m++)
+			{
+				var isStatic = !named || Chance(3);
+				var modifier = isStatic ? "static " : "";
+				var type = generic && Chance(2) ? "T" : ReturnType(context);
+				if (type == "void" && Chance(2))
+					_source.AppendLine($"      public {modifier}void {Name("Do")}() {{ }}");
+				else if (type == "void")
+					_source.AppendLine($"      public {modifier}int {Name("Count")}(int p0) => 0;");
+				else if (Chance(2))
+					_source.AppendLine($"      public {modifier}{type} {Name("Value")} {{ get => throw null!;{(Chance(3) ? " set { }" : "")} }}");
+				else
+					_source.AppendLine($"      public {modifier}{type} {Name("Make")}({Parameters(context, allowDefaults: true)}) => throw null!;");
+			}
+			_source.AppendLine("    }");
+		}
 		_source.AppendLine("  }");
 	}
 

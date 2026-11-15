@@ -78,6 +78,12 @@ public static class ApiComparison
 			{
 				case (ApiProperty a, ApiProperty b):
 					return SameParameters(a.Parameters, b.Parameters);
+				// a block of one member (see Flattened): the receiver as the runtime sees it, its type parameters, and the member
+				case (ApiExtension a, ApiExtension b):
+					return a.TypeParameters.Count == b.TypeParameters.Count && SameParameters(
+						[a.Receiver],
+						[b.Receiver]
+					) && a.Members.Count == b.Members.Count && a.Members.Zip(b.Members, Equals).All(same => same);
 				case (ApiMethod a, ApiMethod b):
 					return a.TypeParameters.Count == b.TypeParameters.Count && SameParameters(a.Parameters, b.Parameters) &&
 						(a.Kind != ApiMethodKind.Conversion || Context.SameRuntime(a.ReturnType, b.ReturnType));
@@ -102,6 +108,7 @@ public static class ApiComparison
 			{
 				ApiMethod m => m.Parameters.Count * 31 + m.TypeParameters.Count,
 				ApiProperty p => p.Parameters.Count,
+				ApiExtension e => e.TypeParameters.Count * 31 + e.Members.Sum(m => GetHashCode(m)),
 				_ => 0,
 			};
 			return (StringComparer.Ordinal.GetHashCode(obj.Name) * 397) ^ (count * 17) ^ obj.GetType().GetHashCode();
@@ -223,7 +230,11 @@ public static class ApiComparison
 					);
 			}
 			else
-				Pair(oldType.Members, newType.Members, MemberIdentity.Instance, (o, n) => Member(o, n, oldType, newType, here));
+			{
+				var oldMembers = Flattened(oldType.Members);
+				var newMembers = Flattened(newType.Members);
+				Pair(Lowered(oldMembers, newMembers), Lowered(newMembers, oldMembers), MemberIdentity.Instance, (o, n) => Member(o, n, oldType, newType, here));
+			}
 
 			Pair(oldType.NestedTypes, newType.NestedTypes, t => t.Name, (o, n) => Type(o, n, here));
 		}
@@ -379,6 +390,12 @@ public static class ApiComparison
 
 			List<string> Here() => here ??= delegateInvoke ? path : path.Append(MemberSegment(member, declaring)).ToList();
 
+			// a block added or removed is its member added or removed, under the block's receiver
+			if (member is ApiExtension { Members: [var inner] } && (oldMember is null || newMember is null))
+			{
+				Member(oldMember is null ? null : inner, newMember is null ? null : inner, Block(oldType), Block(newType), Here());
+				return;
+			}
 			if (oldMember is null)
 			{
 				var (breaks, compatibility, note) = Obligation(newMember!, newType);
@@ -471,6 +488,30 @@ public static class ApiComparison
 					Modifiers(o.Modifiers, n.Modifiers, oldType, Changed);
 					TypeOf("type", o.Type, n.Type, oldType, newType, Changed);
 					break;
+				case (ApiExtension o, ApiExtension n):
+					{
+						// the block's receiver, reported on the member it is the receiver of
+						var at = Here().Append(MemberSegment(n.Members[0], Block(newType))).ToList();
+
+						void Receiver(string part, string? old, string? @new, ApiAudience breaks, ApiCompatibility compatibility, string? note = null) =>
+							Add(at, ApiChangeKind.Changed, part, old, @new, breaks, compatibility, oldType, oldMember, newMember, note);
+						// the receiver's name is what a caller passes it by to the static method the compiler wrote
+						if (o.Receiver.Name != n.Receiver.Name)
+							Receiver(
+								"receiver name",
+								o.Receiver.Name,
+								n.Receiver.Name,
+								ApiAudience.Callers,
+								ApiCompatibility.Source,
+								"callers that pass it by name"
+							);
+						if (o.Receiver.RefKind != n.Receiver.RefKind)
+							Receiver("receiver ref", RefKind(o.Receiver.RefKind), RefKind(n.Receiver.RefKind), ApiAudience.Callers, Both);
+						TypeOf("receiver", o.Receiver.Type, n.Receiver.Type, oldType, newType, Receiver);
+						TypeParameters(o.TypeParameters, n.TypeParameters, oldType, newType, Receiver);
+						Member(o.Members[0], n.Members[0], Block(oldType), Block(newType), Here());
+						break;
+					}
 				case (ApiMethod o, ApiMethod n):
 					Modifiers(o.Modifiers, n.Modifiers, oldType, Changed);
 					TypeOf("return type", o.ReturnType, n.ReturnType, oldType, newType, Changed);
@@ -1099,8 +1140,71 @@ public static class ApiComparison
 		// keys and segments
 
 		/// <summary>A member's identity: its kind, name, number of type parameters and parameter types, without what only the compiler reads.</summary>
+		/// <summary>
+		/// A type's members with each extension block split into one block per member. Blocks are how the source groups
+		/// them; a caller sees each member with its receiver, and a member can move to another block over the same type.
+		/// </summary>
+		private static IReadOnlyList<ApiMember> Flattened(IReadOnlyList<ApiMember> members)
+		{
+			if (!members.Any(m => m is ApiExtension))
+				return members;
+			var result = new List<ApiMember>(members.Count);
+			foreach (var member in members)
+				if (member is ApiExtension extension)
+					result.AddRange(extension.Members.Select(m => extension with { Members = [m] }));
+				else
+					result.Add(member);
+			return result;
+		}
+
+		/// <summary>
+		/// The members, with a block's instance method written as the static method the compiler makes of it where the
+		/// other side declares that method the old way, <c>static int A(this string s)</c>. Moving a method into a block,
+		/// or out of one, keeps what callers compiled against and what they write.
+		/// </summary>
+		private static IReadOnlyList<ApiMember> Lowered(IReadOnlyList<ApiMember> members, IReadOnlyList<ApiMember> other)
+		{
+			List<ApiMember>? result = null;
+			HashSet<ApiMember>? classic = null;
+			for (var i = 0; i < members.Count; i++)
+			{
+				if (
+					members[i] is not ApiExtension
+					{
+						Members: [ApiMethod { Kind: ApiMethodKind.Method } method]
+					} block || (method.Modifiers & ApiMemberModifiers.Static) != 0
+				)
+					continue;
+				classic ??= new HashSet<ApiMember>(other.Where(m => m is ApiMethod { IsExtension: true }), MemberIdentity.Instance);
+				var lowered = new ApiMethod(
+					method.Name,
+					method.Accessibility,
+					method.Attributes,
+					ApiMethodKind.Method,
+					method.Modifiers | ApiMemberModifiers.Static,
+					method.ReturnType,
+					method.ReturnRefKind,
+					method.ReturnAttributes,
+					[.. block.TypeParameters, .. method.TypeParameters],
+					[block.Receiver, .. method.Parameters],
+					true
+				);
+				if (!classic.Contains(lowered))
+					continue;
+				result ??= [.. members];
+				result[i] = lowered;
+			}
+			return result ?? members;
+		}
+
+		/// <summary>An extension block as the declaring type of its members: sealed, so nothing about them is for inheritors.</summary>
+		private static ApiType Block(ApiType container) =>
+			container with { Name = "extension", Kind = ApiTypeKind.Class, Modifiers = ApiTypeModifiers.Sealed, CanBeExtendedOutside = false };
+
 		private static string Key(ApiMember member, ApiType declaring) => member switch
 		{
+			ApiExtension e =>
+				"extension`" + e.TypeParameters.Count + "(" + Parameter(e.Receiver) + ")" + string.Concat(e.Members.Select(m => "::" + Key(m, declaring))),
 			ApiField f => "field " + f.Name,
 			ApiProperty p => "property " + p.Name + "[" + string.Join(",", p.Parameters.Select(Parameter)) + "]",
 			ApiEvent e => "event " + e.Name,
@@ -1173,6 +1277,10 @@ public static class ApiComparison
 						m.Parameters
 					) + ")",
 				ApiProperty { Parameters.Count: > 0 } p => "this[" + Types(p.Parameters) + "]",
+				ApiExtension e =>
+					"extension" + (e.TypeParameters.Count == 0 ? "" : "<" + string.Join(", ", e.TypeParameters.Select(p => p.Name)) + ">") + "(" + Types([
+						e.Receiver
+					]) + ")",
 				_ => member.Name,
 			};
 		}

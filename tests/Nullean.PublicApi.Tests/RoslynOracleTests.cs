@@ -86,58 +86,72 @@ public class RoslynOracleTests
 		if (type.Kind is ApiTypeKind.Enum or ApiTypeKind.Delegate)
 			return;
 		foreach (var member in type.Members)
-		{
-			switch (member)
-			{
-				case ApiField field:
-					{
-						var facts = new List<string> { Access(field.Accessibility) };
-						if (field.Constant is not null)
-							facts.Add("const");
-						else
-						{
-							if (field.IsStatic)
-								facts.Add("static");
-							if (field.IsReadOnly)
-								facts.Add("readonly");
-							if (field.IsVolatile)
-								facts.Add("volatile");
-						}
-						if (field.IsRequired)
-							facts.Add("required");
-						result[name + "::" + field.Name] = string.Join(" ", facts) + " " + Render(field.Type);
-						break;
-					}
-				case ApiProperty property:
-					{
-						var facts = new List<string> { Access(property.Accessibility), Modifiers(property.Modifiers) };
-						if (property.IsRequired)
-							facts.Add("required");
-						if (property.Getter is { } get)
-							facts.Add("get:" + Access(get.Accessibility));
-						if (property.Setter is { } set)
-							facts.Add((set.IsInit ? "init:" : "set:") + Access(set.Accessibility));
-						result[name + "::" + property.Name + Key(property.Parameters.Select(p => p.Type))] = string.Join(" ", facts) + " " + RefKind(
-							property.RefKind
-						) + Render(property.Type) + Parameters(property.Parameters);
-						break;
-					}
-				case ApiEvent @event:
-					result[name + "::" + @event.Name] = Access(@event.Accessibility) + " " + Modifiers(@event.Modifiers) + " " + Render(@event.Type);
-					break;
-				case ApiMethod method:
-					result[name + "::" + method.Name + "`" + method.TypeParameters.Count + Key(
-						method.Parameters.Select(p => p.Type),
-						method.Parameters.Select(p => p.RefKind)
-					)] = Access(method.Accessibility) + " " + (IsFinalizer(method) ? "[finalizer]" : Modifiers(method.Modifiers)) +
-						(method.IsExtension ? " extension" : "") + TypeParameters(method.TypeParameters) + " " + RefKind(method.ReturnRefKind) + Render(
-						method.ReturnType
-					) + Parameters(method.Parameters);
-					break;
-			}
-		}
+			Ours(member, name, result);
 		foreach (var nested in type.NestedTypes)
 			Ours(nested, name, result);
+	}
+
+	private static void Ours(ApiMember member, string name, Dictionary<string, string> result)
+	{
+		switch (member)
+		{
+			// a block is its receiver; its members sit under it
+			case ApiExtension extension:
+				{
+					var block = name + "::extension`" + extension.TypeParameters.Count + Key([extension.Receiver.Type], [extension.Receiver.RefKind]);
+					result[block] = RefKind(extension.Receiver.RefKind) + Render(extension.Receiver.Type) + " " + extension.Receiver.Name + TypeParameters(
+						extension.TypeParameters
+					);
+					foreach (var inner in extension.Members)
+						Ours(inner, block, result);
+					break;
+				}
+			case ApiField field:
+				{
+					var facts = new List<string> { Access(field.Accessibility) };
+					if (field.Constant is not null)
+						facts.Add("const");
+					else
+					{
+						if (field.IsStatic)
+							facts.Add("static");
+						if (field.IsReadOnly)
+							facts.Add("readonly");
+						if (field.IsVolatile)
+							facts.Add("volatile");
+					}
+					if (field.IsRequired)
+						facts.Add("required");
+					result[name + "::" + field.Name] = string.Join(" ", facts) + " " + Render(field.Type);
+					break;
+				}
+			case ApiProperty property:
+				{
+					var facts = new List<string> { Access(property.Accessibility), Modifiers(property.Modifiers) };
+					if (property.IsRequired)
+						facts.Add("required");
+					if (property.Getter is { } get)
+						facts.Add("get:" + Access(get.Accessibility));
+					if (property.Setter is { } set)
+						facts.Add((set.IsInit ? "init:" : "set:") + Access(set.Accessibility));
+					result[name + "::" + property.Name + Key(property.Parameters.Select(p => p.Type))] = string.Join(" ", facts) + " " + RefKind(
+						property.RefKind
+					) + Render(property.Type) + Parameters(property.Parameters);
+					break;
+				}
+			case ApiEvent @event:
+				result[name + "::" + @event.Name] = Access(@event.Accessibility) + " " + Modifiers(@event.Modifiers) + " " + Render(@event.Type);
+				break;
+			case ApiMethod method:
+				result[name + "::" + method.Name + "`" + method.TypeParameters.Count + Key(
+					method.Parameters.Select(p => p.Type),
+					method.Parameters.Select(p => p.RefKind)
+				)] = Access(method.Accessibility) + " " + (IsFinalizer(method) ? "[finalizer]" : Modifiers(method.Modifiers)) +
+					(method.IsExtension ? " extension" : "") + TypeParameters(method.TypeParameters) + " " + RefKind(method.ReturnRefKind) + Render(
+					method.ReturnType
+				) + Parameters(method.Parameters);
+				break;
+		}
 	}
 
 	private static string Parameters(IEnumerable<ApiParameter> parameters) =>
@@ -325,74 +339,99 @@ public class RoslynOracleTests
 		if (type.TypeKind is TypeKind.Enum or TypeKind.Delegate)
 			return;
 		var extendable = Extendable(type);
+		var blocks = type.GetTypeMembers().Where(t => t.IsExtension && t.DeclaredAccessibility == Accessibility.Public).ToList();
+		// the static methods the compiler writes for a block's members are the block's, not the container's
+		var implementations = new HashSet<ISymbol>(
+			blocks
+				.SelectMany(b => b.GetMembers())
+				.SelectMany(m => m is IPropertySymbol p ? new ISymbol?[] { p.GetMethod, p.SetMethod } : [m])
+				.OfType<IMethodSymbol>()
+				.Select(m => m.AssociatedExtensionImplementation?.OriginalDefinition)
+				.Where(m => m is not null)!,
+			SymbolEqualityComparer.Default
+		);
 		foreach (var member in type.GetMembers())
+			if (!implementations.Contains(member))
+				Theirs(member, name, extendable, result);
+		foreach (var block in blocks)
 		{
-			if (!Visible(member, extendable))
-				continue;
-			switch (member)
-			{
-				case IFieldSymbol field:
-					{
-						var facts = new List<string> { Access(field.DeclaredAccessibility) };
-						if (field.IsConst)
-							facts.Add("const");
-						else
-						{
-							if (field.IsStatic)
-								facts.Add("static");
-							if (field.IsReadOnly)
-								facts.Add("readonly");
-							if (field.IsVolatile)
-								facts.Add("volatile");
-						}
-						if (field.IsRequired)
-							facts.Add("required");
-						result[name + "::" + field.MetadataName] = string.Join(" ", facts) + " " + Render(field.Type, field.NullableAnnotation);
-						break;
-					}
-				case IPropertySymbol property when (property.GetMethod is { } g && Visible(g, extendable)) ||
-					(property.SetMethod is { } s && Visible(s, extendable)):
-					{
-						var get = property.GetMethod is { } getter && Visible(getter, extendable) ? getter : null;
-						var set = property.SetMethod is { } setter && Visible(setter, extendable) ? setter : null;
-						var most = new[] { get, set }.Where(m => m is not null).Select(m => m!.DeclaredAccessibility).Max();
-						var facts = new List<string> { Access(most), Modifiers(property) };
-						if (property.IsRequired)
-							facts.Add("required");
-						if (get is not null)
-							facts.Add("get:" + Access(get.DeclaredAccessibility));
-						if (set is not null)
-							facts.Add((set.IsInitOnly ? "init:" : "set:") + Access(set.DeclaredAccessibility));
-						result[name + "::" + property.MetadataName + Key(property.Parameters)] = string.Join(" ", facts) + " " +
-							(property.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(property.RefKind)) + Render(
-							property.Type,
-							property.NullableAnnotation
-						) + Parameters(property.Parameters);
-						break;
-					}
-				case IEventSymbol @event:
-					result[name + "::" + @event.MetadataName] = Access(@event.DeclaredAccessibility) + " " + Modifiers(@event) + " " + Render(
-						@event.Type,
-						@event.NullableAnnotation
-					);
-					break;
-				// a struct's parameterless constructor is not in metadata unless the struct declares one
-				case IMethodSymbol { IsImplicitlyDeclared: true, MethodKind: MethodKind.Constructor, ContainingType.IsValueType: true }:
-					break;
-				case IMethodSymbol method when method.MethodKind is not (MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.StaticConstructor):
-					result[name + "::" + method.MetadataName + "`" + method.TypeParameters.Length + Key(method.Parameters)] =
-					// Roslyn shows a finalizer as a destructor, which is never virtual; metadata says it is
-					Access(method.DeclaredAccessibility) + " " + (method.MethodKind == MethodKind.Destructor ? "[finalizer]" : Modifiers(method)) +
-						(method.IsExtensionMethod ? " extension" : "") + TypeParameters(method.TypeParameters) + " " +
-						(method.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(method.RefKind)) + Render(
-						method.ReturnType,
-						method.ReturnNullableAnnotation
-					) + Parameters(method.Parameters);
-					break;
-			}
+			var receiver = block.ExtensionParameter!;
+			var blockName = name + "::extension`" + block.TypeParameters.Length + Key([receiver]);
+			result[blockName] = RefKind(receiver.RefKind) + Render(receiver.Type, receiver.NullableAnnotation) + " " + receiver.Name + TypeParameters(
+				block.TypeParameters
+			);
+			foreach (var member in block.GetMembers())
+				Theirs(member, blockName, false, result);
 		}
 		foreach (var nested in type.GetTypeMembers())
 			Theirs(nested, type, result);
+	}
+
+	private static void Theirs(ISymbol member, string name, bool extendable, Dictionary<string, string> result)
+	{
+		if (!Visible(member, extendable))
+			return;
+		switch (member)
+		{
+			case IFieldSymbol field:
+				{
+					var facts = new List<string> { Access(field.DeclaredAccessibility) };
+					if (field.IsConst)
+						facts.Add("const");
+					else
+					{
+						if (field.IsStatic)
+							facts.Add("static");
+						if (field.IsReadOnly)
+							facts.Add("readonly");
+						if (field.IsVolatile)
+							facts.Add("volatile");
+					}
+					if (field.IsRequired)
+						facts.Add("required");
+					result[name + "::" + field.MetadataName] = string.Join(" ", facts) + " " + Render(field.Type, field.NullableAnnotation);
+					break;
+				}
+			case IPropertySymbol property when (property.GetMethod is { } g && Visible(g, extendable)) ||
+				(property.SetMethod is { } s && Visible(s, extendable)):
+				{
+					var get = property.GetMethod is { } getter && Visible(getter, extendable) ? getter : null;
+					var set = property.SetMethod is { } setter && Visible(setter, extendable) ? setter : null;
+					var most = new[] { get, set }.Where(m => m is not null).Select(m => m!.DeclaredAccessibility).Max();
+					var facts = new List<string> { Access(most), Modifiers(property) };
+					if (property.IsRequired)
+						facts.Add("required");
+					if (get is not null)
+						facts.Add("get:" + Access(get.DeclaredAccessibility));
+					if (set is not null)
+						facts.Add((set.IsInitOnly ? "init:" : "set:") + Access(set.DeclaredAccessibility));
+					result[name + "::" + property.MetadataName + Key(property.Parameters)] = string.Join(" ", facts) + " " +
+						(property.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(property.RefKind)) + Render(
+						property.Type,
+						property.NullableAnnotation
+					) + Parameters(property.Parameters);
+					break;
+				}
+			case IEventSymbol @event:
+				result[name + "::" + @event.MetadataName] = Access(@event.DeclaredAccessibility) + " " + Modifiers(@event) + " " + Render(
+					@event.Type,
+					@event.NullableAnnotation
+				);
+				break;
+			// a struct's parameterless constructor is not in metadata unless the struct declares one
+			case IMethodSymbol { IsImplicitlyDeclared: true, MethodKind: MethodKind.Constructor, ContainingType.IsValueType: true }:
+				break;
+			case IMethodSymbol method when method.MethodKind is not (MethodKind.PropertyGet or MethodKind.PropertySet or MethodKind.EventAdd or MethodKind.EventRemove or MethodKind.StaticConstructor):
+				result[name + "::" + method.MetadataName + "`" + method.TypeParameters.Length + Key(method.Parameters)] =
+				// Roslyn shows a finalizer as a destructor, which is never virtual; metadata says it is
+				Access(method.DeclaredAccessibility) + " " + (method.MethodKind == MethodKind.Destructor ? "[finalizer]" : Modifiers(method)) +
+					(method.IsExtensionMethod ? " extension" : "") + TypeParameters(method.TypeParameters) + " " +
+					(method.RefKind == Microsoft.CodeAnalysis.RefKind.RefReadOnly ? "ref readonly " : RefKind(method.RefKind)) + Render(
+					method.ReturnType,
+					method.ReturnNullableAnnotation
+				) + Parameters(method.Parameters);
+				break;
+		}
 	}
 
 	private static bool PublicAllTheWay(INamedTypeSymbol type) =>

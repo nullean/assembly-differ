@@ -44,6 +44,12 @@ public class ComparisonTests
 		yield return ("constraint added", "public class A { public void M<T>() { } }", "public class A { public void M<T>() where T : class { } }");
 		yield return ("made static", "public class A { public void M() { } }", "public class A { public static void M() { } }");
 		yield return ("accessibility reduced", "public class A { public void M() { } }", "public class A { protected void M() { } }");
+		yield return ("extension member added", "public static class E { extension(string s) { public int A() => 0; } }", "public static class E { extension(string s) { public int A() => 0; public bool B => true; } }");
+		yield return ("extension member removed", "public static class E { extension(string s) { public int A() => 0; public static int B() => 0; } }", "public static class E { extension(string s) { public int A() => 0; } }");
+		yield return ("extension member moved to another block", "public static class E { extension(string s) { public int A() => 0; } extension(string? t) { public int B() => 0; } }", "public static class E { extension(string? t) { public int A() => 0; public int B() => 0; } }");
+		yield return ("extension receiver renamed", "public static class E { extension(string s) { public int A() => 0; } }", "public static class E { extension(string text) { public int A() => 0; } }");
+		yield return ("extension block constraint added", "public static class E { extension<T>(T[] items) { public T First() => items[0]; } }", "public static class E { extension<T>(T[] items) where T : struct { public T First() => items[0]; } }");
+		yield return ("extension method became an extension block member", "public static class E { public static int A(this string s) => 0; }", "public static class E { extension(string s) { public int A() => 0; } }");
 		yield return ("nothing changed", "public class A { public void M() { } }", "public class A { public void M() { } }");
 	}
 

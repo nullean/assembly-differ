@@ -305,7 +305,7 @@ public sealed class ApiReader
 					.Select(m => ReadMethod(m, shell, allTypeParameters, typeContext, forceVisible: true))
 					.OfType<ApiMember>()
 					.ToList(),
-			_ => Members(type, shell, allTypeParameters, typeContext),
+			_ => WithExtensions(type, shell, Members(type, shell, allTypeParameters, typeContext), typeContext),
 		};
 		var nested = type.GetNestedTypes().Select(h => ReadType(h, shell)).OfType<ApiType>().OrderBy(t => t.Name, StringComparer.Ordinal).ToList();
 		return shell with { Members = members, NestedTypes = nested };
@@ -510,12 +510,185 @@ public sealed class ApiReader
 		ApiEvent => 3,
 		ApiMethod { Kind: ApiMethodKind.Method } => 4,
 		ApiMethod { Kind: ApiMethodKind.Operator } => 5,
+		ApiExtension => 7,
 		_ => 6,
 	};
+
+	private static List<ApiMember> Ordered(IEnumerable<ApiMember> members) =>
+		members.OrderBy(Order).ThenBy(m => m.Name, StringComparer.Ordinal).ThenBy(ParameterKey, StringComparer.Ordinal).ToList();
+
+	/// <summary>
+	/// A static class's C# 14 extension blocks, which the compiler writes as nested grouping types (<c>&lt;G&gt;$…</c>):
+	/// their members as declared, under a marker type (<c>&lt;M&gt;$…</c>) that holds the receiver, and as static methods
+	/// in the class that implement them. The blocks take the place of those methods.
+	/// </summary>
+	private List<ApiMember> WithExtensions(TypeDefinition container, ApiType shell, List<ApiMember> members, byte? typeContext)
+	{
+		var blocks = new List<ApiExtension>();
+		foreach (var groupingHandle in container.GetNestedTypes())
+		{
+			var grouping = _reader.GetTypeDefinition(groupingHandle);
+			if (
+				!_reader.GetString(grouping.Name).StartsWith(
+					"<G>$",
+					StringComparison.Ordinal
+				) || (grouping.Attributes & TypeAttributes.VisibilityMask) != TypeAttributes.NestedPublic
+			)
+				continue;
+			blocks.AddRange(Extensions(grouping, shell, typeContext));
+		}
+		if (blocks.Count == 0)
+			return members;
+
+		var implementations = new HashSet<string>(blocks.SelectMany(Implementations), StringComparer.Ordinal);
+		var kept = members.Where(
+			m => m is not ApiMethod { Modifiers: var modifiers } method || (modifiers & ApiMemberModifiers.Static) == 0 ||
+				!implementations.Contains(Signature(method.Name, method.Parameters.Select(p => p.Type)))
+		);
+		return Ordered(kept.Concat(blocks));
+	}
+
+	private IEnumerable<ApiExtension> Extensions(TypeDefinition grouping, ApiType container, byte? typeContext)
+	{
+		var groupingContext = NullableContext(grouping.GetCustomAttributes()) ?? typeContext;
+		var shell = container with
+		{
+			Name = _reader.GetString(grouping.Name),
+			Kind = ApiTypeKind.Class,
+			Modifiers = ApiTypeModifiers.Sealed,
+			CanBeExtendedOutside = false,
+		};
+
+		// each marker is one block: its <Extension>$ method holds the receiver, and its type parameters have the names
+		// the source gave them, where the grouping type's are the compiler's own
+		var blocks = new Dictionary<string, (ApiParameter Receiver, ImmutableArray<string> Names, List<ApiTypeParameter> TypeParameters, IReadOnlyList<ApiAttribute> Attributes)>(
+			StringComparer.Ordinal
+		);
+		foreach (var markerHandle in grouping.GetNestedTypes())
+		{
+			var marker = _reader.GetTypeDefinition(markerHandle);
+			var names = TypeParameterNames(marker.GetGenericParameters());
+			var context = new TypeContext(names, []);
+			foreach (var methodHandle in marker.GetMethods())
+			{
+				var method = _reader.GetMethodDefinition(methodHandle);
+				if (!_reader.StringComparer.Equals(method.Name, "<Extension>$"))
+					continue;
+				var signature = method.DecodeSignature(_types, context);
+				var parameters = ReadParameters(method, signature.ParameterTypes, NullableContext(method.GetCustomAttributes()) ?? groupingContext);
+				// a receiver without a name has no parameter row
+				var named = false;
+				foreach (var parameterHandle in method.GetParameters())
+					named |= _reader.GetParameter(parameterHandle).SequenceNumber == 1;
+				if (parameters.Count == 1)
+					blocks[_reader.GetString(marker.Name)] =
+						(named ? parameters[0] : parameters[0] with { Name = "" }, names, ReadTypeParameters(
+							marker.GetGenericParameters(),
+							context,
+							groupingContext,
+							false
+						), Attributes(marker.GetCustomAttributes()));
+			}
+		}
+
+		var byMarker = blocks.Keys.ToDictionary(k => k, _ => new List<ApiMember>(), StringComparer.Ordinal);
+		var accessors = new HashSet<MethodDefinitionHandle>();
+		foreach (var propertyHandle in grouping.GetProperties())
+		{
+			var property = _reader.GetPropertyDefinition(propertyHandle);
+			var propertyAccessors = property.GetAccessors();
+			if (!propertyAccessors.Getter.IsNil)
+				accessors.Add(propertyAccessors.Getter);
+			if (!propertyAccessors.Setter.IsNil)
+				accessors.Add(propertyAccessors.Setter);
+			var accessor = propertyAccessors.Getter.IsNil ? propertyAccessors.Setter : propertyAccessors.Getter;
+			if (
+				accessor.IsNil || Marker(_reader.GetMethodDefinition(accessor).GetCustomAttributes()) is not { } markerName ||
+				!byMarker.TryGetValue(markerName, out var list)
+			)
+				continue;
+			var context = new TypeContext(blocks[markerName].Names, []);
+			if (ReadProperty(property, propertyAccessors, shell, context, groupingContext, false) is { } read)
+				list.Add(read);
+		}
+		foreach (var methodHandle in grouping.GetMethods())
+		{
+			if (accessors.Contains(methodHandle))
+				continue;
+			var method = _reader.GetMethodDefinition(methodHandle);
+			if (Marker(method.GetCustomAttributes()) is not { } markerName || !byMarker.TryGetValue(markerName, out var list))
+				continue;
+			if (ReadMethod(method, shell, blocks[markerName].Names, groupingContext, forceVisible: false) is { } read)
+				list.Add(read);
+		}
+
+		// netstandard2.0's KeyValuePair has no Deconstruct
+		foreach (var pair in blocks)
+			if (byMarker[pair.Key].Count > 0)
+				yield return new ApiExtension(
+					"extension",
+					ApiAccessibility.Public,
+					pair.Value.Attributes,
+					pair.Value.TypeParameters,
+					pair.Value.Receiver,
+					Ordered(byMarker[pair.Key])
+				);
+	}
+
+	/// <summary>The marker an extension member belongs to, named by its ExtensionMarkerAttribute.</summary>
+	private string? Marker(IEnumerable<CustomAttributeHandle> attributes)
+	{
+		foreach (var handle in attributes)
+		{
+			var attribute = _reader.GetCustomAttribute(handle);
+			if (
+				AttributeTypeName(attribute) == CompilerServices + "ExtensionMarkerAttribute" &&
+				TryDecode(attribute) is { FixedArguments: [{ Value: string name }] }
+			)
+				return name;
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// The static methods the compiler implements a block's members with: a method by its name, an accessor by
+	/// get_ or set_ and the property's name; an instance member takes the receiver first.
+	/// </summary>
+	private static IEnumerable<string> Implementations(ApiExtension block)
+	{
+		foreach (var member in block.Members)
+		{
+			var isStatic = member switch
+			{
+				ApiMethod m => (m.Modifiers & ApiMemberModifiers.Static) != 0,
+				ApiProperty p => (p.Modifiers & ApiMemberModifiers.Static) != 0,
+				_ => true,
+			};
+			IEnumerable<ApiTypeReference> receiver = isStatic ? [] : [block.Receiver.Type];
+			switch (member)
+			{
+				case ApiMethod method:
+					yield return Signature(method.Name, receiver.Concat(method.Parameters.Select(p => p.Type)));
+					break;
+				case ApiProperty property:
+					var index = property.Parameters.Select(p => p.Type).ToList();
+					if (property.Getter is not null)
+						yield return Signature("get_" + property.Name, receiver.Concat(index));
+					if (property.Setter is not null)
+						yield return Signature("set_" + property.Name, receiver.Concat(index).Append(property.Type));
+					break;
+			}
+		}
+	}
+
+	/// <summary>A method's name and parameter types, with type parameters by name whether a type or a method declares them.</summary>
+	private static string Signature(string name, IEnumerable<ApiTypeReference> parameters) =>
+		name + "(" + string.Join(",", parameters.Select(p => TypeKey(p).Replace("!!", "!"))) + ")";
 
 	/// <summary>Tells overloads apart in the order: their parameter types.</summary>
 	private static string ParameterKey(ApiMember member) => member switch
 	{
+		ApiExtension extension => TypeKey(extension.Receiver.Type) + ";" + extension.TypeParameters.Count,
 		ApiMethod method => string.Join(",", method.Parameters.Select(p => p.RefKind + " " + TypeKey(p.Type))) + ";" + method.TypeParameters.Count,
 		ApiProperty property => string.Join(",", property.Parameters.Select(p => TypeKey(p.Type))),
 		_ => string.Empty,
@@ -757,7 +930,10 @@ public sealed class ApiReader
 		for (var i = 0; i < types.Length; i++)
 		{
 			var row = rows[i];
-			IEnumerable<CustomAttributeHandle> attributes = row is { } withAttributes ? withAttributes.GetCustomAttributes() : [];
+			// typed as the interface: a bare [] would take the struct collection's type, and a default one has no reader
+			IEnumerable<CustomAttributeHandle> attributes = row is { } withAttributes
+				? withAttributes.GetCustomAttributes()
+				: Array.Empty<CustomAttributeHandle>();
 			var rawType = types[i];
 			var refKind = ApiRefKind.None;
 			var offset = 0;

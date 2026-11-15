@@ -613,9 +613,39 @@ public static class ApiParser
 			var cursor = new Cursor(line.Text, 0, line.Number, depth * 2);
 			var member = type.Kind == ApiTypeKind.Enum
 				? EnumValue(cursor, attributes, enumType!)
-				: Declaration(cursor, type, scope, attributes, returnAttributes, indexerName);
+				: cursor.PeekWord() == "extension" && cursor.PeekAfterWord() is '(' or '<'
+					? Extension(ref i, depth, cursor, line, type, declared, attributes)
+					: Declaration(cursor, type, scope, attributes, returnAttributes, indexerName);
 			_locations.Add((member, new ApiLocation(_file, line.Number)));
 			return member;
+		}
+
+		/// <summary>
+		/// A C# 14 extension block, <c>extension&lt;T&gt;(List&lt;T&gt; list) where T : struct</c>, and the members indented
+		/// under it. Its type parameters are in scope for the receiver and the members, as a type's are.
+		/// </summary>
+		private ApiExtension Extension(ref int i, int depth, Cursor cursor, Line line, ApiType type, Declared declared, List<ApiAttribute> attributes)
+		{
+			cursor.Word();
+			var typeParameters = TypeParameters(cursor, false);
+			var block = new Declared(declared.Namespace, "extension", declared, ApiTypeKind.Class, typeParameters.Select(p => p.Name).ToList());
+			block.StructParameters.UnionWith(StructParameters(line.Text));
+			var scope = new Scope(this, block, []);
+			var receiver = Parameters(cursor, scope, '(', ')', out _);
+			if (receiver.Count != 1)
+				throw cursor.Error("an extension block has one receiver");
+			Constraints(cursor, scope, typeParameters);
+			cursor.End();
+
+			var shell = type with { Name = "extension", Kind = ApiTypeKind.Class, Modifiers = ApiTypeModifiers.Sealed, CanBeExtendedOutside = false };
+			var members = new List<ApiMember>();
+			while (i < _lines.Count && _lines[i].Depth > depth)
+			{
+				if (_lines[i].Depth != depth + 1)
+					throw new ApiParseException("indented too far", _lines[i].Number, _lines[i].Depth * 2 + 1);
+				members.Add(Member(ref i, depth + 1, shell, block, null));
+			}
+			return new ApiExtension("extension", ApiAccessibility.Public, attributes, typeParameters, receiver[0], members);
 		}
 
 		private static ApiField EnumValue(Cursor cursor, List<ApiAttribute> attributes, ApiTypeReference type)
@@ -1020,7 +1050,8 @@ public static class ApiParser
 					}
 				}
 				var type = scope.Type(cursor);
-				var name = cursor.MemberName();
+				// a receiver that only static members use has no name: extension(string)
+				var name = cursor.Peek() == close ? "" : cursor.MemberName();
 				string? defaultValue = null;
 				if (cursor.TryChar('='))
 					defaultValue = cursor.RawUntil(',', close);

@@ -115,6 +115,21 @@ namespace Nullean.PublicApi
     static bool operator ==(ApiEvent? left, ApiEvent? right)
     static bool operator !=(ApiEvent? left, ApiEvent? right)
 
+  sealed record ApiExtension : ApiMember, IEquatable<ApiExtension>
+    ApiExtension(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, IReadOnlyList<ApiTypeParameter> TypeParameters, ApiParameter Receiver, IReadOnlyList<ApiMember> Members)
+    IReadOnlyList<ApiMember> Members { get; init; }
+    ApiParameter Receiver { get; init; }
+    IReadOnlyList<ApiTypeParameter> TypeParameters { get; init; }
+    override ApiMember <Clone>$()
+    void Deconstruct(out string Name, out ApiAccessibility Accessibility, out IReadOnlyList<ApiAttribute> Attributes, out IReadOnlyList<ApiTypeParameter> TypeParameters, out ApiParameter Receiver, out IReadOnlyList<ApiMember> Members)
+    bool Equals(ApiExtension? other)
+    sealed override bool Equals(ApiMember? other)
+    override bool Equals(object? obj)
+    override int GetHashCode()
+    override string ToString()
+    static bool operator ==(ApiExtension? left, ApiExtension? right)
+    static bool operator !=(ApiExtension? left, ApiExtension? right)
+
   sealed record ApiField : ApiMember, IEquatable<ApiField>
     ApiField(string Name, ApiAccessibility Accessibility, IReadOnlyList<ApiAttribute> Attributes, ApiTypeReference Type, bool IsStatic, bool IsReadOnly, bool IsVolatile, bool IsRequired, string? Constant)
     string? Constant { get; init; }

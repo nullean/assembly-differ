@@ -1,0 +1,2 @@
+E › extension(string) › B  added: - → bool B { get; }  [Minor]
+suggested: Minor

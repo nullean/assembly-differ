@@ -109,6 +109,15 @@ internal static class ApiJson
 				Parameters(json, method.Parameters, type);
 				json.WriteBoolean("extension", method.IsExtension);
 				break;
+			case ApiExtension extension:
+				json.WriteString("kind", "extension");
+				TypeParameters(json, extension.TypeParameters, type);
+				Parameters(json, [extension.Receiver], type);
+				json.WriteStartArray("members");
+				foreach (var inner in extension.Members)
+					Member(json, inner, type);
+				json.WriteEndArray();
+				break;
 		}
 		Attributes(json, member.Attributes, type);
 		json.WriteEndObject();
