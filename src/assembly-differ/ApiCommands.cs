@@ -159,6 +159,7 @@ internal sealed class ApiCommands
 	/// <param name="version">The version being released; read from a .nupkg when not given.</param>
 	/// <param name="framework">The target framework to compare, such as net8.0. Defaults to the newest the .nupkg ships.</param>
 	/// <param name="requireBaseline">Fail when there is no earlier release to compare with.</param>
+	/// <param name="allAssemblies">Compare every assembly the build ships, not only the ones the solution or projects in this directory build; -t overrides both.</param>
 	/// <param name="report">How to report the comparison.</param>
 	/// <example>assembly-differ release build/output/MyLib.1.3.0.nupkg --fail-on major</example>
 	/// <example>assembly-differ release src/MyLib/bin/Release/net8.0 --package MyLib --version 1.3.0 -t MyLib</example>
@@ -169,10 +170,13 @@ internal sealed class ApiCommands
 		string? version = null,
 		string? framework = null,
 		bool requireBaseline = false,
+		bool allAssemblies = false,
 		[AsParameters] ReportOptions? report = null
 	)
 	{
 		report ??= new ReportOptions();
+		if (!allAssemblies && report.Target is null or { Count: 0 })
+			report.Target = OwnAssemblies(path, framework);
 		string? baseline = null;
 		var exitCode = Run(
 			() =>
@@ -279,6 +283,37 @@ internal sealed class ApiCommands
 		{
 			Console.Error.WriteLine(e);
 			return 1;
+		}
+	}
+
+	/// <summary>
+	/// The assemblies the solution or projects in the current directory build, that the build at <paramref name="path"/>
+	/// ships, when it ships others too, such as the dependencies a package bundles; <c>null</c> to compare every one.
+	/// </summary>
+	private static List<string>? OwnAssemblies(string path, string? framework)
+	{
+		try
+		{
+			var own = Projects.ProjectComparison.AssemblyNames(Directory.GetCurrentDirectory());
+			if (own.Count == 0)
+				return null;
+			var shipped = Local(path, Framework(framework, path))
+				.Provider
+				.GetAssemblies(new HashSet<string>(StringComparer.OrdinalIgnoreCase))
+				.Select(a => Path.GetFileNameWithoutExtension(a.Name))
+				.ToList();
+			var compared = shipped.Where(s => own.Contains(s, StringComparer.OrdinalIgnoreCase)).ToList();
+			if (compared.Count == 0 || compared.Count == shipped.Count)
+				return null;
+			Console.WriteLine(
+				$"[diff] Comparing only the assemblies this solution builds: {string.Join(", ", compared)} (--all-assemblies compares all {shipped.Count})"
+			);
+			return compared;
+		}
+		catch (Exception e) when (e is Projects.Dotnet.SdkException or ArgumentException or FileNotFoundException or DirectoryNotFoundException)
+		{
+			// no SDK to read the projects with, or no usable build: compare everything, as before
+			return null;
 		}
 	}
 

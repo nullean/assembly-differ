@@ -104,6 +104,9 @@ The package id and version come from the `.nupkg`, and the release compared with
 earlier release is a first release: there is nothing to compare, so the command says so and succeeds, unless you pass
 `--require-baseline`.
 
+In a directory with a solution or projects, `release` compares only the assemblies they build, so a dependency the package
+bundles does not count as your API; `--all-assemblies` compares every assembly the package ships, and `-t` names them.
+
 | Command | Compares |
 |---|---|
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |

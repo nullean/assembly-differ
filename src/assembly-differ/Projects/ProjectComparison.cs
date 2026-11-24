@@ -90,6 +90,10 @@ internal static class ProjectComparison
 		);
 	}
 
+	/// <summary>The names of the assemblies the solution or projects in <paramref name="directory"/> build, tests and unpackable projects too.</summary>
+	internal static List<string> AssemblyNames(string directory) =>
+		Libraries(Candidates(directory, []), new Options([], IncludeTests: true, IncludeUnpackable: true), "compares").Select(l => l.AssemblyName).ToList();
+
 	/// <summary>A library project, with every framework it targets.</summary>
 	internal sealed record Library(string Path, string PackageId, string AssemblyName, IReadOnlyList<NuGetFramework> Frameworks);
 

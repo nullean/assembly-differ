@@ -13,6 +13,7 @@ Options:
   --version <string>     The version being released; read from a .nupkg when not given. [default: null]
   --framework <string>   The target framework to compare, such as net8.0. Defaults to the newest the .nupkg ships. [default: null]
   --require-baseline     Fail when there is no earlier release to compare with.
+  --all-assemblies       Compare every assembly the build ships, not only the ones the solution or projects in this directory build; -t overrides both.
   -t, --target <values>  [repeatable] Only compare these assemblies, by file name without extension. Repeat it for more than one.
   -f, --format <string>  The report: markdown, xml, asciidoc, github-comment or json. [default: markdown] [allowed: markdown|xml|asciidoc|github-comment|json]
   -o, --output <string>  A directory or file to write the report to, besides the console.
