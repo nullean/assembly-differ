@@ -7,7 +7,7 @@ permissions: {}
 
 jobs:
   automerge:
-    uses: nullean/.github/.github/workflows/dependabot-automerge.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
+    uses: nullean/.github/.github/workflows/dependabot-automerge.yml@e21d5f59405aa7078e51825cd4c407191e28562f # v1.6.1
     permissions:
       contents: write
       pull-requests: write

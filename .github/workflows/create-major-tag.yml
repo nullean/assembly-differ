@@ -24,7 +24,7 @@ jobs:
     permissions:
       actions: read # read main's ci.yml runs
     steps:
-      - uses: nullean/.github/actions/require-green-main@f9eb30d28e48b3f6b8ff1f4e7dae1d2b7b2d544b # v1.6.0
+      - uses: nullean/.github/actions/require-green-main@e21d5f59405aa7078e51825cd4c407191e28562f # v1.6.1
 
   create-major-tag:
     needs: main-green
