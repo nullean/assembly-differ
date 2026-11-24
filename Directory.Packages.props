@@ -28,11 +28,11 @@
 
   <!-- tests/: TUnit, AwesomeAssertions and the snapshot packages track the latest stable release -->
   <ItemGroup>
-    <PackageVersion Include="TUnit" Version="1.84.0" />
+    <PackageVersion Include="TUnit" Version="1.86.0" />
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="CsCheck" Version="5.0.1" />
-    <PackageVersion Include="Nullean.Snapshots.AwesomeAssertions" Version="0.12.2" />
-    <PackageVersion Include="Nullean.Snapshots.TUnit" Version="0.12.2" />
+    <PackageVersion Include="Nullean.Snapshots.AwesomeAssertions" Version="0.18.0" />
+    <PackageVersion Include="Nullean.Snapshots.TUnit" Version="0.18.0" />
     <!-- compiles the old and new fixture assemblies a test diffs -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
   </ItemGroup>
