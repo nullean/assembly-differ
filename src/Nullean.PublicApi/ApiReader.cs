@@ -49,6 +49,9 @@ public sealed class ApiReader
 		CompilerServices + "PreserveBaseOverridesAttribute",
 		CompilerServices + "SkipLocalsInitAttribute",
 		CompilerServices + "ExtensionMarkerAttribute",
+		// records which generator or SDK wrote the code, such as System.Text.Json's "10.0.15.2326": the same API written by
+		// another patch release of the SDK would otherwise be a change
+		"System.CodeDom.Compiler.GeneratedCodeAttribute",
 		"System.ParamArrayAttribute",
 		"System.Reflection.DefaultMemberAttribute",
 		"System.Diagnostics.DebuggerHiddenAttribute",

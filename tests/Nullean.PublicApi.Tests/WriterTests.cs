@@ -233,4 +233,16 @@ public class WriterTests
 	[Test]
 	public void Without_nullable_annotations() =>
 		Compiler.Api("namespace Lib; public class Oblivious { public string Name(string? value) => value!; }", nullable: false).Should().MatchSnapshot();
+
+	[Test]
+	public void The_version_a_generator_records_is_not_API()
+	{
+		const string Template =
+			"using System.CodeDom.Compiler; namespace Lib; [GeneratedCode(\"Generator\", \"VERSION\")] public partial class Context { [GeneratedCode(\"Generator\", \"VERSION\")] public int Value => 1; }";
+
+		var first = Compiler.Api(Template.Replace("VERSION", "10.0.15.2326", StringComparison.Ordinal));
+		var second = Compiler.Api(Template.Replace("VERSION", "10.0.15.3000", StringComparison.Ordinal));
+
+		first.Should().Be(second).And.NotContain("GeneratedCode");
+	}
 }
