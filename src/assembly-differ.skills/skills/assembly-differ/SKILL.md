@@ -47,6 +47,8 @@ assemblies, and `--fail-on <none|patch|minor|major>` to exit with code 4 at or a
   next build.
 - **Test projects and projects with `IsPackable` false are skipped** without a command; `--include-tests`,
   `--include-unpackable` or `--project <path>` change that.
+- **`release` in a solution compares only the assemblies the solution builds**, not the dependencies a package bundles;
+  `--all-assemblies` compares every assembly, `-t` names them.
 - **A package with no earlier release is a first release**: nothing to compare, exit code 0 (`--require-baseline`
   fails instead).
 
