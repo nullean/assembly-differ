@@ -1,0 +1,19 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels:  -->
+### API changes: suggested version change **None**
+
+✅ All good: the public API is unchanged.
+
+- ✅ **Lib.dll**: no changes
+
+#### Public API files
+
+❌ The committed API files are out of date: suggested version change **Minor**.
+
+```text
+[api] Lib: 1 change since the committed files, suggested version change: Minor
+  api/Lib.api:12  Lib › Widget › Resize(double)  added void Resize(double factor)  [minor]
+[api] api does not match the build. Suggested version change: Minor
+```
+
+Update them with `assembly-differ api -o api`, and commit the result.

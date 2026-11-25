@@ -40,10 +40,13 @@ internal sealed class PullRequestCommand
 	/// <param name="majorLabel">The label for a Major change, matching release-drafter's; empty sets none.</param>
 	/// <param name="minorLabel">The label for a Minor change; empty sets none.</param>
 	/// <param name="patchLabel">The label for a Patch change; empty sets none.</param>
+	/// <param name="apiCode">The exit code of <c>api --verify</c>, to put the check of the committed .api files in the same comment: 0 when they match the build, 5 when they do not. The check fails on anything else.</param>
+	/// <param name="apiReport">What <c>api --verify</c> printed, for the comment; used with --api-code.</param>
 	/// <param name="noComment">Leave the comment alone.</param>
 	/// <param name="noLabels">Leave the labels alone.</param>
 	/// <example>assembly-differ release build/output/MyLib.1.3.0.nupkg -f json -o build/output</example>
 	/// <example>assembly-differ pull-request build/output/api-changes.json --fail-on major</example>
+	/// <example>assembly-differ pull-request build/output/api-changes.json --api-code 5 --api-report build/output/api-verify.txt</example>
 	[CommandName("pull-request")]
 	public async Task<int> PullRequest(
 		[Argument] string report,
@@ -54,6 +57,8 @@ internal sealed class PullRequestCommand
 		string majorLabel = "breaking",
 		string minorLabel = "feature",
 		string patchLabel = "",
+		int? apiCode = null,
+		string? apiReport = null,
 		bool noComment = false,
 		bool noLabels = false
 	)
@@ -103,13 +108,26 @@ internal sealed class PullRequestCommand
 		}
 		var allowed = gated && allowLabel.Length > 0 && present.Contains(allowLabel, StringComparer.OrdinalIgnoreCase);
 		var gate = !gated ? Gate.None : allowed ? Gate.Allowed : Gate.Blocked;
-		var body = Comment.Render(root, wanted, gate, allowLabel);
+		var apiFiles = apiCode is { } code
+			? new Comment.ApiFiles(code, apiReport is not null && File.Exists(apiReport) ? await File.ReadAllTextAsync(apiReport) : "")
+			: null;
+		var body = Comment.Render(root, wanted, gate, allowLabel, apiFiles);
 
 		var summary = Env("GITHUB_STEP_SUMMARY");
 		if (!string.IsNullOrEmpty(summary))
 			await File.AppendAllTextAsync(summary, body + Environment.NewLine);
 
 		var exitCode = Verdict(gate, suggested, failOn, allowLabel, onPullRequest);
+		if (apiFiles is { Code: not 0 })
+		{
+			Console.Error.WriteLine(
+				apiFiles.Code == 5
+					? "[diff] The committed API files do not match the build; the comment says what changed and how to update them"
+					: $"[diff] The committed API files could not be checked (exit code {apiFiles.Code})"
+			);
+			if (exitCode == 0)
+				exitCode = apiFiles.Code;
+		}
 		if (repository is null || pullRequest is null)
 		{
 			Console.WriteLine("[diff] Not a pull request: wrote the job summary only");

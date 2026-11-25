@@ -1,5 +1,5 @@
 name: 'assembly-differ'
-description: 'Report what a pull request changes in your libraries public API, label it for release-drafter, and fail on breaking changes until they are allowed'
+description: 'Report what a pull request changes in your libraries public API, check the committed .api files, label it for release-drafter, and fail on breaking changes until they are allowed'
 branding:
   icon: 'git-pull-request'
   color: 'blue'
@@ -21,6 +21,14 @@ inputs:
     description: 'The target framework to compare, such as net8.0. Defaults to the newest each project or package ships.'
     required: false
     default: ''
+  api-files:
+    description: 'The directory of committed .api files, as assembly-differ api -o wrote them. When set, they are checked against the build too, in the same comment, and the action fails when they differ. Leave empty to skip.'
+    required: false
+    default: ''
+  api-split:
+    description: 'How the committed .api files were split: none, namespace or top-level-namespace.'
+    required: false
+    default: 'none'
   fail-on:
     description: 'Fail when the suggested version change is at least this, unless the pull request has the allow-label: none, patch, minor or major.'
     required: false
@@ -84,6 +92,9 @@ outputs:
   report:
     description: 'The path of api-changes.json.'
     value: ${{ steps.report.outputs.report }}
+  api-files-match:
+    description: 'true when the committed .api files match the build, false when they do not; empty when api-files is not set.'
+    value: ${{ steps.api.outputs.matches }}
 
 runs:
   using: 'composite'
@@ -138,6 +149,34 @@ runs:
         [ -n "$FRAMEWORK" ] && [ -n "$PACKAGE" ] && args+=(--framework "$FRAMEWORK")
         "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}" --format json --output "$output"
 
+    - name: Verify the committed API files
+      id: api
+      if: inputs.first == '' && inputs.api-files != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        DIRECTORY: ${{ inputs.api-files }}
+        PACKAGE: ${{ inputs.package }}
+        PROJECTS: ${{ inputs.projects }}
+        TARGETS: ${{ inputs.target }}
+        FRAMEWORK: ${{ inputs.framework }}
+        SPLIT: ${{ inputs.api-split }}
+      run: |
+        args=(api)
+        [ -n "$PACKAGE" ] && args+=("$PACKAGE")
+        while IFS= read -r project; do [ -n "$project" ] && args+=(--project "$project"); done <<< "$PROJECTS"
+        while IFS= read -r target; do [ -n "$target" ] && args+=(--target "$target"); done <<< "$TARGETS"
+        [ -n "$FRAMEWORK" ] && args+=(--framework "$FRAMEWORK")
+        args+=(--split "$SPLIT" --verify "$DIRECTORY")
+        report="$RUNNER_TEMP/assembly-differ-api.txt"
+        set +e
+        "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}" | tee "$report"
+        code=${PIPESTATUS[0]}
+        set -e
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+        if [ "$code" = "0" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; else echo "matches=false" >> "$GITHUB_OUTPUT"; fi
+
     - name: Report on the pull request
       id: report
       if: inputs.first == ''
@@ -152,13 +191,18 @@ runs:
         PATCH_LABEL: ${{ inputs.patch-label }}
         COMMENT: ${{ inputs.comment }}
         LABELS: ${{ inputs.labels }}
+        API_CODE: ${{ steps.api.outputs.code }}
+        API_REPORT: ${{ steps.api.outputs.report }}
       run: |
         report="$RUNNER_TEMP/assembly-differ/api-changes.json"
         if [ ! -f "$report" ]; then
           # nothing was compared, such as a solution whose libraries have no release yet
           echo "suggested-change=None" >> "$GITHUB_OUTPUT"
           echo "breaking-changes=0" >> "$GITHUB_OUTPUT"
-          exit 0
+          [ -z "$API_CODE" ] && exit 0
+          # the committed API files are still reported, and still fail the check
+          mkdir -p "$RUNNER_TEMP/assembly-differ"
+          echo '{"firstRelease":true,"suggestedVersionChange":"None","breakingChanges":0,"assemblies":[]}' > "$report"
         fi
         echo "report=$report" >> "$GITHUB_OUTPUT"
         echo "suggested-change=$(jq -r .suggestedVersionChange "$report")" >> "$GITHUB_OUTPUT"
@@ -167,4 +211,12 @@ runs:
           --major-label "$MAJOR_LABEL" --minor-label "$MINOR_LABEL" --patch-label "$PATCH_LABEL")
         [ "$COMMENT" != "true" ] && args+=(--no-comment)
         [ "$LABELS" != "true" ] && args+=(--no-labels)
+        [ -n "$API_CODE" ] && args+=(--api-code "$API_CODE" --api-report "$API_REPORT")
+        set +e
         "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}"
+        code=$?
+        set -e
+        if [ "$code" = "5" ]; then
+          echo "::error title=assembly-differ::the committed API files do not match the build; the comment and the job summary say what changed"
+        fi
+        exit "$code"

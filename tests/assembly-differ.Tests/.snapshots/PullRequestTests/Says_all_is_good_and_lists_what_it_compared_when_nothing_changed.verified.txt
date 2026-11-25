@@ -1,0 +1,7 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels:  -->
+### API changes: suggested version change **None**
+
+✅ All good: the public API is unchanged.
+
+- ✅ **Lib.dll**: no changes

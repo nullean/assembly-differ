@@ -21,8 +21,7 @@ distroless container (`ghcr.io/nullean/assembly-differ`) and a GitHub Action (`a
 | `benchmarks/Nullean.PublicApi.Benchmarks` | BenchmarkDotNet: reading, writing, parsing and comparing System.Collections.Immutable and CoreLib, with allocations. `dotnet run -c Release --project benchmarks/Nullean.PublicApi.Benchmarks -- --filter '*' --inProcess` (in process: BenchmarkDotNet 0.15 does not know net11.0 yet) |
 | `build/scripts` | the F# build ([Runna.Fs](https://www.nuget.org/packages/Runna.Fs), net11.0) the `mise` tasks and CI call |
 | `build/keys` | the strong-name key the tool's and the libraries' assemblies are signed with |
-| `action.yml` | the GitHub Action: runs the `edge` container image |
-| `verify-api/action.yml` | the `verify-api` action: installs the tool and runs `api --verify`; checkout and build are the caller's steps; `comment: true` keeps a pull request comment through `gh api` |
+| `action.yml` | the GitHub Action: installs the tool, compares the libraries with their latest release, optionally checks the committed `api/` files (`api-files`), and reports both in one pull request comment through `pull-request`; the deprecated `first`/`second` inputs still run the `edge` container image |
 
 ## Commands
 

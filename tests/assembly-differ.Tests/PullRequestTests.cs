@@ -238,4 +238,96 @@ public class PullRequestTests
 		github.Comments.Should().BeEmpty();
 		github.Labels.Should().BeEmpty();
 	}
+
+	[Test]
+	public async Task Says_all_is_good_and_lists_what_it_compared_when_nothing_changed()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"));
+
+		result.ExitCode.Should().Be(0, result.Error);
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+	}
+
+	[Test]
+	public async Task Lists_the_assemblies_without_changes_next_to_the_ones_with()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		var report = Path.Combine(fixture.Root, "two.json");
+		await File.WriteAllTextAsync(
+			report,
+			"""
+			{
+			  "firstRelease": false,
+			  "baseline": "1.1.0",
+			  "suggestedVersionChange": "Minor",
+			  "breakingChanges": 0,
+			  "assemblies": [
+			    { "name": "Lib.Extras.dll", "suggestedVersionChange": "Minor", "breakingChanges": 0,
+			      "changes": [ { "kind": "Declaration", "name": "type Extras", "change": "added", "suggestedVersionChange": "Minor" } ] },
+			    { "name": "Lib.dll", "suggestedVersionChange": "None", "breakingChanges": 0, "changes": [] }
+			  ],
+			  "removedAssemblies": [],
+			  "addedAssemblies": []
+			}
+			"""
+		);
+
+		await PullRequest(github, fixture, report);
+
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+	}
+
+	[Test]
+	public async Task Reports_committed_API_files_that_match_in_the_same_comment()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		var apiReport = Path.Combine(fixture.Root, "api.txt");
+		await File.WriteAllTextAsync(apiReport, "[api] api matches the build: 6 files\n");
+
+		var (result, summary) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), true, "--api-code", "0", "--api-report", apiReport);
+
+		result.ExitCode.Should().Be(0, result.Error);
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+		summary.Should().Contain("The committed API files match the build (6 files)");
+	}
+
+	[Test]
+	public async Task Fails_with_5_and_says_how_to_update_committed_API_files_that_differ()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		var apiReport = Path.Combine(fixture.Root, "api.txt");
+		await File.WriteAllTextAsync(
+			apiReport,
+			"""
+			[api] Lib: 1 change since the committed files, suggested version change: Minor
+			  api/Lib.api:12  Lib › Widget › Resize(double)  added void Resize(double factor)  [minor]
+			[api] api does not match the build. Suggested version change: Minor
+			[api] Update the files with: assembly-differ api -o api
+			"""
+		);
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), true, "--api-code", "5", "--api-report", apiReport);
+
+		result.ExitCode.Should().Be(5, result.Error);
+		result.Error.Should().Contain("do not match the build");
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+	}
+
+	[Test]
+	public async Task An_API_files_check_that_could_not_run_fails_with_its_own_exit_code()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+
+		var (result, _) = await PullRequest(github, fixture, await ReportFor(fixture, "report"), true, "--api-code", "1");
+
+		result.ExitCode.Should().Be(1, result.Error);
+		github.Comments.Should().ContainSingle().Which.Body.Should().Contain("could not be checked (exit code 1)");
+	}
 }
