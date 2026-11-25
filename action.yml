@@ -204,11 +204,16 @@ runs:
 
         skip() { echo "::warning title=assembly-differ::$1; the check follows the comparison with the latest release"; exit 0; }
 
-        # the committed API of a commit, in a directory of its own; nothing when the commit has none
+        # The committed API of a commit, in a directory of its own; nothing when the commit has none. The commits are fetched
+        # into a repository of their own: a shallow fetch into the workflow's checkout cuts the history of a commit it
+        # already has, and the steps after this one, such as a version from tags, would find none.
+        scratch="$work/git"
+        git init --quiet --bare "$scratch"
+        remote=$(git remote get-url origin)
         export_api() {
           mkdir -p "$2"
-          git -c "http.https://github.com/.extraheader=$header" fetch --quiet --no-tags --depth=1 origin "$1" || return 1
-          git archive "$1" -- "$prefix" 2>/dev/null | tar -x -C "$2" || true
+          git -C "$scratch" -c "http.https://github.com/.extraheader=$header" fetch --quiet --no-tags --depth=1 "$remote" "$1" || return 1
+          git -C "$scratch" archive "$1" -- "$prefix" 2>/dev/null | tar -x -C "$2" || true
         }
         tip() { gh api "repos/$REPOSITORY/git/ref/heads/$1" --jq .object.sha; }
 
