@@ -1,0 +1,13 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels: feature -->
+### API changes: suggested version change **Minor**
+
+Compared with `1.1.0`. No breaking changes.
+
+- ✅ **Lib.dll**: no changes
+
+<details><summary><b>Lib.Extras.dll</b>: Minor, no breaking changes</summary>
+
+- 🌟 type Extras
+
+</details>

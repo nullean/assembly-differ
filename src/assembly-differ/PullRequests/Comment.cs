@@ -17,7 +17,19 @@ public static class Comment
 	/// <summary>GitHub refuses a comment over 65536 characters; the details stop well before that.</summary>
 	private const int MaxLength = 60000;
 
-	public static string Render(JsonElement report, IReadOnlyCollection<string> labels, Gate gate = Gate.None, string allowLabel = "")
+	/// <summary>
+	/// The check of the committed <c>.api</c> files: the exit code of <c>api --verify</c> (0 when they match the build, 5
+	/// when they do not) and what it printed.
+	/// </summary>
+	public sealed record ApiFiles(int Code, string Report);
+
+	public static string Render(
+		JsonElement report,
+		IReadOnlyCollection<string> labels,
+		Gate gate = Gate.None,
+		string allowLabel = "",
+		ApiFiles? apiFiles = null
+	)
 	{
 		var body = new StringBuilder();
 		body.AppendLine(Marker);
@@ -41,6 +53,7 @@ public static class Comment
 			body.AppendLine("### API changes: first release");
 			body.AppendLine();
 			body.AppendLine("There is no earlier release to compare with.");
+			WriteApiFiles(body, apiFiles);
 			return body.ToString();
 		}
 
@@ -49,15 +62,31 @@ public static class Comment
 		body.AppendLine($"### API changes: suggested version change **{suggested}**");
 		body.AppendLine();
 		var baseline = report.TryGetProperty("baseline", out var b) ? $"Compared with `{b.GetString()}`. " : "";
-		body.AppendLine(baseline + (breaking == 0 ? "No breaking changes." : $"⚠️ {Count(breaking, "breaking change")}."));
+		var assemblies = report.GetProperty("assemblies").EnumerateArray().ToList();
+		var removed = Names(report, "removedAssemblies").ToList();
+		var added = Names(report, "addedAssemblies").ToList();
+		var unchanged = assemblies.Count > 0 && removed.Count == 0 && added.Count == 0 && assemblies.All(a => a.GetProperty("changes").GetArrayLength() == 0);
+		body.AppendLine(
+			baseline +
+				(breaking > 0 ? $"⚠️ {Count(breaking, "breaking change")}." : unchanged ? "✅ All good: the public API is unchanged." : "No breaking changes.")
+		);
 
-		foreach (var name in Names(report, "removedAssemblies"))
+		foreach (var name in removed)
 			body.AppendLine($"- 🔴 assembly `{name}` is removed 💥");
-		foreach (var name in Names(report, "addedAssemblies"))
+		foreach (var name in added)
 			body.AppendLine($"- 🌟 assembly `{name}` is added");
 
+		// what was compared is listed too, so it is clear the tool picked up what was expected
+		var untouched = assemblies.Where(a => a.GetProperty("changes").GetArrayLength() == 0).ToList();
+		if (untouched.Count > 0)
+		{
+			body.AppendLine();
+			foreach (var assembly in untouched)
+				body.AppendLine($"- ✅ **{assembly.GetProperty("name").GetString()}**: no changes");
+		}
+
 		var truncated = 0;
-		foreach (var assembly in report.GetProperty("assemblies").EnumerateArray())
+		foreach (var assembly in assemblies)
 		{
 			var changes = assembly.GetProperty("changes");
 			if (changes.GetArrayLength() == 0)
@@ -80,7 +109,53 @@ public static class Comment
 			body.AppendLine().AppendLine(
 				$"{Count(truncated, "more change")} did not fit in this comment; the job summary and `api-changes.json` have them all."
 			);
+		WriteApiFiles(body, apiFiles);
 		return body.ToString();
+	}
+
+	/// <summary>The section on the committed .api files, when they were checked.</summary>
+	private static void WriteApiFiles(StringBuilder body, ApiFiles? apiFiles)
+	{
+		if (apiFiles is null)
+			return;
+		body.AppendLine();
+		body.AppendLine("#### Public API files");
+		body.AppendLine();
+		var lines = apiFiles.Report.Split('\n').Select(l => l.TrimEnd()).Where(l => l.Length > 0).ToArray();
+		switch (apiFiles.Code)
+		{
+			case 0:
+				var files = lines.Select(l => System.Text.RegularExpressions.Regex.Match(l, @"matches the build: (\d+) files?")).FirstOrDefault(m => m.Success);
+				body.AppendLine(
+					files is null ? "✅ The committed API files match the build." : $"✅ The committed API files match the build ({files.Groups[1].Value} files)."
+				);
+				break;
+			case 5:
+				var update = lines.FirstOrDefault(l => l.StartsWith("[api] Update the files with: ", StringComparison.Ordinal));
+				var suggested = lines.Select(l => System.Text.RegularExpressions.Regex.Match(l, @"Suggested version change: (\w+)")).LastOrDefault(
+					m => m.Success
+				)?.Groups[1].Value;
+				body.AppendLine($"❌ The committed API files are out of date{(suggested is null ? "." : $": suggested version change **{suggested}**.")}");
+				body.AppendLine();
+				body.AppendLine("```text");
+				foreach (var line in lines.Where(l => l != update))
+					body.AppendLine(line);
+				body.AppendLine("```");
+				if (update is not null)
+					body.AppendLine().AppendLine($"Update them with `{update["[api] Update the files with: ".Length..]}`, and commit the result.");
+				break;
+			default:
+				body.AppendLine($"⚠️ The committed API files could not be checked (exit code {apiFiles.Code}).");
+				if (lines.Length > 0)
+				{
+					body.AppendLine();
+					body.AppendLine("```text");
+					foreach (var line in lines)
+						body.AppendLine(line);
+					body.AppendLine("```");
+				}
+				break;
+		}
 	}
 
 	/// <summary>The labels an earlier comment says this tool set.</summary>

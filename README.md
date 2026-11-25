@@ -219,12 +219,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # a version from tags, as MinVer reads them, needs them
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
       - run: dotnet build -c Release
       - uses: nullean/assembly-differ@v1
 ```
+
+The comment lists every assembly it compared, the ones without changes too, so a run that finds nothing says so: "All good: the
+public API is unchanged." A shallow checkout builds the libraries without their tags, and a version derived from tags (MinVer, Nerdbank.GitVersioning) then differs from the release in its own version and in the version of the assemblies it references: check out with `fetch-depth: 0`.
 
 Without `package`, the action compares every library project of the solution with the latest release of its package,
 the way running the tool without a command does. Give `package: build/output/MyLib.1.3.0.nupkg` to compare a packed
@@ -237,6 +242,8 @@ later on the runner, the one your build uses.
 | `projects` | | project files to compare instead, one per line |
 | `target` | | only these assemblies, one per line |
 | `framework` | | the target framework to compare |
+| `api-files` | | the directory of committed `.api` files, such as `api`: they are checked against the build too, in the same comment, and the action fails when they differ; see [Public API files](#public-api-files) |
+| `api-split` | `none` | how the committed files were split: `none`, `namespace` or `top-level-namespace` |
 | `fail-on` | `major` | fail when the suggested change is at least this, unless the pull request has `allow-label`; `none` never fails |
 | `allow-label` | `breaking-allowed` | the label that lets a change at `fail-on` through |
 | `major-label`, `minor-label`, `patch-label` | `breaking`, `feature`, none | the release label for each suggested change |
@@ -245,8 +252,8 @@ later on the runner, the one your build uses.
 | `token` | `github.token` | needs `pull-requests: write` |
 | `version` | latest | the assembly-differ version to install |
 
-Outputs: `suggested-change` (`None`, `Patch`, `Minor` or `Major`), `breaking-changes`, and `report`, the path of
-`api-changes.json`.
+Outputs: `suggested-change` (`None`, `Patch`, `Minor` or `Major`), `breaking-changes`, `report`, the path of
+`api-changes.json`, and `api-files-match`, `true` or `false` when `api-files` is set.
 
 On a pull request from a fork the token cannot write, so the action writes the job summary and still applies
 `fail-on`, but leaves the comment and labels alone. The deprecated `first`, `second` and `args` inputs still run `diff`
@@ -305,30 +312,34 @@ installed runtime. A `.nupkg` finds its dependencies, and theirs, in the package
 its own finds only what sits next to it: pass the folders that hold its dependencies with `-r`. An enum that is not
 found is written as a cast, `(Formatting)1`.
 
-Check them on every pull request with the `verify-api` action. Checkout and the build are your steps, before it:
+Check them on every pull request with the `api-files` input of the action above, in the same job and the same comment as
+what the pull request changes in the API. Checkout and the build are your steps, before it:
 
 ```yaml
 permissions:
   contents: read
+  pull-requests: write # the comment and the labels
 
 jobs:
   api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
       - run: dotnet build -c Release
-      - uses: nullean/assembly-differ/verify-api@v1
+      - uses: nullean/assembly-differ@v1
         with:
-          directory: api
+          api-files: api
 ```
 
-It fails when the files do not match, with the report above in the log. With `comment: true` (and
-`pull-requests: write`) it also keeps a comment on the pull request with the report and the command that updates the
-files. Its other inputs are `path`, `projects`, `target`, `framework` and `split`, as for the command, and
-`working-directory`, `token` and `version`; its outputs are `matches` and `suggested-change`.
+The action fails when the files do not match the build, with the report in the log. The comment then says what changed,
+who it breaks and the command that updates the files, under the heading "Public API files"; when they match it says so.
+`projects`, `target`, `framework` and `package` pick what is read, as for the comparison with the release, and
+`api-split` says how the files were split.
 
 ### In a test
 

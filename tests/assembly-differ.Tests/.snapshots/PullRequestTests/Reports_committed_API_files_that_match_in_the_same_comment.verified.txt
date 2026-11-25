@@ -1,0 +1,11 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels:  -->
+### API changes: suggested version change **None**
+
+✅ All good: the public API is unchanged.
+
+- ✅ **Lib.dll**: no changes
+
+#### Public API files
+
+✅ The committed API files match the build (6 files).
