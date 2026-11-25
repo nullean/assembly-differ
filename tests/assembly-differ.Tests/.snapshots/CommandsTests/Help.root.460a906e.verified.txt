@@ -16,6 +16,8 @@ Global options:
 Commands:
   api           Writes the public API of a build as .api files, or checks
                 committed ones against it.
+  api-diff      Compares the .api files in two directories: what changed from
+                the old ones to the new ones, by path.
   files         Compares two local builds: dlls, directories of dlls, or .nupkg
                 files.
   nuget         Compares two versions of a package; in a solution, the version

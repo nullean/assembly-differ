@@ -330,4 +330,110 @@ public class PullRequestTests
 		result.ExitCode.Should().Be(1, result.Error);
 		github.Comments.Should().ContainSingle().Which.Body.Should().Contain("could not be checked (exit code 1)");
 	}
+
+	private const string Cumulative =
+		"""
+		{
+		  "firstRelease": false, "baseline": "1.1.0", "suggestedVersionChange": "Major", "breakingChanges": 32,
+		  "assemblies": [
+		    { "name": "Lib.dll", "suggestedVersionChange": "Major", "breakingChanges": 32,
+		      "changes": [ { "kind": "Declaration", "name": "type Widget", "change": "modified", "suggestedVersionChange": "Major",
+		                     "changes": [ { "kind": "Method", "name": "Draw()", "change": "removed", "suggestedVersionChange": "Major" } ] } ] }
+		  ],
+		  "removedAssemblies": [], "addedAssemblies": []
+		}
+		""";
+
+	private const string Stack =
+		"""
+		[
+		  { "number": 220, "title": "Fix retry budget | sniffing", "url": "https://github.com/owner/repo/pull/220", "suggestedVersionChange": "Major", "breakingChanges": 17 },
+		  { "number": 221, "title": "Model the pipeline as states", "url": "https://github.com/owner/repo/pull/221", "suggestedVersionChange": "Major", "breakingChanges": 14 },
+		  { "number": 222, "title": "Only tests", "url": "https://github.com/owner/repo/pull/222", "suggestedVersionChange": "None", "breakingChanges": 0 }
+		]
+		""";
+
+	private static string Delta(string suggested, int breaking, string frameworks) =>
+		$$"""
+		{
+		  "firstRelease": false, "suggestedVersionChange": "{{suggested}}", "breakingChanges": {{breaking}}, "distinctBreakingChanges": {{breaking}},
+		  "assemblies": [ {{frameworks}} ],
+		  "removedAssemblies": [], "addedAssemblies": []
+		}
+		""";
+
+	private static string Framework(string name, string change) =>
+		change.Length == 0
+			? $$"""{ "name": "{{name}}", "suggestedVersionChange": "None", "breakingChanges": 0, "changes": [] }"""
+			: $$"""{ "name": "{{name}}", "suggestedVersionChange": "Major", "breakingChanges": 1, "changes": [ { "kind": "Declaration", "name": "{{change}}", "change": "removed", "suggestedVersionChange": "Major" } ] }""";
+
+	private static async Task<string[]> Reports(Fixture fixture, string delta)
+	{
+		var release = Path.Combine(fixture.Root, "release.json");
+		var own = Path.Combine(fixture.Root, "delta.json");
+		var stack = Path.Combine(fixture.Root, "stack.json");
+		await File.WriteAllTextAsync(release, Cumulative);
+		await File.WriteAllTextAsync(own, delta);
+		await File.WriteAllTextAsync(stack, Stack);
+		return [release, "--base-report", own, "--base-name", "`2.0/8-base` (#226)", "--stack", stack];
+	}
+
+	[Test]
+	public async Task A_pull_request_that_changes_nothing_passes_however_much_the_stack_below_it_changed()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		var clean = Delta("None", 0, string.Join(", ", new[] { "Lib.net10.0", "Lib.net8.0", "Lib.net462" }.Select(n => Framework(n, ""))));
+		var arguments = await Reports(fixture, clean);
+
+		var (result, _) = await PullRequest(github, fixture, arguments[0], true, [.. arguments[1..], "--fail-on", "major"]);
+
+		result.ExitCode.Should().Be(0, result.Error);
+		github.Labels.Should().BeEmpty();
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+	}
+
+	[Test]
+	public async Task A_pull_request_that_breaks_the_api_fails_and_is_labelled_whatever_the_release_says()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		const string Removed = "Lib › Widget › Draw()  removed void Draw()  [major: breaks callers, compiled code and source]";
+		var delta = Delta(
+			"Major",
+			2,
+			string.Join(
+				", ",
+				new[]
+				{
+					Framework("Lib.net10.0", Removed),
+					Framework("Lib.net8.0", Removed),
+					Framework("Lib.net462", Removed),
+					Framework("Lib.netstandard2.0", ""),
+				}
+			)
+		);
+		var arguments = await Reports(fixture, delta);
+
+		var (result, _) = await PullRequest(github, fixture, arguments[0], true, [.. arguments[1..], "--fail-on", "major"]);
+
+		result.ExitCode.Should().Be(4, result.Error);
+		github.Labels.Should().Equal("breaking");
+		github.Comments.Should().ContainSingle().Which.Body.Should().MatchSnapshot();
+	}
+
+	[Test]
+	public async Task The_allow_label_lets_a_pull_request_through_that_breaks_the_api_itself()
+	{
+		using var fixture = Scenarios.Create("unchanged");
+		using var github = new FakeGitHub();
+		github.Labels.Add("breaking-allowed");
+		var delta = Delta("Major", 1, Framework("Lib", "Lib › Widget › Draw()  removed void Draw()  [major: breaks callers, compiled code and source]"));
+		var arguments = await Reports(fixture, delta);
+
+		var (result, _) = await PullRequest(github, fixture, arguments[0], true, [.. arguments[1..], "--fail-on", "major"]);
+
+		result.ExitCode.Should().Be(0, result.Error);
+		github.Comments.Should().ContainSingle().Which.Body.Should().Contain("The `breaking-allowed` label allows this change");
+	}
 }

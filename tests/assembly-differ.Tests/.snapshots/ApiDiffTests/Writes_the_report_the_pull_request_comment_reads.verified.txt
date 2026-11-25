@@ -1,0 +1,23 @@
+{
+  "firstRelease": false,
+  "suggestedVersionChange": "Major",
+  "breakingChanges": 1,
+  "distinctBreakingChanges": 1,
+  "assemblies": [
+    {
+      "name": "Lib",
+      "suggestedVersionChange": "Major",
+      "breakingChanges": 1,
+      "changes": [
+        {
+          "kind": "Declaration",
+          "name": "Lib \u203A Widget \u203A Draw()  removed void Draw()  [major: breaks callers, compiled code and source]",
+          "change": "removed",
+          "suggestedVersionChange": "Major"
+        }
+      ]
+    }
+  ],
+  "removedAssemblies": [],
+  "addedAssemblies": []
+}

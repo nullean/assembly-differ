@@ -25,6 +25,10 @@ inputs:
     description: 'The directory of committed .api files, as assembly-differ api -o wrote them. When set, they are checked against the build too, in the same comment, and the action fails when they differ. Leave empty to skip.'
     required: false
     default: ''
+  base-comparison:
+    description: 'On a pull request with api-files, compare its committed API with its base branch: the check, the labels and the comment then follow what this pull request itself changes, and the comparison with the latest release is shown for information. Set to false to follow the comparison with the latest release.'
+    required: false
+    default: 'true'
   api-split:
     description: 'How the committed .api files were split: none, namespace or top-level-namespace.'
     required: false
@@ -84,7 +88,7 @@ inputs:
 
 outputs:
   suggested-change:
-    description: 'The suggested version change: None, Patch, Minor or Major.'
+    description: 'The suggested version change: None, Patch, Minor or Major. What the pull request itself changes against its base branch when api-files is set, otherwise the comparison with the latest release.'
     value: ${{ steps.report.outputs.suggested-change }}
   breaking-changes:
     description: 'How many breaking changes were found.'
@@ -177,6 +181,76 @@ runs:
         echo "code=$code" >> "$GITHUB_OUTPUT"
         if [ "$code" = "0" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; else echo "matches=false" >> "$GITHUB_OUTPUT"; fi
 
+    - name: Compare with the base branch
+      id: base
+      if: inputs.first == '' && inputs.api-files != '' && inputs.base-comparison == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPOSITORY: ${{ github.repository }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        API_FILES: ${{ inputs.api-files }}
+      run: |
+        # What this pull request changes in the committed API, against its base branch, and which pull requests below it in
+        # a stack changed the API before it. Nothing is built: the committed .api files of each commit are compared.
+        tool="$RUNNER_TEMP/assembly-differ-tool/assembly-differ"
+        work="$RUNNER_TEMP/assembly-differ-base"
+        rm -rf "$work" && mkdir -p "$work"
+        prefix="$(git rev-parse --show-prefix)${API_FILES#./}"
+        prefix="${prefix%/}"
+        header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+
+        skip() { echo "::warning title=assembly-differ::$1; the check follows the comparison with the latest release"; exit 0; }
+
+        # the committed API of a commit, in a directory of its own; nothing when the commit has none
+        export_api() {
+          mkdir -p "$2"
+          git -c "http.https://github.com/.extraheader=$header" fetch --quiet --no-tags --depth=1 origin "$1" || return 1
+          git archive "$1" -- "$prefix" 2>/dev/null | tar -x -C "$2" || true
+        }
+        tip() { gh api "repos/$REPOSITORY/git/ref/heads/$1" --jq .object.sha; }
+
+        base_sha=$(tip "$BASE_REF") || skip "could not read the base branch $BASE_REF"
+        export_api "$base_sha" "$work/base" || skip "could not fetch the base branch $BASE_REF"
+        "$tool" api-diff "$work/base/$prefix" "$API_FILES" --format json --output "$work/delta.json" || skip "could not compare with the base branch"
+
+        # the pull requests below this one: the open ones whose branch is the base of the one above
+        numbers=(); titles=(); urls=(); shas=(); bases=()
+        cur="$BASE_REF"
+        owner="${REPOSITORY%%/*}"
+        for _ in $(seq 1 30); do
+          [ "$cur" = "$DEFAULT_BRANCH" ] && break
+          found=$(gh api "repos/$REPOSITORY/pulls?head=$owner:$cur&state=open&per_page=1" --jq '.[0] // empty | [.number, .title, .html_url, .head.sha, .base.ref] | @tsv') || break
+          [ -z "$found" ] && break
+          IFS=$'\t' read -r n title url sha base <<< "$found"
+          numbers+=("$n"); titles+=("$title"); urls+=("$url"); shas+=("$sha"); bases+=("$base")
+          cur="$base"
+        done
+
+        base_name="\`$BASE_REF\`"
+        [ "${#numbers[@]}" -gt 0 ] && base_name="$base_name (#${numbers[0]})"
+
+        # each of them against what it was based on, from the bottom of the stack up
+        echo '[]' > "$work/stack.json"
+        count=${#numbers[@]}
+        for ((i = count - 1; i >= 0; i--)); do
+          if [ "$i" -eq $((count - 1)) ]; then below_sha=$(tip "${bases[$i]}") || continue; else below_sha="${shas[$((i + 1))]}"; fi
+          export_api "$below_sha" "$work/below-$i" || continue
+          export_api "${shas[$i]}" "$work/at-$i" || continue
+          "$tool" api-diff "$work/below-$i/$prefix" "$work/at-$i/$prefix" --format json --output "$work/entry-$i.json" > /dev/null || continue
+          jq --argjson number "${numbers[$i]}" --arg title "${titles[$i]}" --arg url "${urls[$i]}" \
+            '{number: $number, title: $title, url: $url, suggestedVersionChange: .suggestedVersionChange, breakingChanges: (.distinctBreakingChanges // .breakingChanges)}' \
+            "$work/entry-$i.json" > "$work/entry-$i.line.json"
+          jq --slurpfile entry "$work/entry-$i.line.json" '. + $entry' "$work/stack.json" > "$work/stack.tmp" && mv "$work/stack.tmp" "$work/stack.json"
+        done
+
+        echo "report=$work/delta.json" >> "$GITHUB_OUTPUT"
+        echo "stack=$work/stack.json" >> "$GITHUB_OUTPUT"
+        echo "name=$base_name" >> "$GITHUB_OUTPUT"
+        echo "suggested-change=$(jq -r .suggestedVersionChange "$work/delta.json")" >> "$GITHUB_OUTPUT"
+
     - name: Report on the pull request
       id: report
       if: inputs.first == ''
@@ -193,25 +267,31 @@ runs:
         LABELS: ${{ inputs.labels }}
         API_CODE: ${{ steps.api.outputs.code }}
         API_REPORT: ${{ steps.api.outputs.report }}
+        BASE_REPORT: ${{ steps.base.outputs.report }}
+        BASE_NAME: ${{ steps.base.outputs.name }}
+        BASE_STACK: ${{ steps.base.outputs.stack }}
       run: |
         report="$RUNNER_TEMP/assembly-differ/api-changes.json"
         if [ ! -f "$report" ]; then
           # nothing was compared, such as a solution whose libraries have no release yet
           echo "suggested-change=None" >> "$GITHUB_OUTPUT"
           echo "breaking-changes=0" >> "$GITHUB_OUTPUT"
-          [ -z "$API_CODE" ] && exit 0
+          [ -z "$API_CODE" ] && [ -z "$BASE_REPORT" ] && exit 0
           # the committed API files are still reported, and still fail the check
           mkdir -p "$RUNNER_TEMP/assembly-differ"
           echo '{"firstRelease":true,"suggestedVersionChange":"None","breakingChanges":0,"assemblies":[]}' > "$report"
         fi
         echo "report=$report" >> "$GITHUB_OUTPUT"
-        echo "suggested-change=$(jq -r .suggestedVersionChange "$report")" >> "$GITHUB_OUTPUT"
-        echo "breaking-changes=$(jq -r .breakingChanges "$report")" >> "$GITHUB_OUTPUT"
+        # on a pull request with a base branch to compare with, the outputs are what the pull request itself changes
+        deciding="${BASE_REPORT:-$report}"
+        echo "suggested-change=$(jq -r .suggestedVersionChange "$deciding")" >> "$GITHUB_OUTPUT"
+        echo "breaking-changes=$(jq -r '.distinctBreakingChanges // .breakingChanges' "$deciding")" >> "$GITHUB_OUTPUT"
         args=(pull-request "$report" --fail-on "$FAIL_ON" --allow-label "$ALLOW_LABEL"
           --major-label "$MAJOR_LABEL" --minor-label "$MINOR_LABEL" --patch-label "$PATCH_LABEL")
         [ "$COMMENT" != "true" ] && args+=(--no-comment)
         [ "$LABELS" != "true" ] && args+=(--no-labels)
         [ -n "$API_CODE" ] && args+=(--api-code "$API_CODE" --api-report "$API_REPORT")
+        [ -n "$BASE_REPORT" ] && args+=(--base-report "$BASE_REPORT" --base-name "$BASE_NAME" --stack "$BASE_STACK")
         set +e
         "$RUNNER_TEMP/assembly-differ-tool/assembly-differ" "${args[@]}"
         code=$?

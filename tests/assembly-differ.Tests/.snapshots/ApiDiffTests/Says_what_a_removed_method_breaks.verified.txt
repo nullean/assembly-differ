@@ -1,0 +1,7 @@
+exit code: 0
+--- stdout
+[api] Lib: 1 change, suggested version change: Major
+  Lib › Widget › Draw()  removed void Draw()  [major: breaks callers, compiled code and source]
+[api] 1 API compared, 0 without changes
+[api] Suggested version change: Major
+--- stderr

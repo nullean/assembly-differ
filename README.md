@@ -112,6 +112,7 @@ bundles does not count as your API; `--all-assemblies` compares every assembly t
 | `release <path>` | a new build, as a `.nupkg`, a `.dll` or a directory, with the release before it; pass `--package` and `--version` unless `<path>` is a `.nupkg` |
 | `files <old> <new>` | two local builds, each a `.dll`, a directory of dlls or a `.nupkg` |
 | `api [path]` | nothing: writes the public API as `.api` files, and `--verify` checks committed ones against the build (see [Public API files](#public-api-files)) |
+| `api-diff <old> <new>` | two directories of committed `.api` files, such as the base branch's `api/` and a pull request's: what changed, by path, with no build, and the same change in every target framework once |
 | `upgrades` | in a solution, every package it references directly that has a newer release, and what updating each breaks in your code |
 | `nuget <id> [<version>] [<new-version>]` | in a solution, the version your projects resolve with the latest release, or with `<version>`: what updating would change; anywhere, two published versions |
 | `projects` | every library project in the directory against its latest release; what runs without a command |
@@ -231,6 +232,16 @@ jobs:
 The comment lists every assembly it compared, the ones without changes too, so a run that finds nothing says so: "All good: the
 public API is unchanged." A shallow checkout builds the libraries without their tags, and a version derived from tags (MinVer, Nerdbank.GitVersioning) then differs from the release in its own version and in the version of the assemblies it references: check out with `fetch-depth: 0`.
 
+**What the check follows.** With `api-files`, the check, the release label and the comment follow what the pull request itself
+changes: its committed API against the committed API of its base branch, target framework by target framework, so a
+pull request is never held back by a breaking change `main` already has and has not released, or by the pull requests
+below it in a stack. The comparison with the latest release is still in the comment, collapsed and marked as
+information, and for a stacked pull request it says which of the pull requests below introduced the changes. A change
+that is the same in every target framework is listed once, and one that only some frameworks have, such as code under
+`#if NET8_0`, is listed apart with its frameworks. Without `api-files` there is no committed API to compare with, and the
+check follows the comparison with the latest release. The action needs the `gh` CLI, as the hosted runners have, and
+reads the base branch and the open pull requests whose branches the stack is made of.
+
 Without `package`, the action compares every library project of the solution with the latest release of its package,
 the way running the tool without a command does. Give `package: build/output/MyLib.1.3.0.nupkg` to compare a packed
 package with the release before it instead. It installs the tool with `dotnet tool`, so it needs the .NET 10 SDK or
@@ -243,6 +254,7 @@ later on the runner, the one your build uses.
 | `target` | | only these assemblies, one per line |
 | `framework` | | the target framework to compare |
 | `api-files` | | the directory of committed `.api` files, such as `api`: they are checked against the build too, in the same comment, and the action fails when they differ; see [Public API files](#public-api-files) |
+| `base-comparison` | `true` | on a pull request with `api-files`, follow what the pull request itself changes against its base branch; `false` follows the comparison with the latest release |
 | `api-split` | `none` | how the committed files were split: `none`, `namespace` or `top-level-namespace` |
 | `fail-on` | `major` | fail when the suggested change is at least this, unless the pull request has `allow-label`; `none` never fails |
 | `allow-label` | `breaking-allowed` | the label that lets a change at `fail-on` through |
