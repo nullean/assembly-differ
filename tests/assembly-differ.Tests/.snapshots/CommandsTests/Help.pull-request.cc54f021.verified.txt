@@ -17,6 +17,9 @@ Options:
   --major-label <string>  The label for a Major change, matching release-drafter's; empty sets none. [default: breaking]
   --minor-label <string>  The label for a Minor change; empty sets none. [default: feature]
   --patch-label <string>  The label for a Patch change; empty sets none. [default: ]
+  --base-report <string>  The api-changes.json of api-diff for this pull request against its base branch. When given, the labels and --fail-on follow this change, the pull request's own, and the report above is shown as the change since the last release, for information. [default: null]
+  --base-name <string>    What the base is called in the comment, such as the branch and its pull request; used with --base-report. [default: null]
+  --stack <string>        A json array of the pull requests below this one in a stack, each with number, title, url, suggestedVersionChange and breakingChanges, to say which introduced the changes since the last release; used with --base-report. [default: null]
   --api-code <value>      The exit code of api --verify, to put the check of the committed .api files in the same comment: 0 when they match the build, 5 when they do not. The check fails on anything else. [default: default]
   --api-report <string>   What api --verify printed, for the comment; used with --api-code. [default: null]
   --no-comment            Leave the comment alone.

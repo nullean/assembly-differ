@@ -23,12 +23,22 @@ public static class Comment
 	/// </summary>
 	public sealed record ApiFiles(int Code, string Report);
 
+	/// <summary>A pull request below this one in a stack, and what it changed in the public API.</summary>
+	public sealed record StackEntry(int Number, string Title, string Url, string Suggested, int Breaking);
+
+	/// <summary>
+	/// What the pull request itself changes: the comparison of its committed API with its base branch's, and the pull
+	/// requests below it in a stack that changed the API before it.
+	/// </summary>
+	public sealed record Delta(JsonElement Report, string BaseName, IReadOnlyList<StackEntry> Stack);
+
 	public static string Render(
 		JsonElement report,
 		IReadOnlyCollection<string> labels,
 		Gate gate = Gate.None,
 		string allowLabel = "",
-		ApiFiles? apiFiles = null
+		ApiFiles? apiFiles = null,
+		Delta? delta = null
 	)
 	{
 		var body = new StringBuilder();
@@ -48,27 +58,128 @@ public static class Comment
 				break;
 		}
 
-		if (report.TryGetProperty("firstRelease", out var first) && first.GetBoolean())
+		if (delta is null)
 		{
-			body.AppendLine("### API changes: first release");
-			body.AppendLine();
-			body.AppendLine("There is no earlier release to compare with.");
+			if (IsFirstRelease(report))
+			{
+				body.AppendLine("### API changes: first release");
+				body.AppendLine();
+				body.AppendLine("There is no earlier release to compare with.");
+			}
+			else
+				WriteSection(body, report, "### API changes", group: false, "the public API is unchanged");
 			WriteApiFiles(body, apiFiles);
 			return body.ToString();
 		}
 
-		var suggested = report.GetProperty("suggestedVersionChange").GetString();
-		var breaking = report.GetProperty("breakingChanges").GetInt32();
-		body.AppendLine($"### API changes: suggested version change **{suggested}**");
+		// the pull request's own change leads: it is what the check and the labels follow
+		WriteSection(
+			body,
+			delta.Report,
+			"### API changes in this pull request",
+			group: true,
+			"this pull request does not change the public API",
+			$"Compared with the base branch {delta.BaseName}. "
+		);
+
+		// since the last release is information: what main already has, or what the pull requests below this one changed,
+		// does not fail this pull request
 		body.AppendLine();
-		var baseline = report.TryGetProperty("baseline", out var b) ? $"Compared with `{b.GetString()}`. " : "";
+		if (IsFirstRelease(report))
+			body.AppendLine("There is no earlier release to compare with.");
+		else
+		{
+			var cumulative = report.GetProperty("suggestedVersionChange").GetString();
+			var cumulativeBreaking = report.GetProperty("breakingChanges").GetInt32();
+			var since = report.TryGetProperty("baseline", out var baseline) ? $" (`{baseline.GetString()}`)" : "";
+			body.AppendLine(
+				$"<details><summary>Since the last release{since}: <b>{cumulative}</b>, {(cumulativeBreaking == 0 ? "no breaking changes" : Count(cumulativeBreaking, "breaking change"))}; for information, it does not fail this check</summary>"
+			);
+			body.AppendLine();
+			WriteSection(body, report, null, group: false, "the public API is unchanged");
+			var introducing = delta.Stack.Where(s => s.Suggested != "None").ToList();
+			if (introducing.Count > 0)
+			{
+				body.AppendLine();
+				body.AppendLine("**Introduced by** the pull requests below this one:");
+				body.AppendLine();
+				body.AppendLine("| Pull request | Change | Breaking |");
+				body.AppendLine("|---|---|---|");
+				foreach (var entry in introducing)
+					body.AppendLine(
+						$"| [#{entry.Number}]({entry.Url}) {entry.Title.Replace("|", "\\|", StringComparison.Ordinal)} | {entry.Suggested} | {entry.Breaking} |"
+					);
+			}
+			body.AppendLine();
+			body.AppendLine("</details>");
+		}
+		WriteApiFiles(body, apiFiles);
+		return body.ToString();
+	}
+
+	private static bool IsFirstRelease(JsonElement report) => report.TryGetProperty("firstRelease", out var first) && first.GetBoolean();
+
+	/// <summary>An assembly's name split into the assembly and its target framework, when the name ends in one: <c>Lib.net8.0</c>.</summary>
+	private static readonly System.Text.RegularExpressions.Regex Framework = new(
+		@"^(?<assembly>.+?)\.(?<tfm>net\d+(?:\.\d+)?|netstandard\d+\.\d+|netcoreapp\d+\.\d+)$",
+		System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant
+	);
+
+	/// <summary>One or more assemblies of the report with the same changes: the frameworks of one library, usually.</summary>
+	private sealed record Group(string Label, JsonElement First, int Count);
+
+	/// <summary>
+	/// The assemblies of a report, with those that have the same changes written once: a change that is the same in
+	/// every target framework is one change, not one per framework, and one only some frameworks have stands apart.
+	/// </summary>
+	private static List<Group> Grouped(IReadOnlyList<JsonElement> assemblies, bool group)
+	{
+		if (!group)
+			return assemblies.Select(a => new Group(a.GetProperty("name").GetString()!, a, 1)).ToList();
+		var groups = new List<(string Assembly, string Signature, List<string> Frameworks, JsonElement First)>();
+		foreach (var assembly in assemblies)
+		{
+			var name = assembly.GetProperty("name").GetString()!;
+			var match = Framework.Match(name);
+			var library = match.Success ? match.Groups["assembly"].Value : name;
+			var framework = match.Success ? match.Groups["tfm"].Value : "";
+			var signature = assembly.GetProperty("changes").GetRawText();
+			var existing = groups.FindIndex(g => g.Assembly == library && g.Signature == signature);
+			if (existing >= 0)
+				groups[existing].Frameworks.Add(framework);
+			else
+				groups.Add((library, signature, [framework], assembly));
+		}
+		return groups.Select(
+			g => new Group(
+				g.Frameworks.All(f => f.Length == 0) ? g.Assembly : $"{g.Assembly} ({string.Join(", ", g.Frameworks.Where(f => f.Length > 0))})",
+				g.First,
+				g.Frameworks.Count
+			)
+		).ToList();
+	}
+
+	/// <summary>The summary line, the assemblies without changes and the details of the ones with, for one report.</summary>
+	private static void WriteSection(StringBuilder body, JsonElement report, string? heading, bool group, string allGood, string compared = "")
+	{
+		var suggested = report.GetProperty("suggestedVersionChange").GetString();
 		var assemblies = report.GetProperty("assemblies").EnumerateArray().ToList();
+		var groups = Grouped(assemblies, group);
+		// a change in every framework counts once
+		var breaking = group ? groups.Sum(g => g.First.GetProperty("breakingChanges").GetInt32()) : report.GetProperty("breakingChanges").GetInt32();
+		if (heading is not null)
+		{
+			body.AppendLine($"{heading}: suggested version change **{suggested}**");
+			body.AppendLine();
+		}
+		var baseline = compared.Length > 0
+			? compared
+			: report.TryGetProperty("baseline", out var b) && heading is not null ? $"Compared with `{b.GetString()}`. " : "";
 		var removed = Names(report, "removedAssemblies").ToList();
 		var added = Names(report, "addedAssemblies").ToList();
 		var unchanged = assemblies.Count > 0 && removed.Count == 0 && added.Count == 0 && assemblies.All(a => a.GetProperty("changes").GetArrayLength() == 0);
 		body.AppendLine(
-			baseline +
-				(breaking > 0 ? $"⚠️ {Count(breaking, "breaking change")}." : unchanged ? "✅ All good: the public API is unchanged." : "No breaking changes.")
+			baseline + (breaking > 0 ? $"⚠️ {Count(breaking, "breaking change")}." : unchanged ? $"✅ All good: {allGood}." : "No breaking changes.")
 		);
 
 		foreach (var name in removed)
@@ -77,27 +188,27 @@ public static class Comment
 			body.AppendLine($"- 🌟 assembly `{name}` is added");
 
 		// what was compared is listed too, so it is clear the tool picked up what was expected
-		var untouched = assemblies.Where(a => a.GetProperty("changes").GetArrayLength() == 0).ToList();
+		var untouched = groups.Where(g => g.First.GetProperty("changes").GetArrayLength() == 0).ToList();
 		if (untouched.Count > 0)
 		{
 			body.AppendLine();
-			foreach (var assembly in untouched)
-				body.AppendLine($"- ✅ **{assembly.GetProperty("name").GetString()}**: no changes");
+			foreach (var item in untouched)
+				body.AppendLine($"- ✅ **{item.Label}**: no changes");
 		}
 
 		var truncated = 0;
-		foreach (var assembly in assemblies)
+		foreach (var item in groups)
 		{
-			var changes = assembly.GetProperty("changes");
+			var changes = item.First.GetProperty("changes");
 			if (changes.GetArrayLength() == 0)
 				continue;
-			var assemblyBreaking = assembly.GetProperty("breakingChanges").GetInt32();
+			var assemblyBreaking = item.First.GetProperty("breakingChanges").GetInt32();
 			var details = new StringBuilder();
 			foreach (var change in changes.EnumerateArray())
 				truncated += WriteChange(details, change, 0, body.Length);
 			body.AppendLine();
 			body.AppendLine(
-				$"<details><summary><b>{assembly.GetProperty("name").GetString()}</b>: {assembly.GetProperty("suggestedVersionChange").GetString()}, " +
+				$"<details><summary><b>{item.Label}</b>: {item.First.GetProperty("suggestedVersionChange").GetString()}, " +
 					$"{(assemblyBreaking == 0 ? "no breaking changes" : Count(assemblyBreaking, "breaking change"))}</summary>"
 			);
 			body.AppendLine();
@@ -109,8 +220,6 @@ public static class Comment
 			body.AppendLine().AppendLine(
 				$"{Count(truncated, "more change")} did not fit in this comment; the job summary and `api-changes.json` have them all."
 			);
-		WriteApiFiles(body, apiFiles);
-		return body.ToString();
 	}
 
 	/// <summary>The section on the committed .api files, when they were checked.</summary>

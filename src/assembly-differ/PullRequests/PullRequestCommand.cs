@@ -40,6 +40,9 @@ internal sealed class PullRequestCommand
 	/// <param name="majorLabel">The label for a Major change, matching release-drafter's; empty sets none.</param>
 	/// <param name="minorLabel">The label for a Minor change; empty sets none.</param>
 	/// <param name="patchLabel">The label for a Patch change; empty sets none.</param>
+	/// <param name="baseReport">The api-changes.json of <c>api-diff</c> for this pull request against its base branch. When given, the labels and --fail-on follow this change, the pull request's own, and the report above is shown as the change since the last release, for information.</param>
+	/// <param name="baseName">What the base is called in the comment, such as the branch and its pull request; used with --base-report.</param>
+	/// <param name="stack">A json array of the pull requests below this one in a stack, each with number, title, url, suggestedVersionChange and breakingChanges, to say which introduced the changes since the last release; used with --base-report.</param>
 	/// <param name="apiCode">The exit code of <c>api --verify</c>, to put the check of the committed .api files in the same comment: 0 when they match the build, 5 when they do not. The check fails on anything else.</param>
 	/// <param name="apiReport">What <c>api --verify</c> printed, for the comment; used with --api-code.</param>
 	/// <param name="noComment">Leave the comment alone.</param>
@@ -57,6 +60,9 @@ internal sealed class PullRequestCommand
 		string majorLabel = "breaking",
 		string minorLabel = "feature",
 		string patchLabel = "",
+		string? baseReport = null,
+		string? baseName = null,
+		string? stack = null,
 		int? apiCode = null,
 		string? apiReport = null,
 		bool noComment = false,
@@ -73,7 +79,21 @@ internal sealed class PullRequestCommand
 		using var document = JsonDocument.Parse(await File.ReadAllTextAsync(report));
 		var root = document.RootElement;
 
-		var suggestedText = root.GetProperty("suggestedVersionChange").GetString();
+		// the pull request's own change, against its base, decides the labels and the check when there is one
+		JsonDocument? baseDocument = null;
+		Comment.Delta? delta = null;
+		if (baseReport is not null)
+		{
+			if (!File.Exists(baseReport))
+			{
+				Console.Error.WriteLine($"[diff] no report at {baseReport}; write one with api-diff --format json");
+				return 1;
+			}
+			baseDocument = JsonDocument.Parse(await File.ReadAllTextAsync(baseReport));
+			delta = new Comment.Delta(baseDocument.RootElement, baseName ?? "", await StackFrom(stack));
+		}
+		var deciding = delta?.Report ?? root;
+		var suggestedText = deciding.GetProperty("suggestedVersionChange").GetString();
 		var suggested = Enum.Parse<SuggestedVersionChange>(suggestedText!, ignoreCase: true);
 		var label = suggested switch
 		{
@@ -111,7 +131,7 @@ internal sealed class PullRequestCommand
 		var apiFiles = apiCode is { } code
 			? new Comment.ApiFiles(code, apiReport is not null && File.Exists(apiReport) ? await File.ReadAllTextAsync(apiReport) : "")
 			: null;
-		var body = Comment.Render(root, wanted, gate, allowLabel, apiFiles);
+		var body = Comment.Render(root, wanted, gate, allowLabel, apiFiles, delta);
 
 		var summary = Env("GITHUB_STEP_SUMMARY");
 		if (!string.IsNullOrEmpty(summary))
@@ -167,6 +187,27 @@ internal sealed class PullRequestCommand
 			Console.Error.WriteLine($"[diff] could not update pull request #{pullRequest} in {repository}: {e.Message}");
 			return 1;
 		}
+	}
+
+	/// <summary>The pull requests below this one, from the json the action wrote.</summary>
+	private static async Task<IReadOnlyList<Comment.StackEntry>> StackFrom(string? path)
+	{
+		if (path is null || !File.Exists(path))
+			return [];
+		using var document = JsonDocument.Parse(await File.ReadAllTextAsync(path));
+		return document
+			.RootElement
+			.EnumerateArray()
+			.Select(
+				e => new Comment.StackEntry(
+					e.GetProperty("number").GetInt32(),
+					e.GetProperty("title").GetString() ?? "",
+					e.GetProperty("url").GetString() ?? "",
+					e.GetProperty("suggestedVersionChange").GetString() ?? "None",
+					e.GetProperty("breakingChanges").GetInt32()
+				)
+			)
+			.ToList();
 	}
 
 	/// <summary>The exit code: 4 when a change at --fail-on is not allowed, with a line saying why and what to do.</summary>

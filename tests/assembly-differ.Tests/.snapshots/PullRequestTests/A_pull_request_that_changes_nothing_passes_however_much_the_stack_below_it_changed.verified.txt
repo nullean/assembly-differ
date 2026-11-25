@@ -1,0 +1,27 @@
+<!-- assembly-differ -->
+<!-- assembly-differ-labels:  -->
+### API changes in this pull request: suggested version change **None**
+
+Compared with the base branch `2.0/8-base` (#226). ✅ All good: this pull request does not change the public API.
+
+- ✅ **Lib (net10.0, net8.0, net462)**: no changes
+
+<details><summary>Since the last release (`1.1.0`): <b>Major</b>, 32 breaking changes; for information, it does not fail this check</summary>
+
+⚠️ 32 breaking changes.
+
+<details><summary><b>Lib.dll</b>: Major, 32 breaking changes</summary>
+
+- 🔷 type Widget
+  - 🔴 method `Draw()` 💥
+
+</details>
+
+**Introduced by** the pull requests below this one:
+
+| Pull request | Change | Breaking |
+|---|---|---|
+| [#220](https://github.com/owner/repo/pull/220) Fix retry budget \| sniffing | Major | 17 |
+| [#221](https://github.com/owner/repo/pull/221) Model the pipeline as states | Major | 14 |
+
+</details>

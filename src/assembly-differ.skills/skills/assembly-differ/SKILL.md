@@ -49,6 +49,8 @@ assemblies, and `--fail-on <none|patch|minor|major>` to exit with code 4 at or a
   `--include-unpackable` or `--project <path>` change that.
 - **`release` in a solution compares only the assemblies the solution builds**, not the dependencies a package bundles;
   `--all-assemblies` compares every assembly, `-t` names them.
+- **`api-diff <old> <new>` compares two directories of committed `.api` files** with no build, such as a base branch's
+  `api/` and a pull request's: what a pull request itself changes, whatever the last release says.
 - **A package with no earlier release is a first release**: nothing to compare, exit code 0 (`--require-baseline`
   fails instead).
 

@@ -11,6 +11,7 @@ app.Map<ApiCommands>();
 app.Map<Differ.PullRequests.PullRequestCommand>();
 app.Map<Differ.Projects.UpgradesCommand>();
 app.Map<Differ.ApiFiles.ApiFileCommand>();
+app.Map<Differ.ApiFiles.ApiDiffCommand>();
 app.Map<DiffCommands>();
 app.MapAndRootAlias<Differ.Projects.ProjectsCommand>();
 
